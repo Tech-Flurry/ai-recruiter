@@ -1,3 +1,3 @@
 ﻿namespace Dointo.AiRecruiter.Dtos;
 
-public record DummyDto(Guid Id, string Name, int Age);
+public record DummyDto(string Id, string Name, int Age);

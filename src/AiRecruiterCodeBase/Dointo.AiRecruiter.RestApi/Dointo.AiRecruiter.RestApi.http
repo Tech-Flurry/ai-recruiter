@@ -1,0 +1,6 @@
+@Dointo.AiRecruiter.RestApi_HostAddress = http://localhost:5275
+
+GET {{Dointo.AiRecruiter.RestApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

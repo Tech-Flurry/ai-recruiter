@@ -15,4 +15,10 @@
 		<ProjectReference Include="..\Dointo.AiRecruiter.Dtos\Dointo.AiRecruiter.Dtos.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<InternalsVisibleTo Include="Dointo.AiRecruiter.Application.Tests">
+			<Assembly>Dointo.AiRecruiter.Application</Assembly>
+		</InternalsVisibleTo>
+	</ItemGroup>
+
 </Project>

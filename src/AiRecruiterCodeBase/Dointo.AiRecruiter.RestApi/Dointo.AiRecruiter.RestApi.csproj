@@ -11,4 +11,10 @@
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="7.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Dointo.AiRecruiter.AiInfrastructure\Dointo.AiRecruiter.AiInfrastructure.csproj" />
+    <ProjectReference Include="..\Dointo.AiRecruiter.Application\Dointo.AiRecruiter.Application.csproj" />
+    <ProjectReference Include="..\Dointo.AiRecruiter.DbInfrastructure\Dointo.AiRecruiter.DbInfrastructure.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -2,5 +2,5 @@
 
 GET {{Dointo.AiRecruiter.RestApi_HostAddress}}/weatherforecast/
 Accept: application/json
-
 ###
+GET {{Dointo.AiRecruiter.RestApi_HostAddress}}/openapi/v1.json

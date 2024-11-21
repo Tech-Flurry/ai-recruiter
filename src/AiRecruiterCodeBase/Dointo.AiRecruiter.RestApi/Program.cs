@@ -11,7 +11,9 @@ var app = builder.Build( );
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment( ))
 {
+	app.UseDeveloperExceptionPage( );
 	app.MapOpenApi( );
+	app.UseSwaggerUI(op => op.SwaggerEndpoint("/openapi/v1.json", "Version 1"));
 }
 
 app.UseHttpsRedirection( );
@@ -20,4 +22,4 @@ app.UseAuthorization( );
 
 app.MapControllers( );
 
-app.Run( );
+await app.RunAsync( );

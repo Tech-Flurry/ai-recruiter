@@ -86,8 +86,9 @@ require('@/src/js/vendors/plugins/dropzone.init.js');
 window.Quill = require('quill/dist/quill.js');
 
 // Tagify - Transforms an input field or a textarea into a Tags component, in an easy, customizable way, with great performance and small code footprint, exploded with features: https://github.com/yairEO/tagify
+import Tagify from '@yaireo/tagify';
 require('@yaireo/tagify/dist/tagify.polyfills.min.js');
-window.Tagify = require('@yaireo/tagify/dist/tagify.min.js');
+window.Tagify = Tagify;
 
 // Toastr - is a Javascript library for non-blocking notifications. jQuery is required. The goal is to create a simple core library that can be customized and extended: https://github.com/CodeSeven/toastr
 window.toastr = require('@/src/plugins/toastr/build/toastr.min.js');

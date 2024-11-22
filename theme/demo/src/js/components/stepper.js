@@ -71,6 +71,14 @@ var KTStepper = function(element, options) {
             KTEventHandler.trigger(the.element, 'kt.stepper.previous', the);
         };
 
+        if (the.element.getAttribute("data-kt-stepper-submit") === "true") {
+            the.submitListener = function(e) {
+                e.preventDefault();
+    
+                KTEventHandler.trigger(the.element, 'kt.stepper.submit', the);
+            };
+        }        
+
         the.stepListener = function(e) {
             e.preventDefault();
 
@@ -91,6 +99,8 @@ var KTStepper = function(element, options) {
         KTUtil.addEvent(the.btnNext, 'click', the.nextListener);
 
         KTUtil.addEvent(the.btnPrevious, 'click', the.previousListener);
+
+        KTUtil.addEvent(the.btnSubmit, 'click', the.submitListener);     
 
         the.stepListenerId = KTUtil.on(the.element, '[data-kt-stepper-action="step"]', 'click', the.stepListener);
 

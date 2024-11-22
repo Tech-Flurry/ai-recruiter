@@ -2,7 +2,6 @@ import gulp from "gulp";
 import rename from "gulp-rename";
 import rtlcss from "gulp-rtlcss";
 import sass from "gulp-dart-sass";
-import merge from "merge-stream";
 import _ from "lodash";
 import {build as buildMaster} from "./build.js";
 import {argv, getDemo, getTheme, objectWalkRecursive, dotPath, pathOnly, outputFunc, bundle, getFolders} from "./helpers.js";
@@ -155,7 +154,7 @@ const rtlTask = (cb) => {
         build.config.compile.rtl.skip
     );
     cb();
-    return merge(streams);
+    return streams;
 };
 
 // task to bundle js/css
@@ -171,7 +170,7 @@ let buildBundleTask = (cb) => {
         }
     });
     cb();
-    return merge(streams);
+    return streams;
 };
 
 // don't clean assets if compile only 1 type

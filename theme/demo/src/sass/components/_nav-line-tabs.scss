@@ -13,7 +13,7 @@
 
 		// Base link
 		.nav-link {
-			color: var(--#{$prefix}gray-500);
+			color: var(--#{$prefix}gray-700);
 			border: 0;
 			border-bottom: 1px solid transparent;
 			transition: $transition-link;
@@ -43,6 +43,7 @@
 		background-color: transparent;
 		border: 0;
 		border-bottom: 1px solid var(--#{$prefix}primary);
+		color: var(--#{$prefix}primary);
 		transition: $transition-link;
   	}
 
@@ -62,6 +63,7 @@
 		.nav-item .nav-link.active,
 	  	.nav-item.show .nav-link,
 		.nav-item .nav-link:hover:not(.disabled) {
+			color: var(--#{$prefix}primary);
 			border-bottom-width: 2px;
 		}
 	}

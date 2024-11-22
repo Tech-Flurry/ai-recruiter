@@ -242,22 +242,22 @@ function mainConfig() {
                       filename: './plugins/custom/images/[name][ext]'
                     },
                 },
-                {
-                    // for demo8 image in scss
-                    test: /\.(gif|png|jpe?g)$/,
-                    use: [
-                        {
-                            loader: 'url-loader',
-                            options: {
-                                emitFile: false,
-                                name: '[path][name].[ext]',
-                                publicPath: (url, resourcePath, context) => {
-                                    return '../';
-                                },
-                            },
-                        },
-                    ],
-                },
+                // {
+                //     // for demo8 image in scss
+                //     test: /\.(gif|png|jpe?g)$/,
+                //     use: [
+                //         {
+                //             loader: 'url-loader',
+                //             options: {
+                //                 emitFile: false,
+                //                 name: '[path][name].[ext]',
+                //                 publicPath: (url, resourcePath, context) => {
+                //                     return '../';
+                //                 },
+                //             },
+                //         },
+                //     ],
+                // },
             ],
         },
         // webpack dev server config

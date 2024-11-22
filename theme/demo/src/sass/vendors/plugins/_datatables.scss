@@ -105,7 +105,7 @@ table.dataTable > thead .dt-ordering-desc:after {
 }
 
 // Responsive
-.dtr-control {
+.dataTable.collapsed .dtr-control {
 	$icon-size:  1.35rem;
     
     &:before {

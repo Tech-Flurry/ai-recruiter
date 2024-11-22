@@ -347,10 +347,10 @@ const getDemos = () => {
 
 const getFolders = (dir) => {
   try {
-    return fs.readdirSync(dir).filter((file) => {
-      return fs.statSync(path.join(dir, file)).isDirectory();
-    });
-  }catch(e) {
+    return fs.readdirSync(dir, { withFileTypes: true })
+      .filter((dirent) => dirent.isDirectory())
+      .map((dirent) => dirent.name);
+  } catch (e) {
     return [];
   }
 };

@@ -38,6 +38,7 @@ var KTApp = function () {
         if (options['dismiss'] && options['dismiss'] === 'click') {
             // Hide popover on element click
             el.addEventListener("click", function (e) {
+                el.blur();
                 tp.hide();
             });
         }

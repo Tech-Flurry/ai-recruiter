@@ -186,6 +186,10 @@ body {
         box-shadow: var(--#{$prefix}dropdown-box-shadow);
         @include border-radius($dropdown-border-radius);
 
+        .modal-open & {
+            z-index: $zindex-modal - 1 !important;    
+        }
+
         .fc-popover-header {
             @include border-top-radius($dropdown-border-radius);
             padding: 0.65rem 0.75rem;

@@ -22,15 +22,15 @@ $white: #ffffff !default;
 $black:#000000 !default;
 
 // Bootstrap grey colors
-$gray-100: #F9F9F9 !default;
-$gray-200: #F1F1F4 !default;
-$gray-300: #DBDFE9 !default;
-$gray-400: #C4CADA !default;
-$gray-500: #99A1B7 !default;
-$gray-600: #78829D !default;
-$gray-700: #4B5675 !default;
-$gray-800: #252F4A !default;
-$gray-900: #071437 !default;
+$gray-100: #F3F4F6 !default;
+$gray-200: #E5E7EB !default;
+$gray-300: #CBD5E1 !default;
+$gray-400: #A1A5B7 !default;
+$gray-500: #6B7280 !default;
+$gray-600: #575d67 !default;
+$gray-700: #41474e !default;
+$gray-800: #3e4246 !default;
+$gray-900: #1e2121 !default;
  
 // Bootstrap muted color
 $text-muted: $gray-500 !default;
@@ -50,17 +50,19 @@ $grays: (
 
 // Bootstrap contextual colors
 // Primary colors
-$primary:						#1B84FF !default;
-$primary-active:				#056EE9 !default;
-$primary-light: 				#E9F3FF !default;
-$primary-clarity: 				rgba(#1B84FF, 0.2) !default;
+$primary:						#5096FF !default;
+$primary-active:				#3878DD !default;
+$primary-light: 				#C7DEFF !default;
+$primary-lighter: 				#F5F9FF !default;
+$primary-clarity: 				rgba(#5096FF, 0.2) !default;
 $primary-inverse: 				$white !default; 
 
 // Secondary colors
-$secondary: 						$gray-200 !default;
-$secondary-active: 				$gray-400 !default;
-$secondary-light: 				#F9F9F9 !default;
-$secondary-clarity:				rgba(#F9F9F9, 0.2) !default; 
+$secondary: 					#50FF62 !default;
+$secondary-active: 				#38DD49 !default;
+$secondary-light: 				#C5FDCB !default;
+$secondary-lighter: 			#F5FFF6 !default;
+$secondary-clarity:				rgba(#50FF62, 0.2) !default; 
 $secondary-inverse:				$gray-800 !default; 
 
 // Light colors
@@ -71,31 +73,31 @@ $light-clarity: 				rgba($white, 0.2) !default;
 $light-inverse:					$gray-800 !default;
 
 // Success colors
-$success: 						#17C653 !default; 
-$success-active: 				#04B440 !default;
-$success-light: 				#DFFFEA !default;
-$success-clarity: 				rgba(#17C653, 0.2) !default;
+$success: 						#65E573 !default; 
+$success-active: 				#33ac41 !default;
+$success-light: 				#b9e2be !default;
+$success-clarity: 				rgba(#65E573, 0.2) !default;
 $success-inverse: 				$white !default;
 
 // Info colors
-$info: 							#7239EA !default; 
-$info-active: 					#5014D0 !default;
-$info-light: 					#F8F5FF !default;
-$info-clarity: 					rgba(#7239EA, 0.2) !default;
+$info: 							#4D83D3 !default; 
+$info-active: 					#1d4888 !default;
+$info-light: 					#9ab7e3 !default;
+$info-clarity: 					rgba(#4D83D3, 0.2) !default;
 $info-inverse: 					$white !default;
 
 // Warning colors
-$warning: 						#F6C000 !default; 
-$warning-active: 				#DEAD00 !default;
-$warning-light: 				#FFF8DD !default;
-$warning-clarity: 				rgba(#F6C000, 0.2) !default;
+$warning: 						#F7D05A !default; 
+$warning-active: 				#bd941a !default;
+$warning-light: 				#eeddac !default;
+$warning-clarity: 				rgba(#F7D05A, 0.2) !default;
 $warning-inverse: 				$white !default;
 
 // Danger colors
-$danger: 						#F8285A !default; 
-$danger-active: 				#D81A48 !default;
-$danger-light: 					#FFEEF3 !default;
-$danger-clarity: 				rgba(#F8285A, 0.2) !default;
+$danger: 						#FA5060 !default; 
+$danger-active: 				#ac1524 !default;
+$danger-light: 					#fabfc5 !default;
+$danger-clarity: 				rgba(#FA5060, 0.2) !default;
 $danger-inverse: 				$white !default;
 
 // Dark colors
@@ -151,6 +153,12 @@ $theme-light-colors: (
 	"danger":  $danger-light,
 	"dark":    $dark-light,
 	"light":   $light-light
+) !default; 
+
+// Contextual lighter state colors
+$theme-lighter-colors: (
+	"primary": $primary-lighter,
+	"secondary": $secondary-lighter
 ) !default; 
 
 // Contextual light state colors

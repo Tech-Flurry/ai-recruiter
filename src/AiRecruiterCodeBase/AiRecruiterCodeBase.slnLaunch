@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "Launch Web",
+    "Projects": [
+      {
+        "Path": "Dointo.AiRecruiter.RestApi\\Dointo.AiRecruiter.RestApi.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      },
+      {
+        "Path": "dointo.airecruiter.web\\dointo.airecruiter.web.esproj",
+        "Action": "Start",
+        "DebugTarget": "localhost (Chrome)"
+      }
+    ]
+  }
+]

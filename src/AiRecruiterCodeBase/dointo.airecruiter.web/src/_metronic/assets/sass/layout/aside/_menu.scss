@@ -1,0 +1,54 @@
+//
+// Menu
+//
+
+// Aside menu
+.aside-menu {
+    .menu {
+        // Link padding x
+        @include menu-link-padding-x(get($aside-config, menu-padding-x));
+
+        // Menu indention
+        @include menu-link-indention(get($aside-config, menu-indention), get($aside-config, menu-padding-x));
+
+        // Item
+        .menu-item {
+			@include menu-link-default-state( $title-color: $gray-500, $icon-color: $gray-500, $bullet-color: $gray-500, $arrow-color: $gray-500, $bg-color: null, $all-links: true);
+			@include menu-link-hover-state( $title-color: $gray-600, $icon-color: $gray-600, $bullet-color: $gray-600, $arrow-color: $gray-600, $bg-color: transparent, $all-links: true);
+            @include menu-link-here-state( $title-color: $gray-600, $icon-color: $gray-600, $bullet-color: $gray-600, $arrow-color: $gray-600, $bg-color: transparent, $all-links: true);
+			@include menu-link-show-state( $title-color: $gray-600, $icon-color: $gray-600, $bullet-color: $gray-600, $arrow-color: $gray-600, $bg-color: transparent, $all-links: true);
+			@include menu-link-active-state( $title-color: $primary-inverse, $icon-color: $primary-inverse, $bullet-color: $primary-inverse, $arrow-color: $primary-inverse, $bg-color: $primary, $all-links: true);
+		}
+
+        // Separator
+		.separator {
+			border-bottom: 1px dashed $gray-400;
+		}
+
+        // Item
+        > .menu-item {
+            padding: 0 0.6rem;               
+        }   
+    }
+
+    // Item
+    .menu-item {
+        padding: 0;                
+
+        // Menu Link
+        .menu-link {
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-radius: $border-radius;
+        }
+
+        // Icon
+        .menu-icon {
+            justify-content: flex-start;
+        }
+    }      
+
+    .menu-sub-lg-dropdown {
+        background-color: get($aside-config, bg-color);
+    }    
+}

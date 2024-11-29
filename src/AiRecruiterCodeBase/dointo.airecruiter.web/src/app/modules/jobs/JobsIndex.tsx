@@ -25,7 +25,7 @@ function JobsIndex() {
 					path='list'
 					element={
 						<>
-							<PageTitle breadcrumbs={jobsBreadCrumbs}>List</PageTitle>
+							<PageTitle breadcrumbs={jobsBreadCrumbs}>Job List</PageTitle>
 							<JobsList />
 						</>
 					}

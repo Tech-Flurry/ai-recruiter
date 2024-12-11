@@ -1,5 +1,5 @@
 variables:
-  CODE_PATH: "/src/AiRecruiterCodeBase/"
+  CODE_PATH: "**/src/AiRecruiterCodeBase/"
 
 pool:
   vmImage: ubuntu-latest

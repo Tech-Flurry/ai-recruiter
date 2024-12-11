@@ -1,0 +1,35 @@
+variables:
+  VSTS_FEED: "8a02c250-3556-4559-a0f0-0f45149f3c82"
+  CODE_PATH: "/src/AiRecruiterCodeBase/"
+  VERSION_PREFIX: "0.0"
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - script: echo Building API
+    displayName: "Comment"
+
+  - task: DotNetCoreCLI@2
+    inputs:
+      displayName: Restore Packages
+      command: "restore"
+      projects: "/$(CODE_PATH)/*/*.csproj"
+      workingDirectory: "$(CODE_PATH)"
+      feedsToUse: "select"
+      vstsFeed: "$(VSTS_FEED)"
+
+  - task: DotNetCoreCLI@2
+    inputs:
+      displayName: Build API
+      command: "build"
+      projects: "/$(CODE_PATH)/*/*.csproj"
+      arguments: "--configuration Release /p:Version=$(VERSION_PREFIX).$(Build.BuildId)"
+      workingDirectory: "$(CODE_PATH)"
+
+  - task: DotNetCoreCLI@2
+    displayName: Test API
+    inputs:
+      command: test
+      projects: "/$(CODE_PATH)/*[Tt]ests/*.csproj"
+      arguments: "--configuration Release"

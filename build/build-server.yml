@@ -8,11 +8,11 @@ steps:
   - script: echo Building API
     displayName: "Comment"
     
-  - task: UseDotNet@2
+  - task: UseDotNet@2 
     inputs:
       packageType: 'sdk'
-      version: '9.x.x'
-      includePreviewVersions: true
+      version: '9.x'
+      installationPath: '$(Agent.ToolsDirectory)/dotnet'
 
   - task: DotNetCoreCLI@2
     displayName: Restore Packages

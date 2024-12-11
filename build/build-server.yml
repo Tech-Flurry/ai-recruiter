@@ -2,7 +2,7 @@ variables:
   CODE_PATH: "**/src/AiRecruiterCodeBase/"
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: windows
 
 steps:
   - script: echo Building API
@@ -34,7 +34,9 @@ steps:
     inputs:
       command: test
       projects: "$(CODE_PATH)**.[Tt]ests/*.csproj"
-      arguments: "--configuration Release"
+      arguments: "--configuration Release --collect Code Coverage"
+
+
 
 
 

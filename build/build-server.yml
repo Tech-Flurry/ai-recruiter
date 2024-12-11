@@ -2,7 +2,7 @@ variables:
   CODE_PATH: "**/src/AiRecruiterCodeBase/"
 
 pool:
-  vmImage: windows
+  vmImage: windows-latest
 
 steps:
   - script: echo Building API

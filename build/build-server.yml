@@ -11,7 +11,8 @@ steps:
   - task: UseDotNet@2
     inputs:
       packageType: 'sdk'
-      version: '9.0.0'
+      version: '9.x.x'
+      includePreviewVersions: true
 
   - task: DotNetCoreCLI@2
     displayName: Restore Packages

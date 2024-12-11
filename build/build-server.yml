@@ -13,7 +13,6 @@ steps:
     inputs:
       command: "restore"
       projects: "$(CODE_PATH)/*/*.csproj"
-      workingDirectory: "$(CODE_PATH)"
       feedsToUse: "select"
       vstsFeed: "$(VSTS_FEED)"
 
@@ -23,7 +22,6 @@ steps:
       command: "build"
       projects: "$(CODE_PATH)/*/*.csproj"
       arguments: "--configuration Release /p:Version=$(VERSION_PREFIX).$(Build.BuildId)"
-      workingDirectory: "$(CODE_PATH)"
 
   - task: DotNetCoreCLI@2
     displayName: Test API
@@ -31,4 +29,3 @@ steps:
       command: test
       projects: "$(CODE_PATH)/*[Tt]ests/*.csproj"
       arguments: "--configuration Release"
-      workingDirectory: "$(CODE_PATH)"

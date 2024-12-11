@@ -34,7 +34,11 @@ steps:
     inputs:
       command: test
       projects: "$(CODE_PATH)**.[Tt]ests/*.csproj"
-      arguments: "--configuration Release"
+      arguments: "--configuration Release /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura"
+
+  - task: PublishCodeCoverageResults@2
+    inputs:
+      summaryFileLocation: '$(Agent.TempDirectory)/coverage.cobertura.xml'
 
 
 

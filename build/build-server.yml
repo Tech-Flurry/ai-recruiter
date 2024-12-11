@@ -20,7 +20,7 @@ steps:
       command: "restore"
       projects: "$(CODE_PATH)**/*.csproj"
       feedsToUse: "select"
-      vstsFeed: "$(VSTS_FEED)"
+      #vstsFeed: "$(VSTS_FEED)"
 
   - task: DotNetCoreCLI@2
     displayName: Build API
@@ -35,3 +35,6 @@ steps:
       command: test
       projects: "$(CODE_PATH)**.[Tt]ests/*.csproj"
       arguments: "--configuration Release"
+
+
+

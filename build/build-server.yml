@@ -34,7 +34,10 @@ steps:
     inputs:
       command: test
       projects: "$(CODE_PATH)**.[Tt]ests/*.csproj"
-      arguments: "--configuration Release /p:CollectCoverage=true --collect:'XPlat Code Coverage'"
+      arguments: "--configuration Release /p:CollectCoverage=true"
+
+  - script: $(Agent.TempDirectory)
+  - script: $(Agent.TempDirectory)   
 
   - task: PublishCodeCoverageResults@2
     inputs:

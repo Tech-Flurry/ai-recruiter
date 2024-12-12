@@ -34,11 +34,20 @@ steps:
       projects: "$(CODE_PATH)**.[Tt]ests/*.csproj"
       arguments: '--configuration Release --collect "Code coverage"'
 
-  - script: dir $(Agent.TempDirectory) /s /b /o:gn
-
   - task: PublishCodeCoverageResults@2
+    displayName: Publishing Code Coverage
     inputs:
       summaryFileLocation: '$(Agent.TempDirectory)/**/*.coverage'
+  
+  - task: SonarQubeAnalyze@7
+    displayName: Static Analysis
+    inputs:
+      jdkversion: 'JAVA_HOME_17_X64'
+  
+  - task: SonarQubePublish@7
+    displayName: Pulishing Code Analysis
+    inputs:
+      pollingTimeoutSec: '300'
 
 
 

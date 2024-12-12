@@ -5,8 +5,6 @@ pool:
   vmImage: windows-latest
 
 steps:
-  - script: echo Building API
-    displayName: "Comment"
     
   - task: UseDotNet@2 
     inputs:
@@ -15,7 +13,7 @@ steps:
       installationPath: '$(Agent.ToolsDirectory)/dotnet'
 
   - task: DotNetCoreCLI@2
-    displayName: Restore Packages
+    displayName: Restoring Packages
     inputs:
       command: "restore"
       projects: "$(CODE_PATH)**/*.csproj"
@@ -23,18 +21,18 @@ steps:
       #vstsFeed: "$(VSTS_FEED)"
 
   - task: DotNetCoreCLI@2
-    displayName: Build API
+    displayName: Building
     inputs:
       command: "build"
       projects: "$(CODE_PATH)**/*.csproj"
       arguments: "--configuration Release /p:Version=$(VERSION_PREFIX).$(Build.BuildId)"
 
   - task: DotNetCoreCLI@2
-    displayName: Test API
+    displayName: Testing
     inputs:
       command: test
       projects: "$(CODE_PATH)**.[Tt]ests/*.csproj"
-      arguments: "--configuration Release /p:CollectCoverage=true"
+      arguments: '--configuration Release --collect "Code coverage"'
 
   - script: dir $(Agent.TempDirectory) /s /b /o:gn
 

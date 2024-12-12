@@ -36,8 +36,7 @@ steps:
       projects: "$(CODE_PATH)**.[Tt]ests/*.csproj"
       arguments: "--configuration Release /p:CollectCoverage=true"
 
-  - script: cd $(Agent.TempDirectory)
-  - script: dir /s /b /o:gn
+  - script: dir $(Agent.TempDirectory) /s /b /o:gn
 
   - task: PublishCodeCoverageResults@2
     inputs:

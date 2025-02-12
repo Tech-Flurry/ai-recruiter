@@ -28,7 +28,7 @@ jobs:
         run: dotnet test ${{ env.CODE_PATH }}**.[Tt]ests/*.csproj --configuration Release --collect "Code coverage"
 
       - name: Publish Code Coverage
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: code-coverage
           path: ${{ runner.temp }}/**/*.coverage

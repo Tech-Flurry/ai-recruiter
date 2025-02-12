@@ -7,7 +7,7 @@ jobs:
     runs-on: windows-latest
 
     env:
-      CODE_PATH: "./src/AiRecruiterCodeBase/"
+      CODE_PATH: "src/AiRecruiterCodeBase/"
 
     steps:
       - name: Checkout code

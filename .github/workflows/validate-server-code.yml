@@ -13,8 +13,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: List files for debugging
-        run: dir ${{ env.CODE_PATH }}
+      - name: List complete directory tree for debugging
+        run: |
+          echo "Listing complete directory tree:"
+          tree
+
+      - name: List files in CODE_PATH for debugging
+        run: |
+          echo "Listing files in CODE_PATH:"
+          tree ${{ env.CODE_PATH }}
 
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v3

@@ -44,12 +44,11 @@ jobs:
           echo "Running tests..."
           $testProjects = Get-ChildItem -Path $env:CODE_PATH -Recurse -Include *.csproj | Where-Object { $_.FullName -match '[Tt]ests' }
           foreach ($proj in $testProjects) {
-            Write-Host "Testing $($proj.FullName)"
-            dotnet test $proj.FullName --configuration Release --collect "Code coverage"
+            dotnet test $proj.FullName --configuration Release --collect "XPlat Code Coverage" --results-directory $env:RUNNER_TEMP
           }
 
       - name: Publish Code Coverage
         uses: actions/upload-artifact@v4
         with:
           name: code-coverage
-          path: ${{ runner.temp }}/**/*.coverage
+          path: ${{ runner.temp }}/**/*.xml

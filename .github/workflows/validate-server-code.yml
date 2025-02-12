@@ -1,0 +1,54 @@
+name: Validate Server Code
+
+on: [pull_request]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    env:
+      CODE_PATH: "src/AiRecruiterCodeBase/"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "9.x"
+
+      - name: Restore Packages
+        shell: pwsh
+        run: |
+          echo "Restoring packages..."
+          $projects = Get-ChildItem -Path $env:CODE_PATH -Recurse -Include *.csproj
+          foreach ($proj in $projects) {
+            Write-Host "Restoring $($proj.FullName)"
+            dotnet restore $proj.FullName
+          }
+
+      - name: Build
+        shell: pwsh
+        run: |
+          echo "Building .csproj files..."
+          $projects = Get-ChildItem -Path $env:CODE_PATH -Recurse -Include *.csproj
+          foreach ($proj in $projects) {
+            Write-Host "Building $($proj.FullName)"
+            dotnet build $proj.FullName --configuration Release /p:Version=${{ github.run_number }}
+          }
+
+      - name: Test
+        shell: pwsh
+        run: |
+          echo "Running tests..."
+          $testProjects = Get-ChildItem -Path $env:CODE_PATH -Recurse -Include *.csproj | Where-Object { $_.FullName -match '[Tt]ests' }
+          foreach ($proj in $testProjects) {
+            dotnet test $proj.FullName --configuration Release --collect "XPlat Code Coverage" --results-directory $env:RUNNER_TEMP
+          }
+
+      - name: Publish Code Coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-coverage
+          path: ${{ runner.temp }}/**/*.xml

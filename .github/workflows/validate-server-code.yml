@@ -13,29 +13,40 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: List complete directory tree for debugging
-        run: |
-          echo "Listing complete directory tree:"
-          tree
-
-      - name: List files in CODE_PATH for debugging
-        run: |
-          echo "Listing files in CODE_PATH:"
-          tree ${{ env.CODE_PATH }}
-
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: "9.x"
 
       - name: Restore Packages
-        run: dotnet restore ${{ env.CODE_PATH }}**/*.csproj
+        shell: pwsh
+        run: |
+          echo "Restoring packages..."
+          $projects = Get-ChildItem -Path $env:CODE_PATH -Recurse -Include *.csproj
+          foreach ($proj in $projects) {
+            Write-Host "Restoring $($proj.FullName)"
+            dotnet restore $proj.FullName
+          }
 
       - name: Build
-        run: dotnet build ${{ env.CODE_PATH }}**/*.csproj --configuration Release /p:Version=${{ github.run_number }}
+        shell: pwsh
+        run: |
+          echo "Building .csproj files..."
+          $projects = Get-ChildItem -Path $env:CODE_PATH -Recurse -Include *.csproj
+          foreach ($proj in $projects) {
+            Write-Host "Building $($proj.FullName)"
+            dotnet build $proj.FullName --configuration Release /p:Version=${{ github.run_number }}
+          }
 
       - name: Test
-        run: dotnet test ${{ env.CODE_PATH }}**.[Tt]ests/*.csproj --configuration Release --collect "Code coverage"
+        shell: pwsh
+        run: |
+          echo "Running tests..."
+          $testProjects = Get-ChildItem -Path $env:CODE_PATH -Recurse -Include *.csproj | Where-Object { $_.FullName -match '[Tt]ests' }
+          foreach ($proj in $testProjects) {
+            Write-Host "Testing $($proj.FullName)"
+            dotnet test $proj.FullName --configuration Release --collect "Code coverage"
+          }
 
       - name: Publish Code Coverage
         uses: actions/upload-artifact@v4

@@ -1,38 +1,39 @@
-import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
-import { PageLink, PageTitle } from '../../../_metronic/layout/core'
+import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { PageLink, PageTitle } from "../../../_metronic/layout/core";
 import JobsList from "./JobsList";
+import JobPost from "./Jobpost";
 
 const jobsBreadCrumbs: Array<PageLink> = [
 	{
-		title: 'Jobs',
-		path: '/jobs/list',
+		title: "Jobs",
+		path: "/jobs/post-new",
 		isSeparator: false,
 		isActive: false,
 	},
 	{
-		title: '',
-		path: '',
+		title: "",
+		path: "",
 		isSeparator: true,
 		isActive: false,
 	},
-]
+];
 
 function JobsIndex() {
+
+
 	return (
-		<Routes>
-			<Route element={<Outlet />}>
-				<Route
-					path='list'
-					element={
-						<>
-							<PageTitle breadcrumbs={jobsBreadCrumbs}>Job List</PageTitle>
-							<JobsList />
-						</>
-					}
-				/>
-				<Route index element={<Navigate to='/jobs/list' />} />
-			</Route>
-		</Routes>
+		<>
+			<PageTitle breadcrumbs={jobsBreadCrumbs}>Job Post</PageTitle>
+			<Outlet />
+
+			<Routes>
+				<Route path="/" element={<Outlet />}>
+					<Route path="list" element={<JobsList />} />
+					<Route path="post-new" element={<JobPost />} />
+					<Route index element={<Navigate to="/jobs/list" />} />
+				</Route>
+			</Routes>
+		</>
 	);
 }
 

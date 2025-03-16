@@ -147,6 +147,7 @@ const JobPost: React.FC = () => {
 			</KTCardBody>
 		</KTCard>
 	);
+
 };
 
 export default JobPost;

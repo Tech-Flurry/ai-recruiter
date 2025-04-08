@@ -19,6 +19,8 @@ public interface IJobPostService
 	Task<IProcessingState> DeleteAsync(string id, string ownerId);
 	Task<IProcessingState> GetAsync(string ownerId, bool allowInactive = false);
 	Task<IProcessingState> SaveAsync(JobPostDto jobPostDto, Owner owner, string username);
+	Task<IProcessingState> GetListAsync(bool allowInactive = false);
+
 }
 
 internal class JobPostService(
@@ -92,4 +94,18 @@ internal class JobPostService(
 			return new ExceptionState("An error occurred while deleting the job post", ex.Message);
 		}
 	}
+	public async Task<IProcessingState> GetListAsync(bool allowInactive = false)
+	{
+		try
+		{
+			var jobPosts = await repository.GetAllAsync(allowInactive);
+			var dtos = jobPosts.Select(resolver.Resolve).ToList( );
+			return new SuccessState<List<JobPostDto>>("All job posts have been fetched", dtos);
+		}
+		catch (Exception ex)
+		{
+			return new ExceptionState("An error occurred while fetching all job posts", ex.Message);
+		}
+	}
+
 }

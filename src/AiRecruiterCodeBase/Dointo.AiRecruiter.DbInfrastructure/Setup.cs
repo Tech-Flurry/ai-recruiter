@@ -20,5 +20,7 @@ public static class Setup
 		// Registering the repositories
 		services.AddScoped<IReadOnlyRepository, ReadOnlyRepository>( );
 		services.AddScoped<IDummyRepository, DummyRepository>( );
+
+		services.AddScoped<IJobListRepository, JobListRepository>( );
 	}
 }

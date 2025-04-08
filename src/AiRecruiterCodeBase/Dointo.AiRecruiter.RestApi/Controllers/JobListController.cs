@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using Dointo.AiRecruiter.Dtos;
+using Dointo.AiRecruiter.Application.Services;
 
 namespace Dointo.AiRecruiter.RestApi.Controllers;
 
 [ApiController]
 [Route("api/job-posts")]
-public class JobListController : ControllerBase
+public class JobListController(IJobPostService jobPostService) : ControllerBase
 {
 	private static readonly List<JobList> jobList = new( )
 	{
@@ -18,9 +19,9 @@ public class JobListController : ControllerBase
 
 	// GET: /api/job-posts
 	[HttpGet]
-	public IActionResult GetJobPosts( )
+	public async Task<IActionResult> GetJobPostsAsync( )
 	{
-		return Ok(jobList);
+		return Ok(await jobPostService.GetListAsync());
 	}
 
 	// POST: /api/job-posts/close

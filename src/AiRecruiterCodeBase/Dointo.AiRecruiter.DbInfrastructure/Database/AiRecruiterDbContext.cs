@@ -8,6 +8,7 @@ namespace Dointo.AiRecruiter.DbInfrastructure.Database;
 public class AiRecruiterDbContext(DbContextOptions<AiRecruiterDbContext> options) : DbContext(options)
 {
 	public DbSet<DummyEntity> DummyEntities { get; set; } = null!;
+	public DbSet<JobListEntity> Jobs { get; set; } = null!;
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
@@ -16,5 +17,13 @@ public class AiRecruiterDbContext(DbContextOptions<AiRecruiterDbContext> options
 		workspace.HasKey(w => w.Id);
 		workspace.Property(w => w.Id).HasConversion<ObjectId>( );
 		workspace.Ignore(x => x.LastUpdated);
+
+		var jobs = modelBuilder.Entity<JobListEntity>( );
+		jobs.ToCollection("jobs");
+		jobs.HasKey(w => w.Id);
+		jobs.Property(w => w.Id).HasConversion<ObjectId>( );
+		jobs.Ignore(x => x.LastUpdated);
 	}
+
+
 }

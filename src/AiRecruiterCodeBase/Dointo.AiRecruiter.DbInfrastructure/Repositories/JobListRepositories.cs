@@ -37,8 +37,16 @@ internal class JobListRepository(AiRecruiterDbContext dbContext)
 			return addedEntity.Entity;
 		}
 	}
+	public async Task<List<JobListEntity>> GetAllAsync(bool allowInactive)
+	{
+		return !allowInactive
+			? await _entitySet.Where(x => !x.IsDeleted).ToListAsync( )
+			: await _entitySet.ToListAsync( );
+	}
+
 
 	Task<JobListEntity?> IJobListRepository.GetByIdAsync(string id) => throw new NotImplementedException( );
 	Task<List<JobListEntity>> IJobListRepository.GetByOwnerAsync(string ownerId, bool allowInactive) => throw new NotImplementedException( );
 	Task<JobListEntity> IJobListRepository.SaveAsync(JobListEntity entity, string username) => throw new NotImplementedException( );
+
 }

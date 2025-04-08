@@ -18,5 +18,7 @@ public static class Setup
 
 		//services
 		services.AddTransient<IDummyService, DummyService>( );
+
+		services.AddTransient<IJobPostService, JobPostService>( );
 	}
 }

@@ -1,5 +1,9 @@
 using Dointo.AiRecruiter.Application;
+using Dointo.AiRecruiter.Application.Services;
+using Dointo.AiRecruiter.Core.Abstractions;
 using Dointo.AiRecruiter.DbInfrastructure;
+using Dointo.AiRecruiter.Domain.Entities;
+using Dointo.AiRecruiter.RestApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +14,7 @@ builder.Services.AddControllers( );
 builder.Services.AddOpenApi( );
 builder.Services.AddApplication( );
 builder.Services.AddDbInfrastructure("MongoDb:ConnectionString", "MongoDb:DatabaseName");
+
 
 var app = builder.Build( );
 

@@ -25,20 +25,20 @@ public class JobListController(IJobPostService jobPostService) : ControllerBase
 	}
 
 	// POST: /api/job-posts/close
-	[HttpPost("close")]
-	public IActionResult CloseJobPosts([FromBody] CloseJobListRequest request)
-	{
-		if (request == null || request.JobIds == null || !request.JobIds.Any( ) || string.IsNullOrWhiteSpace(request.Reason))
-		{
-			return BadRequest("Job IDs and a reason for closing are required.");
-		}
+	//[HttpPost("close")]
+	//public IActionResult CloseJobPosts([FromBody] CloseJobListRequest request)
+	//{
+	//	if (request == null || request.JobIds == null || !request.JobIds.Any( ) || string.IsNullOrWhiteSpace(request.Reason))
+	//	{
+	//		return BadRequest("Job IDs and a reason for closing are required.");
+	//	}
 
-		foreach (var job in jobList.Where(j => request.JobIds.Contains(j.Id)))
-		{
-			job.Status = "closed";
-			// Optionally: log request.Reason somewhere
-		}
+	//	foreach (var job in jobList.Where(j => request.JobIds.Contains(j.Id)))
+	//	{
+	//		job.Status = "closed";
+	//		// Optionally: log request.Reason somewhere
+	//	}
 
-		return Ok(new { message = "Selected job posts closed successfully." });
-	}
+	//	return Ok(new { message = "Selected job posts closed successfully." });
+	//}
 }

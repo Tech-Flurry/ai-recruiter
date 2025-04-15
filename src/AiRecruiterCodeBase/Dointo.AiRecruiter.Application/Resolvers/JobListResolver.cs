@@ -2,6 +2,7 @@
 using Dointo.AiRecruiter.Application.Services;
 using Dointo.AiRecruiter.Core.Abstractions;
 using Dointo.AiRecruiter.Domain.Entities;
+using Dointo.AiRecruiter.Dtos;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +19,7 @@ internal class JobListDtoResolver : ResolverBase<JobListEntity, JobPostDto>
 		{
 			var configuration = new MapperConfiguration(cfg =>
 			{
-				cfg.CreateMap<JobListEntity, JobPostDto>( );
+				cfg.CreateMap<JobListEntity, JobPostDto>( ).ForMember(x => x.IsEditable, op => op.MapFrom(p => p.HasInterviews));
 			});
 			return new AutoMapperProvider(configuration.CreateMapper( ));
 		}

@@ -7,8 +7,10 @@ using System.Threading.Tasks;
 // DTOs/CloseJobPostRequest.cs
 namespace Dointo.AiRecruiter.Dtos;
 
-public class CloseJobListRequest
+public class JobPostDto
 {
-	public List<string> JobIds { get; set; } = [ ];
-	public string Reason { get; set; } = null!;
+	public string Id { get; set; } = null!;
+	public string URL { get; set; } = null!;
+	public string IsEditable { get; set; } = null!;
+	public string Status { get; set; } = null!;
 }

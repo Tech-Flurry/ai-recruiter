@@ -5,14 +5,11 @@ using MongoDB.EntityFrameworkCore.Extensions;
 
 namespace Dointo.AiRecruiter.DbInfrastructure.Database;
 
-public class AiRecruiterDbContext : DbContext
+public class AiRecruiterDbContext(DbContextOptions<AiRecruiterDbContext> options) : DbContext(options)
 {
-	public AiRecruiterDbContext(DbContextOptions<AiRecruiterDbContext> options)
-		: base(options) { }
-
 	// Define DbSets as MongoDB collections
 	public DbSet<DummyEntity> DummyEntities { get; set; } = null!;
-	public DbSet<JobPostEntity> JobPosts { get; set; } = null!;
+	public DbSet<JobPost> JobPosts { get; set; } = null!;
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
@@ -28,14 +25,14 @@ public class AiRecruiterDbContext : DbContext
 		});
 
 		// ----- JobPostEntity Mapping -----
-		modelBuilder.Entity<JobPostEntity>(entity =>
+		modelBuilder.Entity<JobPost>(entity =>
 		{
-			entity.ToCollection("JobPosts"); // Maps to MongoDB collection
-			entity.HasKey(e => e.Id); // Set Id as the key
-			entity.Property(e => e.Id).HasConversion<ObjectId>( ); // ObjectId conversion
-			entity.Property(e => e.JobTitle).IsRequired( );
-			entity.Property(e => e.CreatedBy).IsRequired( );
-			entity.Property(e => e.IsDeleted); // Optional: Only if needed
+			entity.ToCollection("JobPosts");
+			entity.HasKey(e => e.Id);
+			entity.Property(e => e.Id).HasConversion<ObjectId>( );
+			entity.Property(e => e.Title).IsRequired( );
+			entity.Property(e => e.JobDescription).IsRequired( );
+			entity.Ignore(e => e.LastUpdated);
 		});
 	}
 }

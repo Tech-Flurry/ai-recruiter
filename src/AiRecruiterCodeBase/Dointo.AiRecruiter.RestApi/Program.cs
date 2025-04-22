@@ -1,5 +1,6 @@
 ﻿using Dointo.AiRecruiter.Application;
 using Dointo.AiRecruiter.Application.Repositories;
+using Dointo.AiRecruiter.DbInfrastructure;
 using Dointo.AiRecruiter.DbInfrastructure.Database;
 using Dointo.AiRecruiter.DbInfrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -35,19 +36,7 @@ builder.Services.AddSwaggerGen(c =>
 	});
 });
 
-// ✅ MongoFramework DB Context Registration
-string? mongoConnStr = builder.Configuration["MongoDb:ConnectionString"];
-string? mongoDbName = builder.Configuration["MongoDb:DatabaseName"];
-
-if (string.IsNullOrEmpty(mongoConnStr) || string.IsNullOrEmpty(mongoDbName))
-	throw new InvalidOperationException("MongoDb connection details are missing in configuration.");
-
-builder.Services.AddDbContext<AiRecruiterDbContext>(options =>
-	options.UseMongoDB(mongoConnStr, mongoDbName));
-
-// ✅ Repositories
-builder.Services.AddScoped<IJobPostRepository, JobPostRepository>( );
-builder.Services.AddScoped<IDummyRepository, DummyRepository>( );
+builder.Services.AddDbInfrastructure("MongoDb:ConnectionString", "MongoDb:DatabaseName");
 
 // ✅ App Layer
 builder.Services.AddApplication( );

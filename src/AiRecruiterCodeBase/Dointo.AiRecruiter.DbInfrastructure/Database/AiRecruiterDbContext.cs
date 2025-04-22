@@ -8,22 +8,11 @@ namespace Dointo.AiRecruiter.DbInfrastructure.Database;
 public class AiRecruiterDbContext(DbContextOptions<AiRecruiterDbContext> options) : DbContext(options)
 {
 	// Define DbSets as MongoDB collections
-	public DbSet<DummyEntity> DummyEntities { get; set; } = null!;
 	public DbSet<JobPost> JobPosts { get; set; } = null!;
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
 		base.OnModelCreating(modelBuilder);
-
-		// ----- DummyEntity Mapping -----
-		modelBuilder.Entity<DummyEntity>(entity =>
-		{
-			entity.ToCollection("DummyEntities"); // Maps to MongoDB collection
-			entity.HasKey(e => e.Id); // Set Id as the key
-			entity.Property(e => e.Id).HasConversion<ObjectId>( ); // ObjectId conversion
-			entity.Ignore(e => e.LastUpdated); // Ignore non-persistent property
-		});
-
 		// ----- JobPostEntity Mapping -----
 		modelBuilder.Entity<JobPost>(entity =>
 		{

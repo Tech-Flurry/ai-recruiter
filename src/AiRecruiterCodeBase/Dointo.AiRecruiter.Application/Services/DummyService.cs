@@ -32,7 +32,6 @@ internal class DummyService(IDummyRepository repository, IResolver<DummyEntity, 
 		try
 		{
 			var savedEntity = await repository.SaveAsync(dummyEntity, username);
-			await repository.CommitAsync( );
 			return new SuccessState<DummyEntity>("Entity has been saved", savedEntity);
 		}
 		catch (Exception ex)
@@ -68,7 +67,6 @@ internal class DummyService(IDummyRepository repository, IResolver<DummyEntity, 
 		{
 			entity.IsDeleted = true;
 			await repository.SaveAsync(entity, ownerId);
-			await repository.CommitAsync( );
 			return new SuccessState("Entity has been deleted");
 		}
 		catch (Exception ex)

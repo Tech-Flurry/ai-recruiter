@@ -1,7 +1,7 @@
 ﻿using Dointo.AiRecruiter.Domain.Entities;
 
 namespace Dointo.AiRecruiter.Application.Repositories;
-public interface IDummyRepository : IRepository
+public interface IDummyRepository
 {
 	Task<DummyEntity?> GetByIdAsync(string id);
 	Task<List<DummyEntity>> GetByOwnerAsync(string ownerId, bool allowInactive = false);

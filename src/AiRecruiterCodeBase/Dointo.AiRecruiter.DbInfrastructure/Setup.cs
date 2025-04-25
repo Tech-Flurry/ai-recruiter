@@ -19,5 +19,6 @@ public static class Setup
 
 		// Registering the repositories
 		services.AddScoped<IReadOnlyRepository, ReadOnlyRepository>( );
+		services.AddScoped<IJobPostRepository, JobPostRepository>( );
 	}
 }

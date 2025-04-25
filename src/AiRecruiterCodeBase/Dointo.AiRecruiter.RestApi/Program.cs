@@ -1,11 +1,6 @@
 ﻿using Dointo.AiRecruiter.Application;
-using Dointo.AiRecruiter.Application.Repositories;
 using Dointo.AiRecruiter.DbInfrastructure;
-using Dointo.AiRecruiter.DbInfrastructure.Database;
-using Dointo.AiRecruiter.DbInfrastructure.Repositories;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using MongoFramework;
 
 var builder = WebApplication.CreateBuilder(args);
 

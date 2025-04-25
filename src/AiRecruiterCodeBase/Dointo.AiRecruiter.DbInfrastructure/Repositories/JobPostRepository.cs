@@ -6,10 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dointo.AiRecruiter.DbInfrastructure.Repositories;
 
-public class JobPostRepository : RepositoryBase<JobPost>, IJobPostRepository
+public class JobPostRepository(AiRecruiterDbContext dbContext) : RepositoryBase<JobPost>(dbContext), IJobPostRepository
 {
-	public JobPostRepository(AiRecruiterDbContext dbContext) : base(dbContext) { }
-
 	public async Task<JobPost?> GetByIdAsync(string id) =>
 		id.IsNotNullAndEmpty( ) ? await _entitySet.FindAsync(id) : null;
 

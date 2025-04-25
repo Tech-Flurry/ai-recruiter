@@ -29,7 +29,8 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<JobPost,
 		try
 		{
 			var savedEntity = await _repository.SaveAsync(jobPost, username);
-			return new SuccessState<JobPost>("Job post has been saved", savedEntity);
+			if (savedEntity is not null)
+				return new SuccessState<JobPost>("Job post has been saved", savedEntity);
 		}
 		catch (Exception ex)
 		{

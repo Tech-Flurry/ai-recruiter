@@ -1,6 +1,4 @@
 ﻿using Dointo.AiRecruiter.Application;
-using Dointo.AiRecruiter.Application.Services;
-using Dointo.AiRecruiter.Core.Abstractions;
 using Dointo.AiRecruiter.DbInfrastructure;
 using Dointo.AiRecruiter.RestApi.Middleware;
 using Microsoft.OpenApi.Models;
@@ -23,7 +21,6 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers( );
 
 // ✅ Swagger / OpenAPI
-builder.Services.AddEndpointsApiExplorer( );
 builder.Services.AddSwaggerGen(c =>
 {
 	c.SwaggerDoc("v1", new OpenApiInfo

@@ -15,6 +15,11 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	public async Task<IActionResult> GetJobPost(string id) => Ok(await _service.GetByIdAsync(id));
 
+	[HttpGet]
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<JobListDto>))]
+	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	public async Task<IActionResult> GetJobsList( ) => Ok(await _service.GetJobsListAsync( ));
+
 	[HttpPost]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]

@@ -1,17 +1,12 @@
 ﻿using AutoMapper;
-using Dointo.AiRecruiter.Application.Services;
 using Dointo.AiRecruiter.Core.Abstractions;
 using Dointo.AiRecruiter.Domain.Entities;
 using Dointo.AiRecruiter.Dtos;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Humanizer;
 
 namespace Dointo.AiRecruiter.Application.Resolvers;
 
-internal class JobListDtoResolver : ResolverBase<JobListEntity, JobPostDto>
+internal class JobListDtoResolver : ResolverBase<Job, JobListDto>
 {
 	protected override IDointoMapper Mapper
 	{
@@ -19,7 +14,11 @@ internal class JobListDtoResolver : ResolverBase<JobListEntity, JobPostDto>
 		{
 			var configuration = new MapperConfiguration(cfg =>
 			{
-				cfg.CreateMap<JobListEntity, JobPostDto>( ).ForMember(x => x.IsEditable, op => op.MapFrom(p => p.HasInterviews));
+				cfg.CreateMap<Job, JobListDto>( )
+					.ForMember(dest => dest.Status, op => op.MapFrom(src => src.Status.Humanize( )))
+					.ForMember(dest => dest.NumberOfInterviews, op => op.Ignore( ))
+					.ForMember(dest => dest.IsEditable, op => op.Ignore( ))
+					.ForMember(dest => dest.URL, op => op.Ignore( ));
 			});
 			return new AutoMapperProvider(configuration.CreateMapper( ));
 		}

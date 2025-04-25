@@ -12,17 +12,19 @@ public interface IJobPostsService
 {
 	Task<IProcessingState> DeleteAsync(string id);
 	Task<IProcessingState> GetByIdAsync(string id);
+	Task<IProcessingState> GetJobsListAsync( );
 	Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username);
 }
 
-internal class JobPostsService(IJobPostRepository repository, IResolver<Job, EditJobDto> resolver) : IJobPostsService
+internal class JobPostsService(IJobPostRepository repository, IResolver<Job, EditJobDto> editJobResolver, IResolver<Job, JobListDto> jobListResolver) : IJobPostsService
 {
 	private readonly IJobPostRepository _repository = repository;
-	private readonly IResolver<Job, EditJobDto> _resolver = resolver;
+	private readonly IResolver<Job, EditJobDto> _editJobResolver = editJobResolver;
+	private readonly IResolver<Job, JobListDto> _jobListResolver = jobListResolver;
 
 	public async Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username)
 	{
-		var jobPost = _resolver.Resolve(jobPostDto) ?? new Job( );
+		var jobPost = _editJobResolver.Resolve(jobPostDto) ?? new Job( );
 		var validationResult = new JobPostValidator( ).Validate(jobPost);
 		if (!validationResult.IsValid)
 			return validationResult.ToValidationErrorState(nameof(Job));
@@ -37,6 +39,19 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		}
 	}
 
+	public async Task<IProcessingState> GetJobsListAsync( )
+	{
+		var jobs = await _repository.GetByOwnerAsync("system");
+		var jobPostDtos = jobs.Select(x =>
+		{
+			var dto = _jobListResolver.Resolve(x);
+			dto.IsEditable = x.Status != Domain.ValueObjects.JobStatus.Closed;
+			dto.URL = $"/jobs/conduct/{x.Id}?usp=share";
+			return dto;
+		}).ToList( );
+		return new SuccessState<List<JobListDto>>("Job posts retrieved successfully", jobPostDtos);
+	}
+
 	public async Task<IProcessingState> GetByIdAsync(string id)
 	{
 		var validateResult = ValidateJobPostId(id);
@@ -46,7 +61,7 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		var jobPost = await _repository.GetByIdAsync(id);
 		if (jobPost is null)
 			return new BusinessErrorState("Job post not found");
-		var jobPostDto = _resolver.Resolve(jobPost);
+		var jobPostDto = _editJobResolver.Resolve(jobPost);
 		return new SuccessState<EditJobDto>("Job post retrieved successfully", jobPostDto);
 	}
 

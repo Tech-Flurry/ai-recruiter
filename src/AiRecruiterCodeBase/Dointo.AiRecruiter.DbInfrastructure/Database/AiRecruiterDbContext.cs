@@ -1,4 +1,5 @@
 ﻿using Dointo.AiRecruiter.Domain.Entities;
+using Dointo.AiRecruiter.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -23,6 +24,7 @@ public class AiRecruiterDbContext(DbContextOptions<AiRecruiterDbContext> options
 			entity.Property(e => e.Id).HasConversion<ObjectId>( ).HasValueGenerator<BsonIdValueGenerator>( ).ValueGeneratedOnAdd( );
 			entity.Property(e => e.Title).IsRequired( );
 			entity.Property(e => e.JobDescription).IsRequired( );
+			entity.Property(e => e.Status).HasConversion<string>(x => x.ToString( ), x => Enum.Parse<JobStatus>(x));
 			entity.Ignore(e => e.LastUpdated);
 		});
 	}

@@ -7,10 +7,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.AzureAppConfiguration" Version="8.0.0" />
-		<PackageReference Include="MongoDB.EntityFrameworkCore" Version="8.2.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.4" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.4" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.AzureAppConfiguration" Version="8.1.2" />
+		<PackageReference Include="MongoDB.EntityFrameworkCore" Version="9.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>

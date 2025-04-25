@@ -4,6 +4,7 @@ using Dointo.AiRecruiter.DbInfrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Driver;
 
 namespace Dointo.AiRecruiter.DbInfrastructure;
 public static class Setup
@@ -13,14 +14,12 @@ public static class Setup
 		services.AddScoped(sp =>
 		{
 			var configuration = sp.GetRequiredService<IConfiguration>( );
+			var mongoClient = new MongoClient(configuration[connectionStringName]!);
 			var options = new DbContextOptionsBuilder<AiRecruiterDbContext>( ).UseMongoDB(configuration[connectionStringName]!, configuration[aiRecruiterDbName]!).Options;
-			return new AiRecruiterDbContext(options);
+			return new AiRecruiterDbContext(options, mongoClient.GetDatabase(configuration[aiRecruiterDbName]));
 		});
-
 		// Registering the repositories
 		services.AddScoped<IReadOnlyRepository, ReadOnlyRepository>( );
-		services.AddScoped<IDummyRepository, DummyRepository>( );
-
-		services.AddScoped<IJobListRepository, JobListRepository>( );
+		services.AddScoped<IJobPostRepository, JobPostRepository>( );
 	}
 }

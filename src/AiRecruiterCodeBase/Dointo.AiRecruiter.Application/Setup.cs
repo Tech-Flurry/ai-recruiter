@@ -14,12 +14,9 @@ public static class Setup
 		//3rd party services
 
 		//resolvers
-		services.AddScoped<IResolver<DummyEntity, DummyDto>, DummyDtoResolver>( );
-		services.AddTransient<IResolver<JobListEntity, JobPostDto>, JobListDtoResolver>( );
+		services.AddScoped<IResolver<Job, EditJobDto>, EditJobDtoResolver>( );
 
 		//services
-		services.AddTransient<IDummyService, DummyService>( );
-
-		services.AddTransient<IJobPostService, JobPostService>( );
+		services.AddTransient<IJobPostsService, JobPostsService>( );
 	}
 }

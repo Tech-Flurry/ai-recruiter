@@ -1,5 +1,6 @@
 ﻿using Dointo.AiRecruiter.Application;
 using Dointo.AiRecruiter.DbInfrastructure;
+using Dointo.AiRecruiter.RestApi.Middleware;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -50,7 +51,7 @@ if (app.Environment.IsDevelopment( ))
 		c.RoutePrefix = "swagger";
 	});
 }
-
+app.UseMiddleware<UnitOfWorkMiddleware>( );
 app.UseHttpsRedirection( );
 app.UseRouting( );
 app.UseCors(corsPolicyName);

@@ -5,7 +5,7 @@ using Dointo.AiRecruiter.Domain.ValueObjects;
 using Dointo.AiRecruiter.Dtos;
 
 namespace Dointo.AiRecruiter.Application.Resolvers;
-internal class EditJobDtoResolver : ResolverBase<JobPost, EditJobDto>
+internal class EditJobDtoResolver : ResolverBase<Job, EditJobDto>
 {
 	private const char SEPARATOR = ';';
 
@@ -15,7 +15,7 @@ internal class EditJobDtoResolver : ResolverBase<JobPost, EditJobDto>
 		{
 			var configuration = new MapperConfiguration(cfg =>
 			{
-				cfg.CreateMap<JobPost, EditJobDto>( )
+				cfg.CreateMap<Job, EditJobDto>( )
 				   .ForMember(dest => dest.JobTitle, opt => opt.MapFrom(src => src.Title))
 				   .ForMember(dest => dest.YearsOfExperience, opt => opt.MapFrom(src => src.Experience))
 				   .ForMember(dest => dest.AdditionalQuestions, opt => opt.MapFrom(src => string.Join(SEPARATOR, src.AdditionalQuestions.Select(x => x.ToBeAsked))))

@@ -6,12 +6,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dointo.AiRecruiter.DbInfrastructure.Repositories;
 
-public class JobPostRepository(AiRecruiterDbContext dbContext) : RepositoryBase<JobPost>(dbContext), IJobPostRepository
+public class JobPostRepository(AiRecruiterDbContext dbContext) : RepositoryBase<Job>(dbContext), IJobPostRepository
 {
-	public async Task<JobPost?> GetByIdAsync(string id) =>
+	public async Task<Job?> GetByIdAsync(string id) =>
 		id.IsNotNullAndEmpty( ) ? await _entitySet.FindAsync(id) : null;
 
-	public async Task<List<JobPost>> GetByOwnerAsync(string ownerId, bool allowInactive = false)
+	public async Task<List<Job>> GetByOwnerAsync(string ownerId, bool allowInactive = false)
 	{
 		if (string.IsNullOrWhiteSpace(ownerId))
 			return [ ];
@@ -21,7 +21,7 @@ public class JobPostRepository(AiRecruiterDbContext dbContext) : RepositoryBase<
 			: await _entitySet.Where(x => x.CreatedBy == ownerId).ToListAsync( );
 	}
 
-	public async Task<JobPost> SaveAsync(JobPost entity, string username)
+	public async Task<Job> SaveAsync(Job entity, string username)
 	{
 		if (await _entitySet.AnyAsync(e =>
 			!string.IsNullOrEmpty(entity.Id) &&

@@ -2,7 +2,7 @@
 using FluentValidation;
 
 namespace Dointo.AiRecruiter.Domain.Validators;
-public class JobPostValidator : AbstractValidator<JobPost>
+public class JobPostValidator : AbstractValidator<Job>
 {
 	public JobPostValidator( )
 	{

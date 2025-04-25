@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using MongoDB.EntityFrameworkCore.Extensions;
 using System.Security.Claims;
 
 namespace Dointo.AiRecruiter.DbInfrastructure.Database;
@@ -12,15 +11,14 @@ public class AiRecruiterDbContext(DbContextOptions<AiRecruiterDbContext> options
 	private const string SYSTEM_USER = "System";
 	private readonly IMongoDatabase _mongoDatabase = mongoDatabase;
 	// Define DbSets as MongoDB collections
-	public DbSet<JobPost> JobPosts { get; set; } = null!;
+	public DbSet<Job> Jobs { get; set; } = null!;
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
 		base.OnModelCreating(modelBuilder);
-		// ----- JobPostEntity Mapping -----
-		modelBuilder.Entity<JobPost>(entity =>
+		modelBuilder.Entity<Job>(entity =>
 		{
-			entity.ToCollection("JobPosts");
+			entity.ToCollection( );
 			entity.HasKey(e => e.Id);
 			entity.Property(e => e.Id).HasConversion<ObjectId>( ).HasValueGenerator<BsonIdValueGenerator>( ).ValueGeneratedOnAdd( );
 			entity.Property(e => e.Title).IsRequired( );

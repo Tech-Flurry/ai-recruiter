@@ -4,9 +4,9 @@ namespace Dointo.AiRecruiter.Application.Repositories;
 
 public interface IJobPostRepository
 {
-	Task<JobPost?> GetByIdAsync(string id);
+	Task<Job?> GetByIdAsync(string id);
 
-	Task<List<JobPost>> GetByOwnerAsync(string ownerId, bool allowInactive = false);
+	Task<List<Job>> GetByOwnerAsync(string ownerId, bool allowInactive = false);
 
-	Task<JobPost> SaveAsync(JobPost entity, string username);
+	Task<Job> SaveAsync(Job entity, string username);
 }

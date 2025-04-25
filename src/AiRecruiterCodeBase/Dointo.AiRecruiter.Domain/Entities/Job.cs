@@ -2,7 +2,7 @@
 
 namespace Dointo.AiRecruiter.Domain.Entities;
 
-public class JobPost : BaseEntity
+public class Job : BaseEntity
 {
 	public string Title { get; set; } = null!;
 	public int Experience { get; set; }

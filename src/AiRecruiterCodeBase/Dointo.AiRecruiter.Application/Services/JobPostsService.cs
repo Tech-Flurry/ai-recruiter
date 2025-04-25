@@ -15,22 +15,21 @@ public interface IJobPostsService
 	Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username);
 }
 
-internal class JobPostsService(IJobPostRepository repository, IResolver<JobPost, EditJobDto> resolver) : IJobPostsService
+internal class JobPostsService(IJobPostRepository repository, IResolver<Job, EditJobDto> resolver) : IJobPostsService
 {
 	private readonly IJobPostRepository _repository = repository;
-	private readonly IResolver<JobPost, EditJobDto> _resolver = resolver;
+	private readonly IResolver<Job, EditJobDto> _resolver = resolver;
 
 	public async Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username)
 	{
-		var jobPost = _resolver.Resolve(jobPostDto) ?? new JobPost( );
+		var jobPost = _resolver.Resolve(jobPostDto) ?? new Job( );
 		var validationResult = new JobPostValidator( ).Validate(jobPost);
 		if (!validationResult.IsValid)
-			return validationResult.ToValidationErrorState(nameof(JobPost));
+			return validationResult.ToValidationErrorState(nameof(Job));
 		try
 		{
 			var savedEntity = await _repository.SaveAsync(jobPost, username);
-			if (savedEntity is not null)
-				return new SuccessState<JobPost>("Job post has been saved", savedEntity);
+			return new SuccessState<Job>("Job post has been saved", savedEntity);
 		}
 		catch (Exception ex)
 		{

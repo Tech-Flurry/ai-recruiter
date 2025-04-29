@@ -1,5 +1,6 @@
-﻿/* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useRef } from "react";
+﻿/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Container, Form, Button, Row, Col } from "react-bootstrap";
 import { KTCard, KTCardBody } from "../../../_metronic/helpers";
@@ -13,77 +14,92 @@ function JobPost() {
 	const tagifyInstanceRef = useRef<any>(null);
 	const formRef = useRef<HTMLFormElement>(null);
 
+	// Validation States
+	const [jobTitle, setJobTitle] = useState("");
+	const [jobTitleTouched, setJobTitleTouched] = useState(false);
+
+	const [experienceTouched, setExperienceTouched] = useState(false);
+	const [experience, setExperience] = useState("");
+
+	const [jobDescription, setJobDescription] = useState("");
+	const [descriptionTouched, setDescriptionTouched] = useState(false);
+
+	const [budget, setBudget] = useState("");
+	const [budgetTouched, setBudgetTouched] = useState(false);
+
 	useEffect(() => {
 		if (tagifyRef.current) {
 			tagifyInstanceRef.current = new Tagify(tagifyRef.current, {
-				whitelist: [
-					"JavaScript",
-					"Python",
-					"React",
-					"Node.js",
-					"Java",
-					"C++",
-					"Ruby",
-				],
-				dropdown: {
-					enabled: 0,
-				},
+				whitelist: ["JavaScript", "Python", "React", "Node.js", "Java", "C++", "Ruby"],
+				dropdown: { enabled: 0 },
 			});
 		}
 	}, []);
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		const formData = new FormData(e.currentTarget);
 
-		const jobTitle = formData.get("jobTitle") as string;
-		const yearsOfExperience = parseInt(formData.get("yearsOfExperience") as string);
-		const jobDescription = (formData.get("jobDescription") as string)?.replace(/\r?\n|\r/g, " ");
-		const requiredSkills =
-			tagifyInstanceRef.current?.value.map((tag: { value: string }) => tag.value) || [];
-		const budgetAmount = parseFloat(formData.get("budget") as string);
+		setJobTitleTouched(true);
+		setExperienceTouched(true);
+		setDescriptionTouched(true);
+		setBudgetTouched(true);
+
+		const requiredSkills = tagifyInstanceRef.current?.value.map((tag: { value: string }) => tag.value) || [];
+
+		if (
+			jobTitle.trim().length < 3 ||
+			!experience ||
+			parseInt(experience) < 0 ||
+			jobDescription.trim().split(/\s+/).length < 30 ||
+			requiredSkills.length === 0 ||
+			!budget ||
+			parseFloat(budget) <= 0
+		) {
+			return;
+		}
+
+		const formData = new FormData(e.currentTarget);
 		const budgetCurrency = formData.get("currency") as string;
 		const additionalQuestions = formData.get("additionalQuestions") as string;
 
-		// ✅ Payload exactly matching backend DTO
 		const payload = {
-			id: "", // Empty id for new job
-			jobTitle: jobTitle,
-			yearsOfExperience: yearsOfExperience,
-			jobDescription: jobDescription,
+			id: "",
+			jobTitle: jobTitle.trim(),
+			yearsOfExperience: parseInt(experience),
+			jobDescription: jobDescription.trim(),
 			requiredSkills: requiredSkills,
 			additionalQuestions: additionalQuestions,
-			budgetAmount: budgetAmount,
+			budgetAmount: parseFloat(budget),
 			budgetCurrency: budgetCurrency,
 		};
 
 		try {
-			const response = await axios.post(
-				"https://localhost:7072/api/JobPosts",
-				payload,
-				{
-					headers: {
-						"Content-Type": "application/json",
-					},
-					withCredentials: true,
-				}
-			);
-
-			console.log("✅ Job post created successfully:", response.data);
+			const response = await axios.post("https://localhost:7072/api/JobPosts", payload, {
+				headers: { "Content-Type": "application/json" },
+				withCredentials: true,
+			});
+			alert("✅ Job post has been saved.");
 			navigate("/jobs/list");
 		} catch (error: any) {
-			console.error("❌ Error creating job post:", error.response?.data || error.message);
-			alert(`Failed to create job post: ${error.response?.data?.message || error.message}`);
+			alert(`❌ Failed to create job post: ${error.response?.data?.message || error.message}`);
 		}
 	};
 
 	const handleReset = () => {
-		if (tagifyInstanceRef.current) {
-			tagifyInstanceRef.current.removeAllTags();
-		}
-		if (formRef.current) {
-			formRef.current.reset();
-		}
+		setJobTitle("");
+		setJobTitleTouched(false);
+		setExperience("");
+		setExperienceTouched(false);
+		setJobDescription("");
+		setDescriptionTouched(false);
+		setBudget("");
+		setBudgetTouched(false);
+		tagifyInstanceRef.current?.removeAllTags();
+		formRef.current?.reset();
+	};
+
+	const getJobDescriptionWordCount = () => {
+		return jobDescription.trim() ? jobDescription.trim().split(/\s+/).length : 0;
 	};
 
 	return (
@@ -91,49 +107,84 @@ function JobPost() {
 			<div style={{ maxWidth: "900px", width: "100%" }}>
 				<KTCard className="shadow rounded">
 					<KTCardBody>
-						<div className="d-flex align-items-center mb-4">
-							<h3 className="mb-0">Creating a job posting</h3>
-						</div>
-
 						<Form ref={formRef} onSubmit={handleSubmit}>
 							<Row>
 								<Col md={6}>
 									<Form.Group className="mb-3">
-										<Form.Label>Job Title</Form.Label>
+										<Form.Label>Job Title <span className="text-danger">*</span></Form.Label>
 										<Form.Control
 											type="text"
 											name="jobTitle"
+											value={jobTitle}
+											onChange={(e) => setJobTitle(e.target.value)}
+											onBlur={() => setJobTitleTouched(true)}
 											placeholder="Example: Senior Software Engineer"
-											required
+											className={
+												jobTitleTouched
+													? jobTitle.trim().length >= 3
+														? "form-control is-valid"
+														: "form-control is-invalid"
+													: "form-control"
+											}
 										/>
+										{jobTitleTouched && jobTitle.trim().length < 3 && (
+											<div className="invalid-feedback">Job Title must be at least 3 characters.</div>
+										)}
 									</Form.Group>
 								</Col>
+
 								<Col md={6}>
 									<Form.Group className="mb-3">
-										<Form.Label>Years of Experience</Form.Label>
+										<Form.Label>Years of Experience <span className="text-danger">*</span></Form.Label>
 										<Form.Control
 											type="number"
 											name="yearsOfExperience"
-											placeholder="Enter required experience in years"
-											required
+											value={experience}
+											onChange={(e) => setExperience(e.target.value)}
+											onBlur={() => setExperienceTouched(true)}
+											placeholder="Enter experience in years"
+											className={
+												experienceTouched
+													? experience && parseInt(experience) >= 0
+														? "form-control is-valid"
+														: "form-control is-invalid"
+													: "form-control"
+											}
 										/>
+										{experienceTouched && (!experience || parseInt(experience) < 0) && (
+											<div className="invalid-feedback">Experience must be a non-negative number.</div>
+										)}
 									</Form.Group>
 								</Col>
 							</Row>
 
 							<Form.Group className="mb-3">
-								<Form.Label>Job Description</Form.Label>
+								<Form.Label>Job Description <span className="text-danger">*</span></Form.Label>
 								<Form.Control
 									as="textarea"
 									name="jobDescription"
-									placeholder="Describe key responsibilities and requirements"
+									value={jobDescription}
+									onChange={(e) => setJobDescription(e.target.value)}
+									onBlur={() => setDescriptionTouched(true)}
 									rows={4}
-									required
+									placeholder="Describe key responsibilities and requirements"
+									className={
+										descriptionTouched
+											? getJobDescriptionWordCount() >= 30
+												? "form-control is-valid"
+												: "form-control is-invalid"
+											: "form-control"
+									}
 								/>
+								{descriptionTouched && getJobDescriptionWordCount() < 30 && (
+									<div className="invalid-feedback">
+										Job Description must have at least 30 words. (Current: {getJobDescriptionWordCount()} words)
+									</div>
+								)}
 							</Form.Group>
 
 							<Form.Group className="mb-3">
-								<Form.Label>Required Skills</Form.Label>
+								<Form.Label>Required Skills <span className="text-danger">*</span></Form.Label>
 								<Form.Control
 									ref={tagifyRef}
 									name="requiredSkills"
@@ -144,23 +195,35 @@ function JobPost() {
 							<Row>
 								<Col md={6}>
 									<Form.Group className="mb-3">
-										<Form.Label>Hiring Budget</Form.Label>
+										<Form.Label>Hiring Budget <span className="text-danger">*</span></Form.Label>
 										<div className="d-flex">
 											<Form.Control
 												type="number"
 												name="budget"
+												value={budget}
+												onChange={(e) => setBudget(e.target.value)}
+												onBlur={() => setBudgetTouched(true)}
 												placeholder="Enter budget amount"
-												className="me-2"
-												required
+												className={
+													budgetTouched
+														? budget && parseFloat(budget) > 0
+															? "form-control is-valid"
+															: "form-control is-invalid"
+														: "form-control"
+												}
 											/>
-											<Form.Select name="currency" required>
+											<Form.Select name="currency" required className="ms-2">
 												<option value="USD">USD</option>
 												<option value="EUR">EUR</option>
 												<option value="GBP">GBP</option>
 											</Form.Select>
 										</div>
+										{budgetTouched && (!budget || parseFloat(budget) <= 0) && (
+											<div className="invalid-feedback">Budget must be greater than 0.</div>
+										)}
 									</Form.Group>
 								</Col>
+
 								<Col md={6}>
 									<Form.Group className="mb-3">
 										<Form.Label>Additional Questions (Optional)</Form.Label>
@@ -175,25 +238,9 @@ function JobPost() {
 							</Row>
 
 							<div className="d-flex gap-3 mt-4 justify-content-end">
-								<Button type="submit" variant="primary" className="font-weight-bold">
-									Save
-								</Button>
-								<Button
-									type="button"
-									variant="secondary"
-									className="font-weight-bold"
-									onClick={handleReset}
-								>
-									Reset
-								</Button>
-								<Button
-									type="button"
-									variant="dark"
-									className="font-weight-bold"
-									onClick={() => navigate("/jobs/list")}
-								>
-									Cancel
-								</Button>
+								<Button type="submit" variant="primary">Save</Button>
+								<Button type="button" variant="secondary" onClick={handleReset}>Reset</Button>
+								<Button type="button" variant="dark" onClick={() => navigate("/jobs/list")}>Cancel</Button>
 							</div>
 						</Form>
 					</KTCardBody>

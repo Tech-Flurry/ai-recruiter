@@ -5,13 +5,12 @@ import { Container, Form, Button, Row, Col } from "react-bootstrap";
 import { KTCard, KTCardBody } from "../../../_metronic/helpers";
 import Tagify from "@yaireo/tagify";
 import "@yaireo/tagify/dist/tagify.css";
+import axios from "axios";
 
 function JobPost() {
 	const navigate = useNavigate();
 	const tagifyRef = useRef<HTMLInputElement>(null);
-	// Store the Tagify instance so we can later read its value or reset it
 	const tagifyInstanceRef = useRef<any>(null);
-	// Add a ref for the form element
 	const formRef = useRef<HTMLFormElement>(null);
 
 	useEffect(() => {
@@ -39,43 +38,42 @@ function JobPost() {
 
 		const jobTitle = formData.get("jobTitle") as string;
 		const yearsOfExperience = parseInt(formData.get("yearsOfExperience") as string);
-		const jobDescription = formData.get("jobDescription") as string;
-		// Tagify returns an array of tag objects; we extract just the values.
+		const jobDescription = (formData.get("jobDescription") as string)?.replace(/\r?\n|\r/g, " ");
 		const requiredSkills =
 			tagifyInstanceRef.current?.value.map((tag: { value: string }) => tag.value) || [];
-		const budget = parseFloat(formData.get("budget") as string);
-		const currency = formData.get("currency") as string;
+		const budgetAmount = parseFloat(formData.get("budget") as string);
+		const budgetCurrency = formData.get("currency") as string;
 		const additionalQuestions = formData.get("additionalQuestions") as string;
 
-		// Updated payload: include a nested hiringBudget object to match your API model
+		// ✅ Payload exactly matching backend DTO
 		const payload = {
-			jobTitle,
-			yearsOfExperience,
-			jobDescription,
-			requiredSkills,
-			hiringBudget: {
-				amount: budget,
-				currency,
-			},
-			additionalQuestions,
+			id: "", // Empty id for new job
+			jobTitle: jobTitle,
+			yearsOfExperience: yearsOfExperience,
+			jobDescription: jobDescription,
+			requiredSkills: requiredSkills,
+			additionalQuestions: additionalQuestions,
+			budgetAmount: budgetAmount,
+			budgetCurrency: budgetCurrency,
 		};
 
 		try {
-			const response = await fetch("https://localhost:7072/api/JobPosts", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify(payload),
-			});
-			if (!response.ok) {
-				throw new Error("Network response was not ok");
-			}
-			const result = await response.json();
-			console.log("Job post created:", result);
+			const response = await axios.post(
+				"https://localhost:7072/api/JobPosts",
+				payload,
+				{
+					headers: {
+						"Content-Type": "application/json",
+					},
+					withCredentials: true,
+				}
+			);
+
+			console.log("✅ Job post created successfully:", response.data);
 			navigate("/jobs/list");
-		} catch (error) {
-			console.error("Error creating job post:", error);
+		} catch (error: any) {
+			console.error("❌ Error creating job post:", error.response?.data || error.message);
+			alert(`Failed to create job post: ${error.response?.data?.message || error.message}`);
 		}
 	};
 
@@ -96,7 +94,7 @@ function JobPost() {
 						<div className="d-flex align-items-center mb-4">
 							<h3 className="mb-0">Creating a job posting</h3>
 						</div>
-						{/* Attach the form ref here */}
+
 						<Form ref={formRef} onSubmit={handleSubmit}>
 							<Row>
 								<Col md={6}>
@@ -180,7 +178,6 @@ function JobPost() {
 								<Button type="submit" variant="primary" className="font-weight-bold">
 									Save
 								</Button>
-
 								<Button
 									type="button"
 									variant="secondary"
@@ -189,7 +186,6 @@ function JobPost() {
 								>
 									Reset
 								</Button>
-
 								<Button
 									type="button"
 									variant="dark"

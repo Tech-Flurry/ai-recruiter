@@ -13,6 +13,9 @@ public interface IJobPostsService
 	Task<IProcessingState> DeleteAsync(string id);
 	Task<IProcessingState> GetByIdAsync(string id);
 	Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username);
+
+	// ✅ ADD this
+	Task<IProcessingState> GetAllAsync( );
 }
 
 internal class JobPostsService(IJobPostRepository repository, IResolver<Job, EditJobDto> resolver) : IJobPostsService
@@ -59,10 +62,27 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		var jobPost = await _repository.GetByIdAsync(id);
 		if (jobPost is null)
 			return new BusinessErrorState("Job post not found");
+
 		jobPost.IsDeleted = true;
 		await _repository.SaveAsync(jobPost, string.Empty);
 		return new SuccessState("Job post deleted successfully");
 	}
+
+	// ✅ NEW: Fetch all job posts
+	public async Task<IProcessingState> GetAllAsync( )
+	{
+		try
+		{
+			var jobPosts = await _repository.GetAllAsync( );
+			var jobPostDtos = jobPosts.Select(post => _resolver.Resolve(post)).ToList( );
+			return new SuccessState<List<EditJobDto>>("All job posts retrieved successfully", jobPostDtos);
+		}
+		catch (Exception ex)
+		{
+			return new ExceptionState("An error occurred while fetching job posts", ex.Message);
+		}
+	}
+
 	private static ValidationErrorState? ValidateJobPostId(string id)
 	{
 		if (id.IsNullOrEmpty( ))

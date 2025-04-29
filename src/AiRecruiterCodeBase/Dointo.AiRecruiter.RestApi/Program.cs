@@ -5,22 +5,21 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ✅ CORS policy
-const string corsPolicyName = "AllowAll";
+// ✅ Correct CORS policy with credentials support
+const string corsPolicyName = "AllowFrontendOrigin";
 builder.Services.AddCors(options =>
 {
 	options.AddPolicy(corsPolicyName, policy =>
 	{
-		policy.AllowAnyOrigin( )
+		policy.WithOrigins("http://localhost:62835") // frontend origin
 			  .AllowAnyMethod( )
-			  .AllowAnyHeader( );
+			  .AllowAnyHeader( )
+			  .AllowCredentials( ); // this is required with withCredentials: true
 	});
 });
 
-// ✅ Controllers
 builder.Services.AddControllers( );
 
-// ✅ Swagger / OpenAPI
 builder.Services.AddEndpointsApiExplorer( );
 builder.Services.AddSwaggerGen(c =>
 {
@@ -33,8 +32,6 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddDbInfrastructure("MongoDb:ConnectionString", "MongoDb:DatabaseName");
-
-// ✅ App Layer
 builder.Services.AddApplication( );
 
 var app = builder.Build( );
@@ -51,10 +48,14 @@ if (app.Environment.IsDevelopment( ))
 		c.RoutePrefix = "swagger";
 	});
 }
+
 app.UseMiddleware<UnitOfWorkMiddleware>( );
 app.UseHttpsRedirection( );
 app.UseRouting( );
+
+// ✅ Important: Add CORS *before* Authorization
 app.UseCors(corsPolicyName);
+
 app.UseAuthorization( );
 app.MapControllers( );
 

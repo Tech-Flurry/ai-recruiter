@@ -44,7 +44,7 @@ function JobPost() {
 		setDescriptionTouched(true);
 		setBudgetTouched(true);
 
-		const requiredSkills = tagifyInstanceRef.current?.value.map((tag: { value: string }) => tag.value) || [];
+		const requiredSkills = tagifyInstanceRef.current?.value.map((tag: { value: string }) => tag.value) ?? [];
 
 		if (
 			jobTitle.trim().length < 3 ||
@@ -74,14 +74,14 @@ function JobPost() {
 		};
 
 		try {
-			const response = await axios.post("https://localhost:7072/api/JobPosts", payload, {
+			const response = await axios.post(`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts`, payload, {
 				headers: { "Content-Type": "application/json" },
 				withCredentials: true,
 			});
 			alert("✅ Job post has been saved.");
 			navigate("/jobs/list");
 		} catch (error: any) {
-			alert(`❌ Failed to create job post: ${error.response?.data?.message || error.message}`);
+			alert(`❌ Failed to create job post: ${error.response?.data?.message ?? error.message}`);
 		}
 	};
 
@@ -101,11 +101,58 @@ function JobPost() {
 	const getJobDescriptionWordCount = () => {
 		return jobDescription.trim() ? jobDescription.trim().split(/\s+/).length : 0;
 	};
+	function getJobTitleClassName() {
+		if (jobTitleTouched) {
+			if (jobTitle.trim().length >= 3) {
+				return "form-control is-valid";
+			} else {
+				return "form-control is-invalid";
+			}
+		} else {
+			return "form-control";
+		}
+	}
+
+	function getExperienceClassName() {
+		if (experienceTouched) {
+			if (experience && parseInt(experience) >= 0) {
+				return "form-control is-valid";
+			} else {
+				return "form-control is-invalid";
+			}
+		} else {
+			return "form-control";
+		}
+	}
+
+	function getDescriptionClassName() {
+		if (descriptionTouched) {
+			if (getJobDescriptionWordCount() >= 30) {
+				return "form-control is-valid";
+			} else {
+				return "form-control is-invalid";
+			}
+		} else {
+			return "form-control";
+		}
+	}
+	function getBudgetClassName() {
+		if (budgetTouched) {
+			if (budget && parseFloat(budget) > 0) {
+				return "form-control is-valid";
+			} else {
+				return "form-control is-invalid";
+			}
+		} else {
+			return "form-control";
+		}
+	}
+
 
 	return (
 		<Container className="my-5 d-flex justify-content-center">
 			<div style={{ maxWidth: "900px", width: "100%" }}>
-				<KTCard className="shadow rounded">
+				<KTCard className="rounded shadow">
 					<KTCardBody>
 						<Form ref={formRef} onSubmit={handleSubmit}>
 							<Row>
@@ -119,13 +166,7 @@ function JobPost() {
 											onChange={(e) => setJobTitle(e.target.value)}
 											onBlur={() => setJobTitleTouched(true)}
 											placeholder="Example: Senior Software Engineer"
-											className={
-												jobTitleTouched
-													? jobTitle.trim().length >= 3
-														? "form-control is-valid"
-														: "form-control is-invalid"
-													: "form-control"
-											}
+											className={getJobTitleClassName()}
 										/>
 										{jobTitleTouched && jobTitle.trim().length < 3 && (
 											<div className="invalid-feedback">Job Title must be at least 3 characters.</div>
@@ -143,13 +184,7 @@ function JobPost() {
 											onChange={(e) => setExperience(e.target.value)}
 											onBlur={() => setExperienceTouched(true)}
 											placeholder="Enter experience in years"
-											className={
-												experienceTouched
-													? experience && parseInt(experience) >= 0
-														? "form-control is-valid"
-														: "form-control is-invalid"
-													: "form-control"
-											}
+											className={getExperienceClassName()}
 										/>
 										{experienceTouched && (!experience || parseInt(experience) < 0) && (
 											<div className="invalid-feedback">Experience must be a non-negative number.</div>
@@ -168,13 +203,7 @@ function JobPost() {
 									onBlur={() => setDescriptionTouched(true)}
 									rows={4}
 									placeholder="Describe key responsibilities and requirements"
-									className={
-										descriptionTouched
-											? getJobDescriptionWordCount() >= 30
-												? "form-control is-valid"
-												: "form-control is-invalid"
-											: "form-control"
-									}
+									className={getDescriptionClassName()}
 								/>
 								{descriptionTouched && getJobDescriptionWordCount() < 30 && (
 									<div className="invalid-feedback">
@@ -204,13 +233,7 @@ function JobPost() {
 												onChange={(e) => setBudget(e.target.value)}
 												onBlur={() => setBudgetTouched(true)}
 												placeholder="Enter budget amount"
-												className={
-													budgetTouched
-														? budget && parseFloat(budget) > 0
-															? "form-control is-valid"
-															: "form-control is-invalid"
-														: "form-control"
-												}
+												className={getBudgetClassName()}
 											/>
 											<Form.Select name="currency" required className="ms-2">
 												<option value="USD">USD</option>

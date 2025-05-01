@@ -20,15 +20,6 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 		return Ok(result);
 	}
 
-	// ✅ NEW: GET: api/JobPosts
-	[HttpGet]
-	[ProducesResponseType(StatusCodes.Status200OK)]
-	public async Task<IActionResult> GetAllJobPosts( )
-	{
-		var result = await _service.GetAllAsync( );
-		return Ok(result);
-	}
-
 	// ✅ POST: api/JobPosts
 	[HttpPost]
 	[ProducesResponseType(StatusCodes.Status200OK)]

@@ -1,4 +1,5 @@
 ﻿using Dointo.AiRecruiter.Application.Repositories;
+using Dointo.AiRecruiter.Application.Utils;
 using Dointo.AiRecruiter.Core.Abstractions;
 using Dointo.AiRecruiter.Core.Extensions;
 using Dointo.AiRecruiter.Core.States;
@@ -13,18 +14,18 @@ public interface IJobPostsService
 	Task<IProcessingState> DeleteAsync(string id);
 	Task<IProcessingState> GetByIdAsync(string id);
 	Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username);
-
-	// ✅ ADD this
-	Task<IProcessingState> GetAllAsync( );
 }
 
 internal class JobPostsService(IJobPostRepository repository, IResolver<Job, EditJobDto> resolver) : IJobPostsService
 {
+	private const string JOB_STRING = nameof(Job);
 	private readonly IJobPostRepository _repository = repository;
 	private readonly IResolver<Job, EditJobDto> _resolver = resolver;
+	private readonly MessageBuilder _messageBuilder = new( );
 
 	public async Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username)
 	{
+		_messageBuilder.Clear( );
 		var jobPost = _resolver.Resolve(jobPostDto) ?? new Job( );
 		var validationResult = new JobPostValidator( ).Validate(jobPost);
 		if (!validationResult.IsValid)
@@ -32,66 +33,39 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		try
 		{
 			var savedEntity = await _repository.SaveAsync(jobPost, username);
-			return new SuccessState<EditJobDto>("Job post has been saved", _resolver.Resolve(savedEntity));
+			return new SuccessState<EditJobDto>(_messageBuilder.AddFormat(Messages.RECORD_SAVED_FORMAT).AddString(JOB_STRING).Build( ), _resolver.Resolve(savedEntity));
 		}
 		catch (Exception ex)
 		{
-			return new ExceptionState("An error occurred while saving the job post", ex.Message);
+			return new ExceptionState(_messageBuilder.AddFormat(Messages.ERROR_OCCURRED_FORMAT).AddString(JOB_STRING).Build( ), ex.Message);
 		}
 	}
 
 	public async Task<IProcessingState> GetByIdAsync(string id)
 	{
-		var validateResult = ValidateJobPostId(id);
-		if (validateResult is not null)
-			return validateResult;
-
+		_messageBuilder.Clear( );
 		var jobPost = await _repository.GetByIdAsync(id);
 		if (jobPost is null)
-			return new BusinessErrorState("Job post not found");
+			return new BusinessErrorState(RecordNotFoundMessage( ));
 		var jobPostDto = _resolver.Resolve(jobPost);
-		return new SuccessState<EditJobDto>("Job post retrieved successfully", jobPostDto);
+		return new SuccessState<EditJobDto>(_messageBuilder.AddFormat(Messages.RECORD_RETRIEVED_FORMAT).AddString(JOB_STRING).Build( ), jobPostDto);
 	}
 
 	public async Task<IProcessingState> DeleteAsync(string id)
 	{
-		var validateResult = ValidateJobPostId(id);
-		if (validateResult is not null)
-			return validateResult;
-
+		_messageBuilder.Clear( );
 		var jobPost = await _repository.GetByIdAsync(id);
 		if (jobPost is null)
-			return new BusinessErrorState("Job post not found");
+			return new BusinessErrorState(RecordNotFoundMessage( ));
 
 		jobPost.IsDeleted = true;
 		await _repository.SaveAsync(jobPost, string.Empty);
-		return new SuccessState("Job post deleted successfully");
+		return new SuccessState(_messageBuilder.AddFormat(Messages.RECORD_DELETED_FORMAT).AddString(JOB_STRING).Build( ));
 	}
 
-	// ✅ NEW: Fetch all job posts
-	public async Task<IProcessingState> GetAllAsync( )
+	private string RecordNotFoundMessage( )
 	{
-		try
-		{
-			var jobPosts = await _repository.GetAllAsync( );
-			var jobPostDtos = jobPosts.Select(post => _resolver.Resolve(post)).ToList( );
-			return new SuccessState<List<EditJobDto>>("All job posts retrieved successfully", jobPostDtos);
-		}
-		catch (Exception ex)
-		{
-			return new ExceptionState("An error occurred while fetching job posts", ex.Message);
-		}
-	}
-
-	private static ValidationErrorState? ValidateJobPostId(string id)
-	{
-		if (id.IsNullOrEmpty( ))
-		{
-			return new ValidationErrorState("Job post ID cannot be null or empty")
-			{
-				Errors = [new ValidationErrorState.ValidationFailure(nameof(id), "Job post ID cannot be null or empty")]
-			};
-		}
-		return null;
+		_messageBuilder.Clear( );
+		return _messageBuilder.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT).AddString(JOB_STRING).Build( );
 	}
 }

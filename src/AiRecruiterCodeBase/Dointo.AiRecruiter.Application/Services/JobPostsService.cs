@@ -32,7 +32,7 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		try
 		{
 			var savedEntity = await _repository.SaveAsync(jobPost, username);
-			return new SuccessState<Job>("Job post has been saved", savedEntity);
+			return new SuccessState<EditJobDto>("Job post has been saved", _resolver.Resolve(savedEntity));
 		}
 		catch (Exception ex)
 		{

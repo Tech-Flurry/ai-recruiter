@@ -26,6 +26,8 @@ function JobPost() {
 
 	const [budget, setBudget] = useState("");
 	const [budgetTouched, setBudgetTouched] = useState(false);
+	const [serverErrors, setServerErrors] = useState<{ [key: string]: string }>({});
+
 
 	useEffect(() => {
 		if (tagifyRef.current) {
@@ -43,6 +45,9 @@ function JobPost() {
 		setExperienceTouched(true);
 		setDescriptionTouched(true);
 		setBudgetTouched(true);
+
+		// Clear previous server errors
+		setServerErrors({});
 
 		const requiredSkills = tagifyInstanceRef.current?.value.map((tag: { value: string }) => tag.value) ?? [];
 
@@ -78,12 +83,26 @@ function JobPost() {
 				headers: { "Content-Type": "application/json" },
 				withCredentials: true,
 			});
-			alert("✅ Job post has been saved.");
-			navigate("/jobs/list");
+			let responseData = response.data;
+			if (responseData?.success) {
+				alert("✅ Job post has been saved.");
+				navigate("/jobs/list");
+			}
+			else {
+				alert(`❌ Failed to create job post: ${responseData?.message}`);
+				if (responseData?.errors) {
+					const errors: { [key: string]: string } = {};
+					responseData.errors.forEach((err: { propertyName: string; errorMessage: string }) => {
+						errors[err.propertyName] = err.errorMessage;
+					});
+					setServerErrors(errors);
+				}
+			}
 		} catch (error: any) {
 			alert(`❌ Failed to create job post: ${error.response?.data?.message ?? error.message}`);
 		}
 	};
+
 
 	const handleReset = () => {
 		setJobTitle("");
@@ -171,6 +190,9 @@ function JobPost() {
 										{jobTitleTouched && jobTitle.trim().length < 3 && (
 											<div className="invalid-feedback">Job Title must be at least 3 characters.</div>
 										)}
+										{serverErrors.Title && (
+											<div className="invalid-feedback">{serverErrors.Title}</div>
+										)}
 									</Form.Group>
 								</Col>
 
@@ -188,6 +210,9 @@ function JobPost() {
 										/>
 										{experienceTouched && (!experience || parseInt(experience) < 0) && (
 											<div className="invalid-feedback">Experience must be a non-negative number.</div>
+										)}
+										{serverErrors["Experience"] && (
+											<div className="invalid-feedback">{serverErrors["Experience"]}</div>
 										)}
 									</Form.Group>
 								</Col>
@@ -210,6 +235,9 @@ function JobPost() {
 										Job Description must have at least 30 words. (Current: {getJobDescriptionWordCount()} words)
 									</div>
 								)}
+								{serverErrors.JobDescription && (
+									<div className="invalid-feedback">{serverErrors.JobDescription}</div>
+								)}
 							</Form.Group>
 
 							<Form.Group className="mb-3">
@@ -219,6 +247,9 @@ function JobPost() {
 									name="requiredSkills"
 									placeholder="Type skills and press Enter (e.g., React, Node.js)"
 								/>
+								{serverErrors.RequiredSkills && (
+									<div className="invalid-feedback">{serverErrors.RequiredSkills}</div>
+								)}
 							</Form.Group>
 
 							<Row>
@@ -244,6 +275,9 @@ function JobPost() {
 										{budgetTouched && (!budget || parseFloat(budget) <= 0) && (
 											<div className="invalid-feedback">Budget must be greater than 0.</div>
 										)}
+										{serverErrors.Budget && (
+											<div className="invalid-feedback">{serverErrors.Budget}</div>
+										)}
 									</Form.Group>
 								</Col>
 
@@ -256,6 +290,9 @@ function JobPost() {
 											placeholder="Enter any screening questions"
 											rows={2}
 										/>
+										{serverErrors.AdditionalQuestions && (
+											<div className="invalid-feedback">{serverErrors.AdditionalQuestions}</div>
+										)}
 									</Form.Group>
 								</Col>
 							</Row>

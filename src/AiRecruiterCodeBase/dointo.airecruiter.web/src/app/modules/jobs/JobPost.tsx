@@ -13,6 +13,7 @@ function JobPost() {
 	const tagifyRef = useRef<HTMLInputElement>(null);
 	const tagifyInstanceRef = useRef<any>(null);
 	const formRef = useRef<HTMLFormElement>(null);
+	const btnSaveRef = useRef<HTMLButtonElement>(null);
 
 	// Validation States
 	const [jobTitle, setJobTitle] = useState("");
@@ -79,6 +80,9 @@ function JobPost() {
 		};
 
 		try {
+			btnSaveRef.current?.setAttribute("data-kt-indicator", "on");
+			btnSaveRef.current?.classList.add("disabled");
+			btnSaveRef.current?.setAttribute("disabled", "disabled");
 			const response = await axios.post(`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts`, payload, {
 				headers: { "Content-Type": "application/json" },
 				withCredentials: true,
@@ -100,6 +104,11 @@ function JobPost() {
 			}
 		} catch (error: any) {
 			alert(`❌ Failed to create job post: ${error.response?.data?.message ?? error.message}`);
+		}
+		finally {
+			btnSaveRef.current?.removeAttribute("data-kt-indicator");
+			btnSaveRef.current?.classList.remove("disabled");
+			btnSaveRef.current?.removeAttribute("disabled");
 		}
 	};
 
@@ -298,7 +307,11 @@ function JobPost() {
 							</Row>
 
 							<div className="d-flex gap-3 mt-4 justify-content-end">
-								<Button type="submit" variant="primary">Save</Button>
+								<Button ref={btnSaveRef} type="submit" variant="primary">
+									<span className="indicator-label">Save</span>
+									<span className="indicator-progress">Saving...<span className="spinner-border spinner-border-sm ms-2 align-middle"></span>
+									</span>
+								</Button>
 								<Button type="button" variant="secondary" onClick={handleReset}>Reset</Button>
 								<Button type="button" variant="dark" onClick={() => navigate("/jobs/list")}>Cancel</Button>
 							</div>

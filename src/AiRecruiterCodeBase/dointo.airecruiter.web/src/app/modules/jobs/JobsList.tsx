@@ -1,6 +1,23 @@
+﻿import { useNavigate } from "react-router-dom";
+
 function JobsList() {
+
+	const navigate = useNavigate();
+	const handleButtonClick = () => 
+	{
+		navigate("/jobs/create");
+	};
+
 	return (
-		<div>Hello World</div>
+		<div style={{ display: "flex", justifyContent: "flex-end", padding: "10px" }}>
+			<button
+				type="button"
+				className="btn btn-secondary"
+				onClick={handleButtonClick}
+			>
+				Post a New Job
+			</button>
+		</div>
 	);
 }
 

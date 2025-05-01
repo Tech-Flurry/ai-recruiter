@@ -5,16 +5,16 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ✅ Correct CORS policy with credentials support
-const string corsPolicyName = "AllowFrontendOrigin";
 builder.Services.AddCors(options =>
 {
-	options.AddPolicy(corsPolicyName, policy =>
+	options.AddDefaultPolicy(policy =>
 	{
-		policy.WithOrigins("http://localhost:62835") // frontend origin
-			  .AllowAnyMethod( )
+		var clientsUrls = builder.Configuration.GetSection("ClientUrls").Get<string[ ]>( ) ?? [ ];
+		foreach (var url in clientsUrls)
+			policy.WithOrigins(url);
+		policy.AllowAnyMethod( )
 			  .AllowAnyHeader( )
-			  .AllowCredentials( ); // this is required with withCredentials: true
+			  .AllowCredentials( );
 	});
 });
 
@@ -53,8 +53,7 @@ app.UseMiddleware<UnitOfWorkMiddleware>( );
 app.UseHttpsRedirection( );
 app.UseRouting( );
 
-// ✅ Important: Add CORS *before* Authorization
-app.UseCors(corsPolicyName);
+app.UseCors( );
 
 app.UseAuthorization( );
 app.MapControllers( );

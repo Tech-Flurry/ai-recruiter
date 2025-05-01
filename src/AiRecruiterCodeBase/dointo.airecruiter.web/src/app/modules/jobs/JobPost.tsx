@@ -7,6 +7,8 @@ import { KTCard, KTCardBody } from "../../../_metronic/helpers";
 import Tagify from "@yaireo/tagify";
 import "@yaireo/tagify/dist/tagify.css";
 import axios from "axios";
+import toastr from 'toastr';
+import "toastr/build/toastr.min.css";
 
 function JobPost() {
 	const navigate = useNavigate();
@@ -89,11 +91,11 @@ function JobPost() {
 			});
 			let responseData = response.data;
 			if (responseData?.success) {
-				alert("✅ Job post has been saved.");
+				toastr.success("Job post has been saved.");
 				navigate("/jobs/list");
 			}
 			else {
-				alert(`❌ Failed to create job post: ${responseData?.message}`);
+				toastr.error(`Failed to create job post: ${responseData?.message}`);
 				if (responseData?.errors) {
 					const errors: { [key: string]: string } = {};
 					responseData.errors.forEach((err: { propertyName: string; errorMessage: string }) => {
@@ -103,7 +105,7 @@ function JobPost() {
 				}
 			}
 		} catch (error: any) {
-			alert(`❌ Failed to create job post: ${error.response?.data?.message ?? error.message}`);
+			toastr.error(`Failed to create job post: ${error.response?.data?.message ?? error.message}`);
 		}
 		finally {
 			btnSaveRef.current?.removeAttribute("data-kt-indicator");

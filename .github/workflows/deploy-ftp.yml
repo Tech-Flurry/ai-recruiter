@@ -34,6 +34,7 @@ jobs:
       - name: Build App
         run: |
           cd ./src/AiRecruiterCodeBase/dointo.airecruiter.web
+          cp tsconfig.ci.json tsconfig.json
           npm run build
 
       - name: Deploy via FTP

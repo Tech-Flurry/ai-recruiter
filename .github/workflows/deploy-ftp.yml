@@ -26,6 +26,13 @@ jobs:
         with:
           node-version: "18"
 
+      - name: Update API Base URL for Production
+        run: |
+          cd ./src/AiRecruiterCodeBase/dointo.airecruiter.web
+          sed -i 's|VITE_APP_API_BASE_URL=https://localhost:7072/api|VITE_APP_API_BASE_URL=$${{vars.API_BASE_URL}}|g' .env
+          echo "Updated .env file for production deployment"
+          grep VITE_APP_API_BASE_URL .env
+
       - name: Install Dependencies
         run: |
           cd ./src/AiRecruiterCodeBase/dointo.airecruiter.web

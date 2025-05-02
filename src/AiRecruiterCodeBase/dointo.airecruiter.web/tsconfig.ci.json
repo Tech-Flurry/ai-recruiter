@@ -3,6 +3,12 @@
   "compilerOptions": {
     "declaration": false,
     "declarationMap": false,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "module": "ESNext",
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true
   }
 }

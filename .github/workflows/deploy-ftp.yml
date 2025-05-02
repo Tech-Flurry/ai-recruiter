@@ -34,7 +34,7 @@ jobs:
       - name: Build App
         run: |
           cd ./src/AiRecruiterCodeBase/dointo.airecruiter.web
-          VITE_TSCONFIG=tsconfig.ci.json npm run build
+          npm run build:ci
 
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4

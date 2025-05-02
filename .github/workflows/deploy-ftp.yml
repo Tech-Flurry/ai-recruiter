@@ -26,13 +26,6 @@ jobs:
         with:
           node-version: "18"
 
-      - name: Update API Base URL for Production
-        run: |
-          cd ./src/AiRecruiterCodeBase/dointo.airecruiter.web
-          sed -i 's|VITE_APP_API_BASE_URL=https://localhost:7072/api|VITE_APP_API_BASE_URL=$${{vars.API_BASE_URL}}|g' .env
-          echo "Updated .env file for production deployment"
-          grep VITE_APP_API_BASE_URL .env
-
       - name: Install Dependencies
         run: |
           cd ./src/AiRecruiterCodeBase/dointo.airecruiter.web
@@ -41,7 +34,7 @@ jobs:
       - name: Build App
         run: |
           cd ./src/AiRecruiterCodeBase/dointo.airecruiter.web
-          npm run build:ci
+          VITE_APP_API_BASE_URL=$${{vars.API_BASE_URL}} npm run build:ci
 
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
@@ -51,4 +44,4 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./src/AiRecruiterCodeBase/dointo.airecruiter.web/dist/
           server-dir: ./
-          dangerous-clean-slate: true # Use with caution - removes existing files on the server
+          dangerous-clean-slate: false # Use with caution - removes existing files on the server

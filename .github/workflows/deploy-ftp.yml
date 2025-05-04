@@ -44,4 +44,4 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./src/AiRecruiterCodeBase/dointo.airecruiter.web/dist/
           server-dir: ./
-          dangerous-clean-slate: false # Use with caution - removes existing files on the server
+          dangerous-clean-slate: true # Use with caution - removes existing files on the server

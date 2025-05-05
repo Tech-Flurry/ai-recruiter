@@ -13,12 +13,16 @@ public interface IJobPostsService
 	Task<IProcessingState> DeleteAsync(string id);
 	Task<IProcessingState> GetByIdAsync(string id);
 	Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username);
-
-	// ✅ ADD this
 	Task<IProcessingState> GetAllAsync( );
+
+	// ✅ NEW: Basic skill extraction method
+	Task<List<string>> ExtractSkillsFromDescriptionAsync(string jobDescription);
 }
 
-internal class JobPostsService(IJobPostRepository repository, IResolver<Job, EditJobDto> resolver) : IJobPostsService
+internal class JobPostsService(
+	IJobPostRepository repository,
+	IResolver<Job, EditJobDto> resolver
+) : IJobPostsService
 {
 	private readonly IJobPostRepository _repository = repository;
 	private readonly IResolver<Job, EditJobDto> _resolver = resolver;
@@ -29,6 +33,7 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		var validationResult = new JobPostValidator( ).Validate(jobPost);
 		if (!validationResult.IsValid)
 			return validationResult.ToValidationErrorState(nameof(Job));
+
 		try
 		{
 			var savedEntity = await _repository.SaveAsync(jobPost, username);
@@ -49,6 +54,7 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		var jobPost = await _repository.GetByIdAsync(id);
 		if (jobPost is null)
 			return new BusinessErrorState("Job post not found");
+
 		var jobPostDto = _resolver.Resolve(jobPost);
 		return new SuccessState<EditJobDto>("Job post retrieved successfully", jobPostDto);
 	}
@@ -68,7 +74,6 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		return new SuccessState("Job post deleted successfully");
 	}
 
-	// ✅ NEW: Fetch all job posts
 	public async Task<IProcessingState> GetAllAsync( )
 	{
 		try
@@ -81,6 +86,28 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		{
 			return new ExceptionState("An error occurred while fetching job posts", ex.Message);
 		}
+	}
+
+	// ✅ NEW: Basic keyword matching logic for skill extraction
+	public async Task<List<string>> ExtractSkillsFromDescriptionAsync(string jobDescription)
+	{
+		await Task.CompletedTask;
+
+		var predefinedSkills = new List<string>
+		{
+			"C#", "JavaScript", "React", "Node.js", "Python", "SQL",
+			".NET", "TypeScript", "HTML", "CSS", "MongoDB", "Azure",
+			"Git", "REST API", "Agile", "Blazor"
+		};
+
+		var extracted = predefinedSkills
+			.Where(skill => jobDescription.Contains(skill, StringComparison.OrdinalIgnoreCase))
+			.ToList( );
+
+		if (!extracted.Any( ))
+			extracted.Add("General Software Development");
+
+		return extracted;
 	}
 
 	private static ValidationErrorState? ValidateJobPostId(string id)

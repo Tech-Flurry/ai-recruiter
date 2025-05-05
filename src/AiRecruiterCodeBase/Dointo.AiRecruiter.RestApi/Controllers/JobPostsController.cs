@@ -6,9 +6,9 @@ namespace Dointo.AiRecruiter.RestApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class JobPostsController(IJobPostsService service) : ControllerBase
+public class JobPostsController(IJobPostsService jobPostsService) : ControllerBase
 {
-	private readonly IJobPostsService _service = service;
+	private readonly IJobPostsService _jobPostsService = jobPostsService;
 
 	// ✅ GET: api/JobPosts/{id}
 	[HttpGet("{id}")]
@@ -16,7 +16,7 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	public async Task<IActionResult> GetJobPost(string id)
 	{
-		var result = await _service.GetByIdAsync(id);
+		var result = await _jobPostsService.GetByIdAsync(id);
 		return Ok(result);
 	}
 
@@ -29,7 +29,7 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 		if (dto is null)
 			return BadRequest(new { Message = "Invalid job post data." });
 
-		var result = await _service.SaveAsync(dto, User.Identity?.Name ?? "system");
+		var result = await _jobPostsService.SaveAsync(dto, User.Identity?.Name ?? "system");
 		return Ok(result);
 	}
 
@@ -39,21 +39,21 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	public async Task<IActionResult> DeleteJobPost(string id)
 	{
-		var result = await _service.DeleteAsync(id);
+		var result = await _jobPostsService.DeleteAsync(id);
 		return Ok(result);
 	}
+	// ✅ POST: api/JobPosts/extract-skills
+	[HttpPost("extract-skills")]
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest)]
+	public async Task<IActionResult> ExtractSkillsFromDescription([FromBody] JobDescriptionDto dto)
+	{
+		if (string.IsNullOrWhiteSpace(dto?.JobDescription))
+			return BadRequest("Job description is required.");
 
-	// 🔒 Reset method remains commented unless approved
-	// [HttpPost("reset")]
-	// [ProducesResponseType(StatusCodes.Status200OK)]
-	// public async Task<IActionResult> ResetAllJobPosts()
-	// {
-	//     var posts = await _repository.GetByOwnerAsync("system", true);
-	//     foreach (var post in posts)
-	//     {
-	//         post.IsDeleted = true;
-	//         await _repository.SaveAsync(post, "system");
-	//     }
-	//     return Ok(new { Message = "All job posts have been soft-deleted." });
-	// }
+		var skills = await _jobPostsService.ExtractSkillsFromDescriptionAsync(dto.JobDescription);
+		return Ok(skills);
+	}
+
 }
+

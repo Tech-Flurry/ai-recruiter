@@ -17,7 +17,6 @@ function JobPost() {
 	const formRef = useRef<HTMLFormElement>(null);
 	const btnSaveRef = useRef<HTMLButtonElement>(null);
 
-	// Validation States
 	const [jobTitle, setJobTitle] = useState("");
 	const [jobTitleTouched, setJobTitleTouched] = useState(false);
 
@@ -36,19 +35,33 @@ function JobPost() {
 	useEffect(() => {
 		if (tagifyRef.current) {
 			tagifyInstanceRef.current = new Tagify(tagifyRef.current, {
-				whitelist: [
-					"JavaScript",
-					"Python",
-					"React",
-					"Node.js",
-					"Java",
-					"C++",
-					"Ruby",
-				],
+				whitelist: [],
 				dropdown: { enabled: 0 },
 			});
 		}
 	}, []);
+
+	const handleJobDescriptionChange = async (value: string) => {
+		setJobDescription(value);
+
+		const wordCount = value.trim().split(/\s+/).length;
+		if (wordCount >= 30) {
+			try {
+				const response = await axios.post(
+					"https://localhost:7072/api/JobPosts/extract-skills",
+					{ jobDescription: value },
+					{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+				);
+				const skills: string[] = response.data;
+				if (Array.isArray(skills)) {
+					tagifyInstanceRef.current?.removeAllTags();
+					tagifyInstanceRef.current?.addTags(skills);
+				}
+			} catch (err) {
+				console.error("❌ Failed to extract skills", err);
+			}
+		}
+	};
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -270,7 +283,7 @@ function JobPost() {
 									as="textarea"
 									name="jobDescription"
 									value={jobDescription}
-									onChange={(e) => setJobDescription(e.target.value)}
+									onChange={(e) => handleJobDescriptionChange(e.target.value)}
 									onBlur={() => setDescriptionTouched(true)}
 									rows={4}
 									placeholder="Describe key responsibilities and requirements"
@@ -386,3 +399,4 @@ function JobPost() {
 }
 
 export default JobPost;
+

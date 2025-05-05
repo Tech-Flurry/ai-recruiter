@@ -11,61 +11,86 @@ namespace Dointo.AiRecruiter.Application.Services;
 
 public interface IJobPostsService
 {
-	Task<IProcessingState> DeleteAsync(string id);
-	Task<IProcessingState> GetByIdAsync(string id);
-	Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username);
+  Task<IProcessingState> DeleteAsync(string id);
+  Task<IProcessingState> GetByIdAsync(string id);
+  Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username);
+  Task<List<string>> ExtractSkillsFromDescriptionAsync(string jobDescription);
 }
 
-internal class JobPostsService(IJobPostRepository repository, IResolver<Job, EditJobDto> resolver) : IJobPostsService
+internal class JobPostsService(
+  IJobPostRepository repository,
+  IResolver<Job, EditJobDto> resolver
+) : IJobPostsService
 {
-	private const string JOB_STRING = nameof(Job);
-	private readonly IJobPostRepository _repository = repository;
-	private readonly IResolver<Job, EditJobDto> _resolver = resolver;
-	private readonly MessageBuilder _messageBuilder = new( );
+  private const string JOB_STRING = nameof(Job);
+  private readonly IJobPostRepository _repository = repository;
+  private readonly IResolver<Job, EditJobDto> _resolver = resolver;
+  private readonly MessageBuilder _messageBuilder = new();
 
-	public async Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username)
-	{
-		_messageBuilder.Clear( );
-		var jobPost = _resolver.Resolve(jobPostDto) ?? new Job( );
-		var validationResult = new JobPostValidator( ).Validate(jobPost);
-		if (!validationResult.IsValid)
-			return validationResult.ToValidationErrorState(nameof(Job));
-		try
-		{
-			var savedEntity = await _repository.SaveAsync(jobPost, username);
-			return new SuccessState<EditJobDto>(_messageBuilder.AddFormat(Messages.RECORD_SAVED_FORMAT).AddString(JOB_STRING).Build( ), _resolver.Resolve(savedEntity));
-		}
-		catch (Exception ex)
-		{
-			return new ExceptionState(_messageBuilder.AddFormat(Messages.ERROR_OCCURRED_FORMAT).AddString(JOB_STRING).Build( ), ex.Message);
-		}
-	}
+  public async Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username)
+  {
+    _messageBuilder.Clear();
+    var jobPost = _resolver.Resolve(jobPostDto) ?? new Job();
+    var validationResult = new JobPostValidator().Validate(jobPost);
+    if (!validationResult.IsValid)
+      return validationResult.ToValidationErrorState(nameof(Job));
 
-	public async Task<IProcessingState> GetByIdAsync(string id)
-	{
-		_messageBuilder.Clear( );
-		var jobPost = await _repository.GetByIdAsync(id);
-		if (jobPost is null)
-			return new BusinessErrorState(RecordNotFoundMessage( ));
-		var jobPostDto = _resolver.Resolve(jobPost);
-		return new SuccessState<EditJobDto>(_messageBuilder.AddFormat(Messages.RECORD_RETRIEVED_FORMAT).AddString(JOB_STRING).Build( ), jobPostDto);
-	}
+    try
+    {
+      var savedEntity = await _repository.SaveAsync(jobPost, username);
+      return new SuccessState<EditJobDto>(_messageBuilder.AddFormat(Messages.RECORD_SAVED_FORMAT).AddString(JOB_STRING).Build(), _resolver.Resolve(savedEntity));
+    }
+    catch (Exception ex)
+    {
+      return new ExceptionState(_messageBuilder.AddFormat(Messages.ERROR_OCCURRED_FORMAT).AddString(JOB_STRING).Build(), ex.Message);
+    }
+  }
 
-	public async Task<IProcessingState> DeleteAsync(string id)
-	{
-		_messageBuilder.Clear( );
-		var jobPost = await _repository.GetByIdAsync(id);
-		if (jobPost is null)
-			return new BusinessErrorState(RecordNotFoundMessage( ));
+  public async Task<IProcessingState> GetByIdAsync(string id)
+  {
+    _messageBuilder.Clear();
+    var jobPost = await _repository.GetByIdAsync(id);
+    if (jobPost is null)
+      return new BusinessErrorState(RecordNotFoundMessage());
+    var jobPostDto = _resolver.Resolve(jobPost);
+    return new SuccessState<EditJobDto>(_messageBuilder.AddFormat(Messages.RECORD_RETRIEVED_FORMAT).AddString(JOB_STRING).Build(), jobPostDto);
+  }
 
-		jobPost.IsDeleted = true;
-		await _repository.SaveAsync(jobPost, string.Empty);
-		return new SuccessState(_messageBuilder.AddFormat(Messages.RECORD_DELETED_FORMAT).AddString(JOB_STRING).Build( ));
-	}
+  public async Task<IProcessingState> DeleteAsync(string id)
+  {
+    _messageBuilder.Clear();
+    var jobPost = await _repository.GetByIdAsync(id);
+    if (jobPost is null)
+      return new BusinessErrorState(RecordNotFoundMessage());
 
-	private string RecordNotFoundMessage( )
-	{
-		_messageBuilder.Clear( );
-		return _messageBuilder.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT).AddString(JOB_STRING).Build( );
-	}
+    jobPost.IsDeleted = true;
+    await _repository.SaveAsync(jobPost, string.Empty);
+    return new SuccessState(_messageBuilder.AddFormat(Messages.RECORD_DELETED_FORMAT).AddString(JOB_STRING).Build());
+  }
+
+  private string RecordNotFoundMessage()
+  {
+    _messageBuilder.Clear();
+    return _messageBuilder.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT).AddString(JOB_STRING).Build();
+  }
+  public async Task<List<string>> ExtractSkillsFromDescriptionAsync(string jobDescription)
+  {
+    await Task.CompletedTask;
+
+    var predefinedSkills = new List<string>
+    {
+      "C#", "JavaScript", "React", "Node.js", "Python", "SQL",
+      ".NET", "TypeScript", "HTML", "CSS", "MongoDB", "Azure",
+      "Git", "REST API", "Agile", "Blazor"
+    };
+
+    var extracted = predefinedSkills
+      .Where(skill => jobDescription.Contains(skill, StringComparison.OrdinalIgnoreCase))
+      .ToList();
+
+    if (!extracted.Any())
+      extracted.Add("General Software Development");
+
+    return extracted;
+  }
 }

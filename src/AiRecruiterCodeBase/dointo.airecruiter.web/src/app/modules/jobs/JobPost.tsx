@@ -97,16 +97,14 @@ function JobPost() {
 			btnSaveRef.current?.setAttribute("data-kt-indicator", "on");
 			btnSaveRef.current?.classList.add("disabled");
 			btnSaveRef.current?.setAttribute("disabled", "disabled");
-			const apiUrl = new URL(
-				"/JobPosts",
-				import.meta.env.VITE_APP_API_BASE_URL
-			).toString();
-			console.log("API URL being used:", apiUrl);
-			console.log("Base URL from env:", import.meta.env.VITE_APP_API_BASE_URL);
-			const response = await axios.post(apiUrl, payload, {
-				headers: { "Content-Type": "application/json" },
-				withCredentials: true,
-			});
+			const response = await axios.post(
+				`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts`,
+				payload,
+				{
+					headers: { "Content-Type": "application/json" },
+					withCredentials: true,
+				}
+			);
 			let responseData = response.data;
 			if (responseData?.success) {
 				toastr.success("Job post has been saved.");

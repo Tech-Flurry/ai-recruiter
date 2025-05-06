@@ -15,6 +15,7 @@ public static class Setup
 
 		//resolvers
 		services.AddScoped<IResolver<Job, EditJobDto>, EditJobDtoResolver>( );
+		services.AddScoped<IResolver<Skill, SkillDto>, SkillDtoResolver>( );
 
 		//services
 		services.AddTransient<IJobPostsService, JobPostsService>( );

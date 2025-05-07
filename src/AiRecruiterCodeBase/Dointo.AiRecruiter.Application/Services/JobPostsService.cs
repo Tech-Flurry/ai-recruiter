@@ -75,22 +75,18 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 	}
 	public Task<List<string>> ExtractSkillsFromDescriptionAsync(string jobDescription)
 	{
-		var predefinedSkills = new List<string>
-	{
-	  "C#", "JavaScript", "React", "Node.js", "Python", "SQL",
-	  ".NET", "TypeScript", "HTML", "CSS", "MongoDB", "Azure",
-	  "Git", "REST API", "Agile", "Blazor"
-	}; //TODO:instead of these hard coded skills, load them through the database
-
+		var predefinedSkills = GetAllSkills( )
+			.Select(skillDto => skillDto.Name)
+			.ToList( );
 		var extracted = predefinedSkills
-		  .Where(skill => jobDescription.Contains(skill, StringComparison.OrdinalIgnoreCase))
-		  .ToList( );
-
+			.Where(skill => jobDescription.Contains(skill, StringComparison.OrdinalIgnoreCase))
+			.ToList( );
 		if (extracted.Count == 0)
 			extracted.Add("General Software Development");
 
 		return Task.FromResult(extracted);
 	}
+
 	//TODO:Create an api and populate these skills into the select box
 	public List<SkillDto> GetAllSkills( ) => _readOnlyRepository.Query<Skill>( ).Select(_skillsResolver.Resolve).ToList( );
 }

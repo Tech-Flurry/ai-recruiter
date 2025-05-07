@@ -28,17 +28,37 @@ function JobPost() {
 
 	const [budget, setBudget] = useState("");
 	const [budgetTouched, setBudgetTouched] = useState(false);
-	const [serverErrors, setServerErrors] = useState<{ [key: string]: string }>(
-		{}
-	);
+	const [serverErrors, setServerErrors] = useState<{ [key: string]: string }>({});
 
+	// ✅ Fetch skills from API and set them in Tagify whitelist
 	useEffect(() => {
-		if (tagifyRef.current) {
-			tagifyInstanceRef.current = new Tagify(tagifyRef.current, {
-				whitelist: [],
-				dropdown: { enabled: 0 },
-			});
-		}
+		const fetchSkills = async () => {
+			try {
+				const response = await axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/skills`, {
+					withCredentials: true,
+				});
+				const skills = response.data.map((skill: { name: string }) => skill.name);
+				if (tagifyRef.current) {
+					tagifyInstanceRef.current = new Tagify(tagifyRef.current, {
+						whitelist: skills,
+						dropdown: {
+							enabled: 0,
+							maxItems: 100,
+							closeOnSelect: false,
+							highlightFirst: true
+						}
+					});
+					tagifyInstanceRef.current.on('focus', () => {
+						tagifyInstanceRef.current.dropdown.show.call(tagifyInstanceRef.current);
+					});
+				}
+
+			} catch (error) {
+				console.error("❌ Failed to fetch skills:", error);
+			}
+		};
+
+		fetchSkills();
 	}, []);
 
 	const handleJobDescriptionChange = async (value: string) => {
@@ -48,7 +68,7 @@ function JobPost() {
 		if (wordCount >= 30) {
 			try {
 				const response = await axios.post(
-					"https://localhost:7072/api/JobPosts/extract-skills",
+					`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/extract-skills`,
 					{ jobDescription: value },
 					{ headers: { "Content-Type": "application/json" }, withCredentials: true }
 				);
@@ -70,14 +90,10 @@ function JobPost() {
 		setExperienceTouched(true);
 		setDescriptionTouched(true);
 		setBudgetTouched(true);
-
-		// Clear previous server errors
 		setServerErrors({});
 
 		const requiredSkills =
-			tagifyInstanceRef.current?.value.map(
-				(tag: { value: string }) => tag.value
-			) ?? [];
+			tagifyInstanceRef.current?.value.map((tag: { value: string }) => tag.value) ?? [];
 
 		if (
 			jobTitle.trim().length < 3 ||
@@ -110,6 +126,7 @@ function JobPost() {
 			btnSaveRef.current?.setAttribute("data-kt-indicator", "on");
 			btnSaveRef.current?.classList.add("disabled");
 			btnSaveRef.current?.setAttribute("disabled", "disabled");
+
 			const response = await axios.post(
 				`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts`,
 				payload,
@@ -118,7 +135,9 @@ function JobPost() {
 					withCredentials: true,
 				}
 			);
-			let responseData = response.data;
+
+			const responseData = response.data;
+
 			if (responseData?.success) {
 				toastr.success("Job post has been saved.");
 				navigate("/jobs/list");
@@ -126,20 +145,14 @@ function JobPost() {
 				toastr.error(`Failed to create job post: ${responseData?.message}`);
 				if (responseData?.errors) {
 					const errors: { [key: string]: string } = {};
-					responseData.errors.forEach(
-						(err: { propertyName: string; errorMessage: string }) => {
-							errors[err.propertyName] = err.errorMessage;
-						}
-					);
+					responseData.errors.forEach((err: { propertyName: string; errorMessage: string }) => {
+						errors[err.propertyName] = err.errorMessage;
+					});
 					setServerErrors(errors);
 				}
 			}
 		} catch (error: any) {
-			toastr.error(
-				`Failed to create job post: ${
-					error.response?.data?.message ?? error.message
-				}`
-			);
+			toastr.error(`Failed to create job post: ${error.response?.data?.message ?? error.message}`);
 		} finally {
 			btnSaveRef.current?.removeAttribute("data-kt-indicator");
 			btnSaveRef.current?.classList.remove("disabled");
@@ -160,57 +173,10 @@ function JobPost() {
 		formRef.current?.reset();
 	};
 
-	const getJobDescriptionWordCount = () => {
-		return jobDescription.trim()
-			? jobDescription.trim().split(/\s+/).length
-			: 0;
-	};
-	function getJobTitleClassName() {
-		if (jobTitleTouched) {
-			if (jobTitle.trim().length >= 3) {
-				return "form-control is-valid";
-			} else {
-				return "form-control is-invalid";
-			}
-		} else {
-			return "form-control";
-		}
-	}
+	const getJobDescriptionWordCount = () => jobDescription.trim().split(/\s+/).length || 0;
 
-	function getExperienceClassName() {
-		if (experienceTouched) {
-			if (experience && parseInt(experience) >= 0) {
-				return "form-control is-valid";
-			} else {
-				return "form-control is-invalid";
-			}
-		} else {
-			return "form-control";
-		}
-	}
-
-	function getDescriptionClassName() {
-		if (descriptionTouched) {
-			if (getJobDescriptionWordCount() >= 30) {
-				return "form-control is-valid";
-			} else {
-				return "form-control is-invalid";
-			}
-		} else {
-			return "form-control";
-		}
-	}
-	function getBudgetClassName() {
-		if (budgetTouched) {
-			if (budget && parseFloat(budget) > 0) {
-				return "form-control is-valid";
-			} else {
-				return "form-control is-invalid";
-			}
-		} else {
-			return "form-control";
-		}
-	}
+	const getFieldClassName = (touched: boolean, isValid: boolean) =>
+		touched ? (isValid ? "form-control is-valid" : "form-control is-invalid") : "form-control";
 
 	return (
 		<Container className="my-5 d-flex justify-content-center">
@@ -221,64 +187,45 @@ function JobPost() {
 							<Row>
 								<Col md={6}>
 									<Form.Group className="mb-3">
-										<Form.Label>
-											Job Title <span className="text-danger">*</span>
-										</Form.Label>
+										<Form.Label>Job Title <span className="text-danger">*</span></Form.Label>
 										<Form.Control
 											type="text"
 											name="jobTitle"
 											value={jobTitle}
 											onChange={(e) => setJobTitle(e.target.value)}
 											onBlur={() => setJobTitleTouched(true)}
-											placeholder="Example: Senior Software Engineer"
-											className={getJobTitleClassName()}
+											placeholder="Example: Backend Developer"
+											className={getFieldClassName(jobTitleTouched, jobTitle.trim().length >= 3)}
 										/>
 										{jobTitleTouched && jobTitle.trim().length < 3 && (
-											<div className="invalid-feedback">
-												Job Title must be at least 3 characters.
-											</div>
+											<div className="invalid-feedback">Job Title must be at least 3 characters.</div>
 										)}
-										{serverErrors.Title && (
-											<div className="invalid-feedback">
-												{serverErrors.Title}
-											</div>
-										)}
+
 									</Form.Group>
 								</Col>
 
 								<Col md={6}>
 									<Form.Group className="mb-3">
-										<Form.Label>
-											Years of Experience <span className="text-danger">*</span>
-										</Form.Label>
+										<Form.Label>Years of Experience <span className="text-danger">*</span></Form.Label>
 										<Form.Control
 											type="number"
 											name="yearsOfExperience"
 											value={experience}
 											onChange={(e) => setExperience(e.target.value)}
 											onBlur={() => setExperienceTouched(true)}
-											placeholder="Enter experience in years"
-											className={getExperienceClassName()}
+											placeholder="e.g. 2"
+											className={getFieldClassName(experienceTouched, !!experience && parseInt(experience) >= 0)}
 										/>
-										{experienceTouched &&
-											(!experience || parseInt(experience) < 0) && (
-												<div className="invalid-feedback">
-													Experience must be a non-negative number.
-												</div>
-											)}
-										{serverErrors["Experience"] && (
-											<div className="invalid-feedback">
-												{serverErrors["Experience"]}
-											</div>
+										{experienceTouched && (!experience || parseInt(experience) < 0) && (
+											<div className="invalid-feedback">Experience must be a non-negative number.</div>
 										)}
+
 									</Form.Group>
 								</Col>
 							</Row>
 
 							<Form.Group className="mb-3">
-								<Form.Label>
-									Job Description <span className="text-danger">*</span>
-								</Form.Label>
+								<Form.Label>Job Description <span className="text-danger">*</span></Form.Label>
 								<Form.Control
 									as="textarea"
 									name="jobDescription"
@@ -286,44 +233,34 @@ function JobPost() {
 									onChange={(e) => handleJobDescriptionChange(e.target.value)}
 									onBlur={() => setDescriptionTouched(true)}
 									rows={4}
-									placeholder="Describe key responsibilities and requirements"
-									className={getDescriptionClassName()}
+									placeholder="Include roles, responsibilities, and requirements"
+									className={getFieldClassName(descriptionTouched, getJobDescriptionWordCount() >= 30)}
 								/>
 								{descriptionTouched && getJobDescriptionWordCount() < 30 && (
 									<div className="invalid-feedback">
-										Job Description must have at least 30 words. (Current:{" "}
-										{getJobDescriptionWordCount()} words)
+										Job Description must be at least 30 words. (Current: {getJobDescriptionWordCount()})
 									</div>
 								)}
-								{serverErrors.JobDescription && (
-									<div className="invalid-feedback">
-										{serverErrors.JobDescription}
-									</div>
-								)}
+
 							</Form.Group>
 
 							<Form.Group className="mb-3">
-								<Form.Label>
-									Required Skills <span className="text-danger">*</span>
-								</Form.Label>
+								<Form.Label>Required Skills <span className="text-danger">*</span></Form.Label>
 								<Form.Control
 									ref={tagifyRef}
 									name="requiredSkills"
-									placeholder="Type skills and press Enter (e.g., React, Node.js)"
+									placeholder="Type skills and press Enter"
 								/>
-								{serverErrors.RequiredSkills && (
-									<div className="invalid-feedback">
-										{serverErrors.RequiredSkills}
-									</div>
+								{serverErrors.requiredSkills && (
+									<div className="invalid-feedback d-block">{serverErrors.requiredSkills}</div>
 								)}
+
 							</Form.Group>
 
 							<Row>
 								<Col md={6}>
 									<Form.Group className="mb-3">
-										<Form.Label>
-											Hiring Budget <span className="text-danger">*</span>
-										</Form.Label>
+										<Form.Label>Hiring Budget <span className="text-danger">*</span></Form.Label>
 										<div className="d-flex">
 											<Form.Control
 												type="number"
@@ -331,25 +268,19 @@ function JobPost() {
 												value={budget}
 												onChange={(e) => setBudget(e.target.value)}
 												onBlur={() => setBudgetTouched(true)}
-												placeholder="Enter budget amount"
-												className={getBudgetClassName()}
+												placeholder="e.g. 500"
+												className={getFieldClassName(budgetTouched, !!budget && parseFloat(budget) > 0)}
 											/>
+											{budgetTouched && (!budget || parseFloat(budget) <= 0) && (
+												<div className="invalid-feedback">Budget must be greater than 0.</div>
+											)}
+
 											<Form.Select name="currency" required className="ms-2">
 												<option value="USD">USD</option>
 												<option value="EUR">EUR</option>
-												<option value="GBP">GBP</option>
+												<option value="PKR">PKR</option>
 											</Form.Select>
 										</div>
-										{budgetTouched && (!budget || parseFloat(budget) <= 0) && (
-											<div className="invalid-feedback">
-												Budget must be greater than 0.
-											</div>
-										)}
-										{serverErrors.Budget && (
-											<div className="invalid-feedback">
-												{serverErrors.Budget}
-											</div>
-										)}
 									</Form.Group>
 								</Col>
 
@@ -359,36 +290,23 @@ function JobPost() {
 										<Form.Control
 											as="textarea"
 											name="additionalQuestions"
-											placeholder="Enter any screening questions"
 											rows={2}
+											placeholder="Screening or clarification questions"
 										/>
-										{serverErrors.AdditionalQuestions && (
-											<div className="invalid-feedback">
-												{serverErrors.AdditionalQuestions}
-											</div>
-										)}
 									</Form.Group>
 								</Col>
 							</Row>
 
-							<div className="d-flex gap-3 mt-4 justify-content-end">
+							<div className="d-flex justify-content-end gap-3 mt-4">
 								<Button ref={btnSaveRef} type="submit" variant="primary">
 									<span className="indicator-label">Save</span>
 									<span className="indicator-progress">
 										Saving...
-										<span className="spinner-border spinner-border-sm ms-2 align-middle"></span>
+										<span className="spinner-border spinner-border-sm ms-2"></span>
 									</span>
 								</Button>
-								<Button type="button" variant="secondary" onClick={handleReset}>
-									Reset
-								</Button>
-								<Button
-									type="button"
-									variant="dark"
-									onClick={() => navigate("/jobs/list")}
-								>
-									Cancel
-								</Button>
+								<Button type="button" variant="secondary" onClick={handleReset}>Reset</Button>
+								<Button type="button" variant="dark" onClick={() => navigate("/jobs/list")}>Cancel</Button>
 							</div>
 						</Form>
 					</KTCardBody>
@@ -399,4 +317,3 @@ function JobPost() {
 }
 
 export default JobPost;
-

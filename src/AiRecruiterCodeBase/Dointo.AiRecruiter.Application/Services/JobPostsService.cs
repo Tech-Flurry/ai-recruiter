@@ -75,7 +75,7 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		_messageBuilder.Clear( );
 		return _messageBuilder.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT).AddString(JOB_STRING).Build( );
 	}
-	public async Task<List<string>> ExtractSkillsFromDescriptionAsync(string jobDescription)
+	public Task<List<string>> ExtractSkillsFromDescriptionAsync(string jobDescription)
 	{
 		var predefinedSkills = GetAllSkills( )
 			.Select(skillDto => skillDto.Name)

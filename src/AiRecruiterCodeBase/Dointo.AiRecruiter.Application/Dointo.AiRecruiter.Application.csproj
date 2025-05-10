@@ -7,10 +7,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Folder Include="AiAbstractions\" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<ProjectReference Include="..\Dointo.AiRecruiter.Domain\Dointo.AiRecruiter.Domain.csproj" />
 		<ProjectReference Include="..\Dointo.AiRecruiter.Dtos\Dointo.AiRecruiter.Dtos.csproj" />
 	</ItemGroup>

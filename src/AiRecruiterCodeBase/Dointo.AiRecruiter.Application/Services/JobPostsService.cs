@@ -1,4 +1,5 @@
-﻿using Dointo.AiRecruiter.Application.Repositories;
+﻿using Dointo.AiRecruiter.Application.AiAbstractions;
+using Dointo.AiRecruiter.Application.Repositories;
 using Dointo.AiRecruiter.Application.Utils;
 using Dointo.AiRecruiter.Core.Abstractions;
 using Dointo.AiRecruiter.Core.Extensions;
@@ -18,13 +19,14 @@ public interface IJobPostsService
 	List<SkillDto> GetAllSkills( );
 }
 
-internal class JobPostsService(IJobPostRepository repository, IResolver<Job, EditJobDto> editJobResolver, IReadOnlyRepository readOnlyRepository, IResolver<Skill, SkillDto> skillsResolver) : IJobPostsService
+internal class JobPostsService(IJobPostRepository repository, IResolver<Job, EditJobDto> editJobResolver, IReadOnlyRepository readOnlyRepository, IResolver<Skill, SkillDto> skillsResolver, IJobsAgent jobsAgent) : IJobPostsService
 {
 	private const string JOB_STRING = nameof(Job);
 	private readonly IJobPostRepository _repository = repository;
 	private readonly IResolver<Job, EditJobDto> _editJobResolver = editJobResolver;
 	private readonly IReadOnlyRepository _readOnlyRepository = readOnlyRepository;
 	private readonly IResolver<Skill, SkillDto> _skillsResolver = skillsResolver;
+	private readonly IJobsAgent _jobsAgent = jobsAgent;
 	private readonly MessageBuilder _messageBuilder = new( );
 
 	public async Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username)
@@ -73,7 +75,7 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		_messageBuilder.Clear( );
 		return _messageBuilder.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT).AddString(JOB_STRING).Build( );
 	}
-	public Task<List<string>> ExtractSkillsFromDescriptionAsync(string jobDescription)
+	public async Task<List<string>> ExtractSkillsFromDescriptionAsync(string jobDescription)
 	{
 		var predefinedSkills = new List<string>
 	{
@@ -82,14 +84,7 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 	  "Git", "REST API", "Agile", "Blazor"
 	}; //TODO:instead of these hard coded skills, load them through the database
 
-		var extracted = predefinedSkills
-		  .Where(skill => jobDescription.Contains(skill, StringComparison.OrdinalIgnoreCase))
-		  .ToList( );
-
-		if (extracted.Count == 0)
-			extracted.Add("General Software Development");
-
-		return Task.FromResult(extracted);
+		return await _jobsAgent.ExtractSkillsAsync(jobDescription, predefinedSkills);
 	}
 	//TODO:Create an api and populate these skills into the select box
 	public List<SkillDto> GetAllSkills( ) => _readOnlyRepository.Query<Skill>( ).Select(_skillsResolver.Resolve).ToList( );

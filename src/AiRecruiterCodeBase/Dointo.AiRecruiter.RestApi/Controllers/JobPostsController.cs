@@ -54,6 +54,15 @@ public class JobPostsController(IJobPostsService jobPostsService) : ControllerBa
 		var skills = await _jobPostsService.ExtractSkillsFromDescriptionAsync(dto.JobDescription);
 		return Ok(skills);
 	}
+	// ✅ GET: api/JobPosts/skills
+	[HttpGet("skills")]
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	public IActionResult GetAllSkills( )
+	{
+		var skills = _jobPostsService.GetAllSkills( );
+		return Ok(skills);
+	}
+
 
 }
 

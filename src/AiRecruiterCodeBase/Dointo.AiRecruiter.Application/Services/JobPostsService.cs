@@ -1,4 +1,5 @@
-﻿using Dointo.AiRecruiter.Application.Repositories;
+﻿using Dointo.AiRecruiter.Application.AiAbstractions;
+using Dointo.AiRecruiter.Application.Repositories;
 using Dointo.AiRecruiter.Application.Utils;
 using Dointo.AiRecruiter.Core.Abstractions;
 using Dointo.AiRecruiter.Core.Extensions;
@@ -14,26 +15,32 @@ public interface IJobPostsService
 	Task<IProcessingState> DeleteAsync(string id);
 	Task<IProcessingState> GetByIdAsync(string id);
 	Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username);
+	Task<List<string>> ExtractSkillsFromDescriptionAsync(string jobDescription);
+	List<SkillDto> GetAllSkills( );
 }
 
-internal class JobPostsService(IJobPostRepository repository, IResolver<Job, EditJobDto> resolver) : IJobPostsService
+internal class JobPostsService(IJobPostRepository repository, IResolver<Job, EditJobDto> editJobResolver, IReadOnlyRepository readOnlyRepository, IResolver<Skill, SkillDto> skillsResolver, IJobsAgent jobsAgent) : IJobPostsService
 {
 	private const string JOB_STRING = nameof(Job);
 	private readonly IJobPostRepository _repository = repository;
-	private readonly IResolver<Job, EditJobDto> _resolver = resolver;
+	private readonly IResolver<Job, EditJobDto> _editJobResolver = editJobResolver;
+	private readonly IReadOnlyRepository _readOnlyRepository = readOnlyRepository;
+	private readonly IResolver<Skill, SkillDto> _skillsResolver = skillsResolver;
+	private readonly IJobsAgent _jobsAgent = jobsAgent;
 	private readonly MessageBuilder _messageBuilder = new( );
 
 	public async Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username)
 	{
 		_messageBuilder.Clear( );
-		var jobPost = _resolver.Resolve(jobPostDto) ?? new Job( );
+		var jobPost = _editJobResolver.Resolve(jobPostDto) ?? new Job( );
 		var validationResult = new JobPostValidator( ).Validate(jobPost);
 		if (!validationResult.IsValid)
 			return validationResult.ToValidationErrorState(nameof(Job));
+
 		try
 		{
 			var savedEntity = await _repository.SaveAsync(jobPost, username);
-			return new SuccessState<EditJobDto>(_messageBuilder.AddFormat(Messages.RECORD_SAVED_FORMAT).AddString(JOB_STRING).Build( ), _resolver.Resolve(savedEntity));
+			return new SuccessState<EditJobDto>(_messageBuilder.AddFormat(Messages.RECORD_SAVED_FORMAT).AddString(JOB_STRING).Build( ), _editJobResolver.Resolve(savedEntity));
 		}
 		catch (Exception ex)
 		{
@@ -47,7 +54,7 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		var jobPost = await _repository.GetByIdAsync(id);
 		if (jobPost is null)
 			return new BusinessErrorState(RecordNotFoundMessage( ));
-		var jobPostDto = _resolver.Resolve(jobPost);
+		var jobPostDto = _editJobResolver.Resolve(jobPost);
 		return new SuccessState<EditJobDto>(_messageBuilder.AddFormat(Messages.RECORD_RETRIEVED_FORMAT).AddString(JOB_STRING).Build( ), jobPostDto);
 	}
 
@@ -68,4 +75,20 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		_messageBuilder.Clear( );
 		return _messageBuilder.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT).AddString(JOB_STRING).Build( );
 	}
+	public Task<List<string>> ExtractSkillsFromDescriptionAsync(string jobDescription)
+	{
+		var predefinedSkills = GetAllSkills( )
+			.Select(skillDto => skillDto.Name)
+			.ToList( );
+		var extracted = predefinedSkills
+			.Where(skill => jobDescription.Contains(skill, StringComparison.OrdinalIgnoreCase))
+			.ToList( );
+		if (extracted.Count == 0)
+			extracted.Add("General Software Development");
+
+		return Task.FromResult(extracted);
+	}
+
+	//TODO:Create an api and populate these skills into the select box
+	public List<SkillDto> GetAllSkills( ) => _readOnlyRepository.Query<Skill>( ).Select(_skillsResolver.Resolve).ToList( );
 }

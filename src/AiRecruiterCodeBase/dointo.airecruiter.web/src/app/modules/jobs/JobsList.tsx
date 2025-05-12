@@ -3,8 +3,7 @@
 function JobsList() {
 
 	const navigate = useNavigate();
-	const handleButtonClick = () => 
-	{
+	const handleButtonClick = () => {
 		navigate("/jobs/create");
 	};
 
@@ -18,6 +17,8 @@ function JobsList() {
 				Post a New Job
 			</button>
 		</div>
+
+
 	);
 }
 

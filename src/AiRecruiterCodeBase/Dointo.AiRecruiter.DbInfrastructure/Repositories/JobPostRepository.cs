@@ -3,13 +3,20 @@ using Dointo.AiRecruiter.Core.Extensions;
 using Dointo.AiRecruiter.DbInfrastructure.Database;
 using Dointo.AiRecruiter.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using MongoDB.Bson;
 
 namespace Dointo.AiRecruiter.DbInfrastructure.Repositories;
 
 public class JobPostRepository(AiRecruiterDbContext dbContext) : RepositoryBase<Job>(dbContext), IJobPostRepository
 {
-	public async Task<Job?> GetByIdAsync(string id) =>
-		id.IsNotNullAndEmpty( ) ? await _entitySet.FindAsync(id) : null;
+	public async Task<Job?> GetByIdAsync(string id)
+	{
+		if (string.IsNullOrWhiteSpace(id))
+			return null;
+
+		return await _entitySet.FirstOrDefaultAsync(x => x.Id == id);
+	}
+
 
 	public async Task<List<Job>> GetByOwnerAsync(string ownerId, bool allowInactive = false)
 	{

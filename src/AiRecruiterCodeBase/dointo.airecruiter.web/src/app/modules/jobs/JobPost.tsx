@@ -1,7 +1,7 @@
 ﻿/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Container, Form, Button, Row, Col } from "react-bootstrap";
 import { KTCard, KTCardBody } from "../../../_metronic/helpers";
 import Tagify from "@yaireo/tagify";
@@ -12,26 +12,26 @@ import "toastr/build/toastr.min.css";
 
 function JobPost() {
 	const navigate = useNavigate();
+	const location = useLocation();
 	const tagifyRef = useRef<HTMLInputElement>(null);
 	const tagifyInstanceRef = useRef<any>(null);
 	const formRef = useRef<HTMLFormElement>(null);
 	const btnSaveRef = useRef<HTMLButtonElement>(null);
 
-	// Validation States
+	const queryParams = new URLSearchParams(location.search);
+	const jobId = queryParams.get("id");
+	const isEditMode = !!jobId;
+
 	const [jobTitle, setJobTitle] = useState("");
 	const [jobTitleTouched, setJobTitleTouched] = useState(false);
-
 	const [experienceTouched, setExperienceTouched] = useState(false);
 	const [experience, setExperience] = useState("");
-
 	const [jobDescription, setJobDescription] = useState("");
 	const [descriptionTouched, setDescriptionTouched] = useState(false);
-
 	const [budget, setBudget] = useState("");
 	const [budgetTouched, setBudgetTouched] = useState(false);
-	const [serverErrors, setServerErrors] = useState<{ [key: string]: string }>(
-		{}
-	);
+	const [serverErrors, setServerErrors] = useState<{ [key: string]: string }>({});
+	const [isEditable, setIsEditable] = useState(true); // NEW
 
 	useEffect(() => {
 		if (tagifyRef.current) {
@@ -50,6 +50,68 @@ function JobPost() {
 		}
 	}, []);
 
+	useEffect(() => {
+		if (isEditMode && jobId) {
+			const fetchJob = async () => {
+				try {
+					const res = await axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/${jobId}`, {
+						withCredentials: true
+					});
+
+					const job = res.data?.data;
+
+					setJobTitle(job.jobTitle || "");
+					setExperience(job.yearsOfExperience?.toString() || "");
+					setJobDescription(job.jobDescription || "");
+					setBudget(job.budgetAmount?.toString() || "");
+
+					if (job.status === "closed" || job.hasInterviews) {
+						setIsEditable(false);
+					}
+
+					const currencyInput = formRef.current?.elements.namedItem("currency") as HTMLSelectElement;
+					const additionalInput = formRef.current?.elements.namedItem("additionalQuestions") as HTMLTextAreaElement;
+					if (currencyInput) currencyInput.value = job.budgetCurrency || "USD";
+					if (additionalInput) additionalInput.value = job.additionalQuestions || "";
+
+					setTimeout(() => {
+						if (tagifyInstanceRef.current && Array.isArray(job.requiredSkills)) {
+							tagifyInstanceRef.current.removeAllTags();
+							tagifyInstanceRef.current.addTags(job.requiredSkills.map((skill: string) => ({ value: skill })));
+						}
+					}, 300);
+				} catch (err) {
+					console.error("Failed to load job post for edit:", err);
+					toastr.error("Unable to load job post.");
+				}
+			};
+			fetchJob();
+		}
+	}, [isEditMode, jobId]);
+
+	const handleJobDescriptionChange = async (value: string) => {
+		setJobDescription(value);
+		const wordCount = value.trim().split(/\s+/).length;
+
+		if (wordCount >= 30) {
+			try {
+				const response = await axios.post(
+					`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/extract-skills`,
+					{ jobDescription: value },
+					{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+				);
+
+				const skills: string[] = response.data;
+				if (Array.isArray(skills)) {
+					tagifyInstanceRef.current?.removeAllTags();
+					tagifyInstanceRef.current?.addTags(skills.map(skill => ({ value: skill })));
+				}
+			} catch (err) {
+				console.error("❌ Failed to extract skills", err);
+			}
+		}
+	};
+
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
@@ -61,10 +123,7 @@ function JobPost() {
 		// Clear previous server errors
 		setServerErrors({});
 
-		const requiredSkills =
-			tagifyInstanceRef.current?.value.map(
-				(tag: { value: string }) => tag.value
-			) ?? [];
+		const requiredSkills = (tagifyInstanceRef.current?.value ?? []).map((tag: any) => tag.value);
 
 		if (
 			jobTitle.trim().length < 3 ||
@@ -83,7 +142,7 @@ function JobPost() {
 		const additionalQuestions = formData.get("additionalQuestions") as string;
 
 		const payload = {
-			id: "",
+			id: jobId ?? "",
 			jobTitle: jobTitle.trim(),
 			yearsOfExperience: parseInt(experience),
 			jobDescription: jobDescription.trim(),
@@ -105,7 +164,7 @@ function JobPost() {
 					withCredentials: true,
 				}
 			);
-			let responseData = response.data;
+			const responseData = response.data;
 			if (responseData?.success) {
 				toastr.success("Job post has been saved.");
 				navigate("/jobs/list");
@@ -122,11 +181,7 @@ function JobPost() {
 				}
 			}
 		} catch (error: any) {
-			toastr.error(
-				`Failed to create job post: ${
-					error.response?.data?.message ?? error.message
-				}`
-			);
+			toastr.error(`Failed to ${isEditMode ? "update" : "create"} job post: ${error.response?.data?.message ?? error.message}`);
 		} finally {
 			btnSaveRef.current?.removeAttribute("data-kt-indicator");
 			btnSaveRef.current?.classList.remove("disabled");
@@ -357,9 +412,14 @@ function JobPost() {
 									</Form.Group>
 								</Col>
 							</Row>
-
-							<div className="d-flex gap-3 mt-4 justify-content-end">
-								<Button ref={btnSaveRef} type="submit" variant="primary">
+							<div className="d-flex justify-content-end gap-3 mt-4">
+								<Button
+									ref={btnSaveRef}
+									type="submit"
+									variant="primary"
+									disabled={!isEditable}
+									title={!isEditable ? "Editing disabled for closed job or one with interviews" : ""}
+								>
 									<span className="indicator-label">Save</span>
 									<span className="indicator-progress">
 										Saving...
@@ -377,6 +437,12 @@ function JobPost() {
 									Cancel
 								</Button>
 							</div>
+
+							{!isEditable && (
+								<div className="text-danger fw-semibold mt-3">
+									This job post is either closed or already has interviews. You cannot edit it.
+								</div>
+							)}
 						</Form>
 					</KTCardBody>
 				</KTCard>

@@ -1,4 +1,5 @@
 ﻿using Dointo.AiRecruiter.AiInfrastructure.Config;
+using Dointo.AiRecruiter.AiInfrastructure.Utils;
 using Dointo.AiRecruiter.Application.AiAbstractions;
 using System.Text.Json;
 
@@ -22,9 +23,7 @@ internal class JobsAgent(AiProviderFactory aiProviderFactory) : IJobsAgent
 - Match even if the job description uses similar language or synonyms (e.g., ""developing APIs"" → ""API Development"").
 - Do **not** generate any new skills not in the given list.
 - Your output should only be the list of matched skills in a **valid JSON string format**.";
-		var format = @"```json
-[""skill_1"", ""skill_2"", ""skill_3""]";
-		var completion = await aiProvider.GetCompletionAsync(OpenAiModels.GPT_4_1_NANO, context, prompt, format);
+		var completion = await aiProvider.GetCompletionAsync(OpenAiModels.GPT_4_1_NANO, context, prompt, JsonUtils.GetJsonSchemaOf(typeof(string[ ])), "array_of_strings");
 		var skills = JsonSerializer.Deserialize<List<string>>(completion);
 		return skills ?? [ ];
 	}

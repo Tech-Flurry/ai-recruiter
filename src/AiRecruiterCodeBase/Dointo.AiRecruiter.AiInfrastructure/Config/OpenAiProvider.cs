@@ -1,6 +1,7 @@
 ﻿using OpenAI;
 using OpenAI.Chat;
 using System.ClientModel;
+using OpenAiChatMessage = OpenAI.Chat.ChatMessage;
 
 namespace Dointo.AiRecruiter.AiInfrastructure.Config;
 
@@ -8,44 +9,44 @@ internal partial class AiProviderFactory
 {
 	private sealed class OpenAiProvider(AiConfig config) : AiProvider(config)
 	{
-		public override async Task<string> GetCompletionAsync(string model, string context, string prompt, string? completionFormat = null, List<ChatMessage>? history = null, CancellationToken cancellationToken = default)
+		public override async Task<string> GetCompletionAsync(string model, string context, string prompt, string? outputFormat = null, string? formatName = null, List<ChatMessage>? history = null, CancellationToken cancellationToken = default)
 		{
-			// Create the OpenAI client with options
 			var options = new OpenAIClientOptions( );
 
 			if (!string.IsNullOrEmpty(Config.ApiBaseUrl))
-			{
 				options.Endpoint = new Uri(Config.ApiBaseUrl);
+
+			var client = new ChatClient(model, new ApiKeyCredential(Config.ApiKey), new OpenAIClientOptions( ));
+
+			var messages = new List<OpenAiChatMessage>
+			{
+				OpenAiChatMessage.CreateSystemMessage(context)
+			};
+			if (history is { Count: > 0 })
+			{
+				foreach (var message in history.Where(x => x.Role is not ChatMessage.ROLE_SYSTEM))
+				{
+					messages.Add(message.Role switch
+					{
+						ChatMessage.ROLE_ASSISTANCE => OpenAiChatMessage.CreateAssistantMessage(message.Content),
+						_ => OpenAiChatMessage.CreateUserMessage(message.Content),
+					});
+				}
 			}
 
-			var client = new OpenAIClient(new ApiKeyCredential(Config.ApiBaseUrl), options);
-
-			var messages = new List<ChatMessage>( );
-
-			if (history is { Count: > 0 })
-				messages.AddRange(history);
-
-			if (messages.Count == 0)
-				messages.Add(ChatMessage.CreateSystemMessage(context));
-
-
-			// Add the user prompt
-			messages.Add(new ChatRequestUserMessage(prompt));
-
-			// Set up completion options
+			messages.Add(OpenAiChatMessage.CreateUserMessage(prompt));
 			var completionOptions = new ChatCompletionOptions
 			{
-				Messages = messages,
-				Model = model,
 				Temperature = 0.7f,
-				MaxTokens = 2000
+				ResponseFormat = !string.IsNullOrEmpty(outputFormat) && !string.IsNullOrEmpty(formatName)
+					? ChatResponseFormat.CreateJsonSchemaFormat(formatName, BinaryData.FromString(outputFormat))
+					: null,
+				MaxOutputTokenCount = 2000,
 			};
 
-			// Request the completion
-			var response = await client.GetChatCompletionsAsync(completionOptions, cancellationToken);
+			var completion = await client.CompleteChatAsync(messages, completionOptions, cancellationToken);
 
-			// Return the completion text
-			return response.Choices[0].Message.Content;
+			return completion.Value.Content[0].Text;
 		}
 	}
 }

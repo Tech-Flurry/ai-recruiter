@@ -11,6 +11,7 @@ internal record ChatMessage(string Role, string Content)
 {
 	public static ChatMessage CreateUserMessage(string content) => new("user", content);
 	public static ChatMessage CreateAssistantMessage(string content) => new("assistant", content);
+	public static ChatMessage CreateSystemMessage(string content) => new("system", content);
 }
 
 public record AiConfig(string ApiKey, string ApiBaseUrl);

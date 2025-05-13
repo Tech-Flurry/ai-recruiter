@@ -18,7 +18,8 @@ internal class JobListDtoResolver : ResolverBase<Job, JobListDto>
 					.ForMember(dest => dest.Status, op => op.MapFrom(src => src.Status.Humanize( )))
 					.ForMember(dest => dest.NumberOfInterviews, op => op.Ignore( ))
 					.ForMember(dest => dest.IsEditable, op => op.Ignore( ))
-					.ForMember(dest => dest.URL, op => op.Ignore( ));
+					.ForMember(dest => dest.URL, op => op.Ignore( ))
+					.ForMember(dest => dest.Posted, op => op.Ignore( ));
 			});
 			return new AutoMapperProvider(configuration.CreateMapper( ));
 		}

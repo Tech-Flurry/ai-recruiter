@@ -8,4 +8,5 @@ public class JobListDto
 	public bool IsEditable { get; set; }
 	public int NumberOfInterviews { get; set; }
 	public string Status { get; set; } = null!;
+	public string Posted { get; set; } = null!;
 }

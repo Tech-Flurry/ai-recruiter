@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { KTCard, KTCardBody } from "../../../_metronic/helpers";
 import { Modal, Form, Button, Table } from "react-bootstrap";
+import { Link } from "react-router-dom"; // 👈 for linking job titles
 
-// Updated Job Post Type Definition based on your backend structure
 interface JobPost {
 	id: string;
 	title: string;
@@ -18,34 +19,26 @@ const JobPost: React.FC = () => {
 	const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
 	const [closeReason, setCloseReason] = useState("");
 
-	// Fetch job posts from backend
 	useEffect(() => {
-		fetch("https://localhost:7072/api/JobPosts")
-			.then((res) => res.json())
-			.then((data) => setJobPosts(data.data)) // Adjusted for backend response shape
+		axios
+			.get("https://localhost:7072/api/JobPosts")
+			.then((res) => setJobPosts(res.data.data))
 			.catch((err) => console.error("Failed to fetch job posts:", err));
 	}, []);
 
-	// Toggle selection for bulk close
 	const toggleJobSelection = (id: string) => {
 		setSelectedJobs((prev) =>
 			prev.includes(id) ? prev.filter((jobId) => jobId !== id) : [...prev, id]
 		);
 	};
 
-	// Close selected jobs (call backend)
 	const handleCloseJobs = () => {
-		fetch("https://localhost:7072/api/JobPosts/close", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ jobIds: selectedJobs, reason: closeReason }),
-		})
-			.then((res) => {
-				if (!res.ok) throw new Error("Close failed");
-				return res.json();
+		axios
+			.post("https://localhost:7072/api/JobPosts/close", {
+				jobIds: selectedJobs,
+				reason: closeReason,
 			})
 			.then(() => {
-				// Mark jobs closed in UI
 				setJobPosts((prev) =>
 					prev.map((job) =>
 						selectedJobs.includes(job.id) ? { ...job, status: "Closed" } : job
@@ -90,7 +83,7 @@ const JobPost: React.FC = () => {
 							</th>
 							<th>Job Title</th>
 							<th>Status</th>
-							<th>Created At</th>
+							<th>Posted</th>
 							<th>Interviews</th>
 							<th>Actions</th>
 						</tr>
@@ -105,38 +98,46 @@ const JobPost: React.FC = () => {
 										onChange={() => toggleJobSelection(job.id)}
 									/>
 								</td>
-								<td>{job.title}</td>
+
+								<td>
+									<Link
+										to={`/jobs/create?id=${job.id}`}
+										className="text-primary text-hover-dark fw-bold"
+										style={{ textDecoration: "none" }}
+									>
+										{job.title}
+									</Link>
+								</td>
+
 								<td>
 									<span
-										className={`badge ${job.status === "Open" ? "bg-success" : "bg-danger"
-											}`}
+										className={`badge ${job.status === "Open" ? "bg-success" : "bg-danger"}`}
 									>
 										{job.status}
 									</span>
 								</td>
+
 								<td>{new Date(job.createdAt).toLocaleDateString()}</td>
 								<td>{job.numberOfInterviews}</td>
+
 								<td>
 									<Button
-										variant="outline-primary"
-										size="sm"
-										disabled={job.status === "Closed" || !job.isEditable}
-									>
-										Edit
-									</Button>{" "}
-									<Button
-										variant="outline-secondary"
-										size="sm"
-										onClick={() =>
-											navigator.clipboard.writeText(
-												`/jobs/conduct/${job.id}?usp=share`
-											)
-										}
+										className="btn btn-light-primary btn-sm"
+										onClick={(e) => {
+											const fullLink = `${window.location.origin}/jobs/conduct/${job.id}?usp=share`;
+											navigator.clipboard.writeText(fullLink);
+											const button = e.currentTarget;
+											const originalText = button.innerText;
+											button.innerText = "Copied!";
+											setTimeout(() => {
+												button.innerText = originalText;
+											}, 2000);
+										}}
 									>
 										Copy URI
 									</Button>{" "}
 									<Button
-										variant="outline-danger"
+										variant="danger"
 										size="sm"
 										onClick={() => {
 											setSelectedJobs([job.id]);
@@ -151,12 +152,8 @@ const JobPost: React.FC = () => {
 					</tbody>
 				</Table>
 
-				{/* Close Job Modal */}
-				<Modal
-					show={isCloseModalOpen}
-					onHide={() => setIsCloseModalOpen(false)}
-					centered
-				>
+				{/* Close Modal */}
+				<Modal show={isCloseModalOpen} onHide={() => setIsCloseModalOpen(false)} centered>
 					<Modal.Header closeButton>
 						<Modal.Title>Close Job Posts</Modal.Title>
 					</Modal.Header>
@@ -176,11 +173,7 @@ const JobPost: React.FC = () => {
 						<Button variant="secondary" onClick={() => setIsCloseModalOpen(false)}>
 							Cancel
 						</Button>
-						<Button
-							variant="danger"
-							onClick={handleCloseJobs}
-							disabled={!closeReason}
-						>
+						<Button variant="danger" onClick={handleCloseJobs} disabled={!closeReason}>
 							Close Jobs
 						</Button>
 					</Modal.Footer>

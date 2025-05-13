@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { KTCard, KTCardBody } from "../../../_metronic/helpers";
-import { Modal, Form, Button, Table } from "react-bootstrap"; // Bootstrap Modal
+import { Modal, Form, Button, Table } from "react-bootstrap";
 
-// Job Post Type Definition
+// Updated Job Post Type Definition based on your backend structure
 interface JobPost {
 	id: string;
 	title: string;
 	createdAt: string;
-	status: "open" | "closed";
-	hasInterviews: boolean;
+	status: "Open" | "Closed";
+	isEditable: boolean;
+	numberOfInterviews: number;
 }
 
 const JobPost: React.FC = () => {
@@ -17,42 +18,52 @@ const JobPost: React.FC = () => {
 	const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
 	const [closeReason, setCloseReason] = useState("");
 
-	// Fetch job posts (Mock API call)
+	// Fetch job posts from backend
 	useEffect(() => {
-		fetch("/api/job-posts")
+		fetch("https://localhost:7072/api/JobPosts")
 			.then((res) => res.json())
-			.then((data) => setJobPosts(data));
+			.then((data) => setJobPosts(data.data)) // Adjusted for backend response shape
+			.catch((err) => console.error("Failed to fetch job posts:", err));
 	}, []);
 
-	// Toggle selection for bulk closing
+	// Toggle selection for bulk close
 	const toggleJobSelection = (id: string) => {
 		setSelectedJobs((prev) =>
 			prev.includes(id) ? prev.filter((jobId) => jobId !== id) : [...prev, id]
 		);
 	};
 
-	// Handle closing jobs
+	// Close selected jobs (call backend)
 	const handleCloseJobs = () => {
-		fetch("/api/job-posts/close", {
+		fetch("https://localhost:7072/api/JobPosts/close", {
 			method: "POST",
-			body: JSON.stringify({ jobIds: selectedJobs, reason: closeReason }),
 			headers: { "Content-Type": "application/json" },
-		}).then(() => {
-			setJobPosts((prev) =>
-				prev.map((job) =>
-					selectedJobs.includes(job.id) ? { ...job, status: "closed" } : job
-				)
-			);
-			setSelectedJobs([]);
-			setIsCloseModalOpen(false);
-			setCloseReason("");
-		});
+			body: JSON.stringify({ jobIds: selectedJobs, reason: closeReason }),
+		})
+			.then((res) => {
+				if (!res.ok) throw new Error("Close failed");
+				return res.json();
+			})
+			.then(() => {
+				// Mark jobs closed in UI
+				setJobPosts((prev) =>
+					prev.map((job) =>
+						selectedJobs.includes(job.id) ? { ...job, status: "Closed" } : job
+					)
+				);
+				setSelectedJobs([]);
+				setIsCloseModalOpen(false);
+				setCloseReason("");
+			})
+			.catch((err) => {
+				console.error("Error closing jobs:", err);
+				alert("Failed to close jobs. Check server log.");
+			});
 	};
 
 	return (
 		<KTCard>
 			<KTCardBody>
-				{/* Header with Bulk Action Button */}
 				<div className="d-flex justify-content-between align-items-center mb-4">
 					<h3 className="fw-bold">Job Posts</h3>
 					<Button
@@ -63,6 +74,7 @@ const JobPost: React.FC = () => {
 						Bulk Close Selected
 					</Button>
 				</div>
+
 				<Table striped bordered hover responsive>
 					<thead>
 						<tr>
@@ -70,13 +82,16 @@ const JobPost: React.FC = () => {
 								<input
 									type="checkbox"
 									onChange={(e) =>
-										setSelectedJobs(e.target.checked ? jobPosts.map((job) => job.id) : [])
+										setSelectedJobs(
+											e.target.checked ? jobPosts.map((job) => job.id) : []
+										)
 									}
 								/>
 							</th>
 							<th>Job Title</th>
 							<th>Status</th>
 							<th>Created At</th>
+							<th>Interviews</th>
 							<th>Actions</th>
 						</tr>
 					</thead>
@@ -92,18 +107,37 @@ const JobPost: React.FC = () => {
 								</td>
 								<td>{job.title}</td>
 								<td>
-									<span className={`badge ${job.status === "open" ? "bg-success" : "bg-danger"}`}>
-										{job.status.toUpperCase()}
+									<span
+										className={`badge ${job.status === "Open" ? "bg-success" : "bg-danger"
+											}`}
+									>
+										{job.status}
 									</span>
 								</td>
 								<td>{new Date(job.createdAt).toLocaleDateString()}</td>
+								<td>{job.numberOfInterviews}</td>
 								<td>
-									<Button variant="outline-primary" disabled={job.status === "closed" || job.hasInterviews}>
+									<Button
+										variant="outline-primary"
+										size="sm"
+										disabled={job.status === "Closed" || !job.isEditable}
+									>
 										Edit
-									</Button>
-									<Button variant="outline-secondary">Copy URI</Button>
+									</Button>{" "}
+									<Button
+										variant="outline-secondary"
+										size="sm"
+										onClick={() =>
+											navigator.clipboard.writeText(
+												`/jobs/conduct/${job.id}?usp=share`
+											)
+										}
+									>
+										Copy URI
+									</Button>{" "}
 									<Button
 										variant="outline-danger"
+										size="sm"
 										onClick={() => {
 											setSelectedJobs([job.id]);
 											setIsCloseModalOpen(true);
@@ -115,11 +149,14 @@ const JobPost: React.FC = () => {
 							</tr>
 						))}
 					</tbody>
-				</Table>;
-
+				</Table>
 
 				{/* Close Job Modal */}
-				<Modal show={isCloseModalOpen} onHide={() => setIsCloseModalOpen(false)} centered>
+				<Modal
+					show={isCloseModalOpen}
+					onHide={() => setIsCloseModalOpen(false)}
+					centered
+				>
 					<Modal.Header closeButton>
 						<Modal.Title>Close Job Posts</Modal.Title>
 					</Modal.Header>
@@ -139,7 +176,11 @@ const JobPost: React.FC = () => {
 						<Button variant="secondary" onClick={() => setIsCloseModalOpen(false)}>
 							Cancel
 						</Button>
-						<Button variant="danger" onClick={handleCloseJobs} disabled={!closeReason}>
+						<Button
+							variant="danger"
+							onClick={handleCloseJobs}
+							disabled={!closeReason}
+						>
 							Close Jobs
 						</Button>
 					</Modal.Footer>
@@ -147,7 +188,6 @@ const JobPost: React.FC = () => {
 			</KTCardBody>
 		</KTCard>
 	);
-
 };
 
 export default JobPost;

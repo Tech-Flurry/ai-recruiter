@@ -2,7 +2,6 @@
 using Dointo.AiRecruiter.Application.AiAbstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Text.Json;
 
 namespace Dointo.AiRecruiter.AiInfrastructure.Config;
 
@@ -17,7 +16,7 @@ public static class Setup
 			foreach (var configSectionName in aiProviderConfigs)
 			{
 				var configSection = sp.GetRequiredService<IConfiguration>( ).GetSection(configSectionName);
-				var config = JsonSerializer.Deserialize<AiConfig>(configSection.Value!)!;
+				var config = configSection.Get<AiConfig>( ) ?? throw new InvalidOperationException($"Configuration for '{configSectionName}' is missing or invalid.");
 				aiProviderFactory.AddAiProvider(Enum.Parse<AiProviders>(configSectionName), config);
 			}
 			return aiProviderFactory;

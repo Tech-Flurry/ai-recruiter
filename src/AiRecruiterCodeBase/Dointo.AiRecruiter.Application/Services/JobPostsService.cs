@@ -75,20 +75,14 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		_messageBuilder.Clear( );
 		return _messageBuilder.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT).AddString(JOB_STRING).Build( );
 	}
-	public Task<List<string>> ExtractSkillsFromDescriptionAsync(string jobDescription)
+	public async Task<List<string>> ExtractSkillsFromDescriptionAsync(string jobDescription)
 	{
 		var predefinedSkills = GetAllSkills( )
 			.Select(skillDto => skillDto.Name)
 			.ToList( );
-		var extracted = predefinedSkills
-			.Where(skill => jobDescription.Contains(skill, StringComparison.OrdinalIgnoreCase))
-			.ToList( );
-		if (extracted.Count == 0)
-			extracted.Add("General Software Development");
-
-		return Task.FromResult(extracted);
+		var extracted = await _jobsAgent.ExtractSkillsAsync(jobDescription, predefinedSkills);
+		return extracted;
 	}
 
-	//TODO:Create an api and populate these skills into the select box
 	public List<SkillDto> GetAllSkills( ) => _readOnlyRepository.Query<Skill>( ).Select(_skillsResolver.Resolve).ToList( );
 }

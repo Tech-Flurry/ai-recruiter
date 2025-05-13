@@ -33,7 +33,7 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 	{
 		_messageBuilder.Clear( );
 		var jobPost = _editJobResolver.Resolve(jobPostDto) ?? new Job( );
-		var validationResult = new JobPostValidator( ).Validate(jobPost);
+		var validationResult = new JobValidator( ).Validate(jobPost);
 		if (!validationResult.IsValid)
 			return validationResult.ToValidationErrorState(nameof(Job));
 

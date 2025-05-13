@@ -12,6 +12,7 @@ public class AiRecruiterDbContext(DbContextOptions<AiRecruiterDbContext> options
 	private readonly IMongoDatabase _mongoDatabase = mongoDatabase;
 	// Define DbSets as MongoDB collections
 	public DbSet<Job> Jobs { get; set; } = null!;
+	public DbSet<Skill> Skills { get; set; } = null!;
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
@@ -24,6 +25,13 @@ public class AiRecruiterDbContext(DbContextOptions<AiRecruiterDbContext> options
 			entity.Property(e => e.Title).IsRequired( );
 			entity.Property(e => e.JobDescription).IsRequired( );
 			entity.Ignore(e => e.LastUpdated);
+		});
+		modelBuilder.Entity<Skill>(entity =>
+		{
+			entity.ToCollection( );
+			entity.HasKey(e => e.Id);
+			entity.Property(e => e.Id).HasConversion<ObjectId>( ).HasValueGenerator<BsonIdValueGenerator>( ).ValueGeneratedOnAdd( );
+			entity.Property(e => e.Name).IsRequired( );
 		});
 	}
 

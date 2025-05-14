@@ -105,7 +105,7 @@ function JobPost() {
 					withCredentials: true,
 				}
 			);
-			let responseData = response.data;
+			const responseData = response.data;
 			if (responseData?.success) {
 				toastr.success("Job post has been saved.");
 				navigate("/jobs/list");

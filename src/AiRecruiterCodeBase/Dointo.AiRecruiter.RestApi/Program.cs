@@ -18,6 +18,7 @@ builder.Services.AddCors(options =>
 	});
 });
 
+// ✅ Controllers
 builder.Services.AddControllers( );
 
 builder.Services.AddEndpointsApiExplorer( );

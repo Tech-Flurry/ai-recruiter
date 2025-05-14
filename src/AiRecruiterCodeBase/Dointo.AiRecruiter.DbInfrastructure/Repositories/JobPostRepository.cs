@@ -37,7 +37,6 @@ public class JobPostRepository(AiRecruiterDbContext dbContext) : RepositoryBase<
 		}
 	}
 
-	// ✅ NEW: Get all active (non-deleted) job posts
 	public async Task<List<Job>> GetAllAsync( )
 	{
 		return await QueryableEntity

@@ -18,7 +18,7 @@ internal class EditJobDtoResolver : ResolverBase<Job, EditJobDto>
 				cfg.CreateMap<Job, EditJobDto>( )
 				   .ForMember(dest => dest.JobTitle, opt => opt.MapFrom(src => src.Title))
 				   .ForMember(dest => dest.YearsOfExperience, opt => opt.MapFrom(src => src.Experience))
-				   .ForMember(dest => dest.AdditionalQuestions, opt => opt.MapFrom(src => string.Join(SEPARATOR, src.AdditionalQuestions.Select(x => x.ToBeAsked))))
+				   .ForMember(dest => dest.AdditionalQuestions, opt => opt.MapFrom(src => string.Join(SEPARATOR, ( src.AdditionalQuestions ?? Enumerable.Empty<Question>( ) ).Select(x => x.ToBeAsked))))
 				   .ForMember(dest => dest.BudgetAmount, opt => opt.MapFrom(src => src.Budget != null ? src.Budget.Amount : (double?)null))
 				   .ForMember(dest => dest.BudgetCurrency, opt => opt.MapFrom(src => src.Budget != null ? src.Budget.CurrencySymbol : null))
 				   .ReverseMap( )

@@ -6,6 +6,7 @@ using Dointo.AiRecruiter.Core.States;
 using Dointo.AiRecruiter.Domain.Entities;
 using Dointo.AiRecruiter.Domain.Validators;
 using Dointo.AiRecruiter.Dtos;
+using Humanizer;
 
 namespace Dointo.AiRecruiter.Application.Services;
 
@@ -23,9 +24,9 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 	private readonly IJobPostRepository _repository = repository;
 	private readonly IResolver<Job, EditJobDto> _editJobResolver = editJobResolver;
 	private readonly IResolver<Job, JobListDto> _jobListResolver = jobListResolver;
-    private readonly MessageBuilder _messageBuilder = new();
+	private readonly MessageBuilder _messageBuilder = new( );
 
-    public async Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username)
+	public async Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username)
 	{
 		_messageBuilder.Clear( );
 		var jobPost = _editJobResolver.Resolve(jobPostDto) ?? new Job( );
@@ -51,6 +52,7 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 			var dto = _jobListResolver.Resolve(x);
 			dto.IsEditable = x.Status != Domain.ValueObjects.JobStatus.Closed;
 			dto.URL = $"/jobs/conduct/{x.Id}?usp=share";
+			dto.Posted = x.CreatedAt.Humanize( );
 			return dto;
 		}).ToList( );
 		return new SuccessState<List<JobListDto>>("Job posts retrieved successfully", jobPostDtos);

@@ -13,9 +13,6 @@ internal partial class AiProviderFactory
 		{
 			var options = new OpenAIClientOptions( );
 
-			if (!string.IsNullOrEmpty(Config.ApiBaseUrl))
-				options.Endpoint = new Uri(Config.ApiBaseUrl);
-
 			var client = new ChatClient(model, new ApiKeyCredential(Config.ApiKey), options);
 
 			var messages = new List<OpenAiChatMessage>

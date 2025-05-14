@@ -1,0 +1,41 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "chrome",
+      "preLaunchTask": "start-react-dev",
+      "request": "launch",
+      "name": "Launch Chrome against React App",
+      "url": "http://localhost:62835", // Changed from https to http to match Vite's default
+      "webRoot": "${workspaceFolder}/src/AiRecruiterCodeBase/dointo.airecruiter.web"
+    },
+    {
+      "name": "Launch .NET API",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/src/AiRecruiterCodeBase/Dointo.AiRecruiter.RestApi/bin/Debug/net9.0/Dointo.AiRecruiter.RestApi.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/AiRecruiterCodeBase/Dointo.AiRecruiter.RestApi",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+        "uriFormat": "%s/swagger" // This will open Swagger directly
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "sourceFileMap": {
+        "/Views": "${workspaceFolder}/src/AiRecruiterCodeBase/Dointo.AiRecruiter.RestApi/Views"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Run Full Stack (Client + API)",
+      "configurations": ["Launch .NET API", "Launch Chrome against React App"],
+      "stopAll": true
+    }
+  ]
+}

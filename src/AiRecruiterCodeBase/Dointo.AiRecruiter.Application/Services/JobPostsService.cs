@@ -1,4 +1,5 @@
 ﻿using Dointo.AiRecruiter.Application.Repositories;
+using Dointo.AiRecruiter.Application.Utils;
 using Dointo.AiRecruiter.Core.Abstractions;
 using Dointo.AiRecruiter.Core.Extensions;
 using Dointo.AiRecruiter.Core.States;
@@ -18,12 +19,15 @@ public interface IJobPostsService
 
 internal class JobPostsService(IJobPostRepository repository, IResolver<Job, EditJobDto> editJobResolver, IResolver<Job, JobListDto> jobListResolver) : IJobPostsService
 {
+	private const string JOB_STRING = nameof(Job);
 	private readonly IJobPostRepository _repository = repository;
 	private readonly IResolver<Job, EditJobDto> _editJobResolver = editJobResolver;
 	private readonly IResolver<Job, JobListDto> _jobListResolver = jobListResolver;
+    private readonly MessageBuilder _messageBuilder = new();
 
-	public async Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username)
+    public async Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username)
 	{
+		_messageBuilder.Clear( );
 		var jobPost = _editJobResolver.Resolve(jobPostDto) ?? new Job( );
 		var validationResult = new JobPostValidator( ).Validate(jobPost);
 		if (!validationResult.IsValid)
@@ -31,11 +35,11 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		try
 		{
 			var savedEntity = await _repository.SaveAsync(jobPost, username);
-			return new SuccessState<Job>("Job post has been saved", savedEntity);
+			return new SuccessState<EditJobDto>(_messageBuilder.AddFormat(Messages.RECORD_SAVED_FORMAT).AddString(JOB_STRING).Build( ), _editJobResolver.Resolve(savedEntity));
 		}
 		catch (Exception ex)
 		{
-			return new ExceptionState("An error occurred while saving the job post", ex.Message);
+			return new ExceptionState(_messageBuilder.AddFormat(Messages.ERROR_OCCURRED_FORMAT).AddString(JOB_STRING).Build( ), ex.Message);
 		}
 	}
 
@@ -54,39 +58,29 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 
 	public async Task<IProcessingState> GetByIdAsync(string id)
 	{
-		var validateResult = ValidateJobPostId(id);
-		if (validateResult is not null)
-			return validateResult;
-
+		_messageBuilder.Clear( );
 		var jobPost = await _repository.GetByIdAsync(id);
 		if (jobPost is null)
-			return new BusinessErrorState("Job post not found");
+			return new BusinessErrorState(RecordNotFoundMessage( ));
 		var jobPostDto = _editJobResolver.Resolve(jobPost);
-		return new SuccessState<EditJobDto>("Job post retrieved successfully", jobPostDto);
+		return new SuccessState<EditJobDto>(_messageBuilder.AddFormat(Messages.RECORD_RETRIEVED_FORMAT).AddString(JOB_STRING).Build( ), jobPostDto);
 	}
 
 	public async Task<IProcessingState> DeleteAsync(string id)
 	{
-		var validateResult = ValidateJobPostId(id);
-		if (validateResult is not null)
-			return validateResult;
-
+		_messageBuilder.Clear( );
 		var jobPost = await _repository.GetByIdAsync(id);
 		if (jobPost is null)
-			return new BusinessErrorState("Job post not found");
+			return new BusinessErrorState(RecordNotFoundMessage( ));
+
 		jobPost.IsDeleted = true;
 		await _repository.SaveAsync(jobPost, string.Empty);
-		return new SuccessState("Job post deleted successfully");
+		return new SuccessState(_messageBuilder.AddFormat(Messages.RECORD_DELETED_FORMAT).AddString(JOB_STRING).Build( ));
 	}
-	private static ValidationErrorState? ValidateJobPostId(string id)
+
+	private string RecordNotFoundMessage( )
 	{
-		if (id.IsNullOrEmpty( ))
-		{
-			return new ValidationErrorState("Job post ID cannot be null or empty")
-			{
-				Errors = [new ValidationErrorState.ValidationFailure(nameof(id), "Job post ID cannot be null or empty")]
-			};
-		}
-		return null;
+		_messageBuilder.Clear( );
+		return _messageBuilder.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT).AddString(JOB_STRING).Build( );
 	}
 }

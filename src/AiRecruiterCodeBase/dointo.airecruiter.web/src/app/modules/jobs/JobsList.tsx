@@ -59,7 +59,23 @@ const JobPost: React.FC = () => {
 			});
 	};
 
+
+	const navigate = useNavigate();
+	const handleButtonClick = () => 
+	{
+		navigate("/jobs/create");
+	};
+
 	return (
+		<div style={{ display: "flex", justifyContent: "flex-end", padding: "10px" }}>
+			<button
+				type="button"
+				className="btn btn-secondary"
+				onClick={handleButtonClick}
+			>
+				Post a New Job
+			</button>
+		</div>
 		<KTCard>
 			<KTCardBody>
 				<div className="d-flex justify-content-between align-items-center mb-4">

@@ -10,6 +10,7 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 {
 	private readonly IJobPostsService _service = service;
 
+	// ✅ GET: api/JobPosts/{id}
 	[HttpGet("{id}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -27,10 +28,12 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 	{
 		if (dto is null)
 			return BadRequest(new { Message = "Invalid job post data." });
+
 		var result = await _service.SaveAsync(dto, User.Identity?.Name ?? "system");
 		return Ok(result);
 	}
 
+	// ✅ DELETE: api/JobPosts/{id}
 	[HttpDelete("{id}")]
 	[ProducesResponseType(StatusCodes.Status204NoContent)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]

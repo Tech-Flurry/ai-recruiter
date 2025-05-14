@@ -1,0 +1,74 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/src/AiRecruiterCodeBase/Dointo.AiRecruiter.RestApi/Dointo.AiRecruiter.RestApi.csproj",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "build-react",
+      "command": "npm",
+      "type": "shell",
+      "options": {
+        "cwd": "${workspaceFolder}/src/AiRecruiterCodeBase/dointo.airecruiter.web"
+      },
+      "args": ["run", "build"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "preview-react",
+      "command": "npm",
+      "type": "shell",
+      "dependsOn": "build-react",
+      "options": {
+        "cwd": "${workspaceFolder}/src/AiRecruiterCodeBase/dointo.airecruiter.web"
+      },
+      "args": ["run", "preview"],
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "custom",
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Local:",
+          "endsPattern": "http://localhost:\\d+"
+        }
+      }
+    },
+    {
+      "label": "start-react-dev",
+      "command": "npm",
+      "type": "shell",
+      "options": {
+        "cwd": "${workspaceFolder}/src/AiRecruiterCodeBase/dointo.airecruiter.web"
+      },
+      "args": ["run", "dev"],
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "custom",
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*",
+          "endsPattern": "Local:.*(http://localhost:\\d+)"
+        }
+      }
+    }
+  ]
+}

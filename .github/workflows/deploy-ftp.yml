@@ -1,0 +1,47 @@
+name: Build and Deploy via FTP
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
+
+jobs:
+  build_and_deploy_job:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    name: Build and Deploy Job
+    environment: Production
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+          lfs: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install Dependencies
+        run: |
+          cd ./src/AiRecruiterCodeBase/dointo.airecruiter.web
+          npm ci
+
+      - name: Build App
+        run: |
+          cd ./src/AiRecruiterCodeBase/dointo.airecruiter.web
+          VITE_APP_API_BASE_URL=${{vars.API_BASE_URL}} npm run build:ci
+
+      - name: Deploy via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ vars.FTP_SERVER_ADD }}
+          username: ${{ vars.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./src/AiRecruiterCodeBase/dointo.airecruiter.web/dist/
+          server-dir: ./
+          dangerous-clean-slate: true # Use with caution - removes existing files on the server

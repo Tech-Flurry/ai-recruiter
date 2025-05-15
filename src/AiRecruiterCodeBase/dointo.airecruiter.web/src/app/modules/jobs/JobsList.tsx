@@ -25,7 +25,7 @@ const JobPost: React.FC = () => {
 
 	useEffect(() => {
 		axios
-			.get("https://localhost:7072/api/JobPosts")
+			.get(`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts`)
 			.then((res) => setJobPosts(res.data.data))
 			.catch((err) => console.error("Failed to fetch job posts:", err));
 	}, []);

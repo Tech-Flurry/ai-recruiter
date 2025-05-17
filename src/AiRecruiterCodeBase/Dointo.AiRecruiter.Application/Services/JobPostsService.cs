@@ -5,6 +5,7 @@ using Dointo.AiRecruiter.Core.Extensions;
 using Dointo.AiRecruiter.Core.States;
 using Dointo.AiRecruiter.Domain.Entities;
 using Dointo.AiRecruiter.Domain.Validators;
+using Dointo.AiRecruiter.Domain.ValueObjects;
 using Dointo.AiRecruiter.Dtos;
 using Humanizer;
 
@@ -16,6 +17,9 @@ public interface IJobPostsService
 	Task<IProcessingState> GetByIdAsync(string id);
 	Task<IProcessingState> GetJobsListAsync( );
 	Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username);
+	Task<bool> CloseJobAsync(string jobId, string reason);
+	Task CloseMultipleJobsAsync(List<string> jobIds, string reason);
+
 }
 
 internal class JobPostsService(IJobPostRepository repository, IResolver<Job, EditJobDto> editJobResolver, IResolver<Job, JobListDto> jobListResolver) : IJobPostsService
@@ -85,4 +89,33 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		_messageBuilder.Clear( );
 		return _messageBuilder.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT).AddString(JOB_STRING).Build( );
 	}
+	public async Task<bool> CloseJobAsync(string jobId, string reason)
+{
+    var job = await _repository.GetByIdAsync(jobId);
+    if (job == null)
+        return false;
+
+    job.Status = Domain.ValueObjects.JobStatus.Closed;
+    job.ClosedReason = reason;
+
+    await _repository.SaveAsync(job, "system");
+    return true;
+}
+
+public async Task CloseMultipleJobsAsync(List<string> jobIds, string reason)
+
+{
+    foreach (var jobId in jobIds)
+{
+    var job = await _repository.GetByIdAsync(jobId); // jobId is already string
+    if (job != null)
+    {
+        job.Status = JobStatus.Closed;
+        job.ClosedReason = reason;
+        await _repository.SaveAsync(job, "system");
+    }
+}
+
+}
+
 }

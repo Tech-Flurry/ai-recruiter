@@ -25,9 +25,9 @@ const JobPost: React.FC = () => {
 
 	useEffect(() => {
 		axios
-			.get(`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts`)
-			.then((res) => setJobPosts(res.data.data))
-			.catch((err) => console.error("Failed to fetch job posts:", err));
+		.get<{ data: JobPost[] }>(`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts`)
+		.then((res) => setJobPosts(res.data.data))
+		.catch((err) => console.error("Failed to fetch job posts:", err));
 	}, []);
 
 	const toggleJobSelection = (id: string) => {
@@ -38,7 +38,7 @@ const JobPost: React.FC = () => {
 
 	const handleCloseJobs = () => {
 		axios
-			.post("https://localhost:7072/api/JobPosts/close", {
+			.post("https://localhost:7072/api/JobPosts/close-multiple", {
 				jobIds: selectedJobs,
 				reason: closeReason,
 			})

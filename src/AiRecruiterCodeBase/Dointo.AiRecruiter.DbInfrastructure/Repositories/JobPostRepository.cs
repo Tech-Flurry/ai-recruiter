@@ -3,7 +3,6 @@ using Dointo.AiRecruiter.Core.Extensions;
 using Dointo.AiRecruiter.DbInfrastructure.Database;
 using Dointo.AiRecruiter.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using MongoDB.Bson;
 
 namespace Dointo.AiRecruiter.DbInfrastructure.Repositories;
 

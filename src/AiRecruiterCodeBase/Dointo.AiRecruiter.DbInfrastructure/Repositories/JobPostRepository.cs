@@ -9,13 +9,7 @@ namespace Dointo.AiRecruiter.DbInfrastructure.Repositories;
 
 public class JobPostRepository(AiRecruiterDbContext dbContext) : RepositoryBase<Job>(dbContext), IJobPostRepository
 {
-	public async Task<Job?> GetByIdAsync(string id)
-	{
-		if (string.IsNullOrWhiteSpace(id))
-			return null;
-
-		return await _entitySet.FirstOrDefaultAsync(x => x.Id == id);
-	}
+	public async Task<Job?> GetByIdAsync(string id) => await _entitySet.FindAsync(id);
 
 
 	public async Task<List<Job>> GetByOwnerAsync(string ownerId, bool allowInactive = false)

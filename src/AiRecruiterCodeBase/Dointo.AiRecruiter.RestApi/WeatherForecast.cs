@@ -10,3 +10,10 @@ public class WeatherForecast
 
 	public string? Summary { get; set; }
 }
+public class Jobs
+{
+    public int JobId { get; set; }
+
+    public string? Title { get; set; }
+
+}

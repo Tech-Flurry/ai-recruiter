@@ -14,13 +14,13 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 	[HttpGet("{id}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<IActionResult> GetJobPost(string id)
-	{
-		var result = await _service.GetByIdAsync(id);
-		return Ok(result);
-	}
+	public async Task<IActionResult> GetJobPost(string id) => Ok(await _service.GetByIdAsync(id));
 
-	// ✅ POST: api/JobPosts
+	[HttpGet]
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<JobListDto>))]
+	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	public async Task<IActionResult> GetJobsList( ) => Ok(await _service.GetJobsListAsync( ));
+
 	[HttpPost]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -37,23 +37,21 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 	[HttpDelete("{id}")]
 	[ProducesResponseType(StatusCodes.Status204NoContent)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<IActionResult> DeleteJobPost(string id)
-	{
-		var result = await _service.DeleteAsync(id);
-		return Ok(result);
-	}
+	public async Task<IActionResult> DeleteJobPost(string id) => Ok(await _service.DeleteAsync(id));
 
-	// 🔒 Reset method remains commented unless approved
-	// [HttpPost("reset")]
-	// [ProducesResponseType(StatusCodes.Status200OK)]
-	// public async Task<IActionResult> ResetAllJobPosts()
-	// {
-	//     var posts = await _repository.GetByOwnerAsync("system", true);
-	//     foreach (var post in posts)
-	//     {
-	//         post.IsDeleted = true;
-	//         await _repository.SaveAsync(post, "system");
-	//     }
-	//     return Ok(new { Message = "All job posts have been soft-deleted." });
-	// }
+	//[HttpPost("reset")]
+	//[ProducesResponseType(StatusCodes.Status200OK)]
+	//public async Task<IActionResult> ResetAllJobPosts( )
+	//{
+	//	_logger.LogWarning("Resetting all job posts by marking them deleted.");
+
+	//	var posts = await _repository.GetByOwnerAsync("system", true); // Adjust owner logic as needed
+	//	foreach (var post in posts)
+	//	{
+	//		post.IsDeleted = true;
+	//		await _repository.SaveAsync(post, "system");
+	//	}
+
+	//	return Ok(new { Message = "All job posts have been soft-deleted." });
+	//} //TODO: Need to confirm with the team if this is needed or not.
 }

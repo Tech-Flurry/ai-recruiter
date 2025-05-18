@@ -1,4 +1,5 @@
-﻿using Dointo.AiRecruiter.DbInfrastructure.Database;
+﻿using Dointo.AiRecruiter.Core.States;
+using Dointo.AiRecruiter.DbInfrastructure.Database;
 
 namespace Dointo.AiRecruiter.RestApi.Middleware;
 
@@ -17,7 +18,8 @@ public class UnitOfWorkMiddleware(RequestDelegate next, ILogger<UnitOfWorkMiddle
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Transaction failed. Rolling back.");
-			throw;
+			context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+			await context.Response.WriteAsJsonAsync(new ErrorState("An error occurred while processing your request."));
 		}
 	}
 }

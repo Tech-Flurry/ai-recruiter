@@ -60,16 +60,5 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 	[HttpPost("close-multiple")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
-	public async Task<IActionResult> CloseMultipleJobPosts([FromBody] CloseMultipleJobsDto dto)
-	{
-		if (dto is { JobIds.Count: 0 } || string.IsNullOrWhiteSpace(dto.Reason))
-			return BadRequest(new { Message = "Invalid data: job IDs and reason are required." });
-
-		await _service.CloseMultipleJobsAsync(dto.JobIds, dto.Reason);
-
-		return Ok(new { Message = "Selected job posts closed successfully." });
-	}
-
-
-
+	public async Task<IActionResult> CloseMultipleJobPosts([FromBody] CloseMultipleJobsDto dto) => Ok(await _service.CloseMultipleJobsAsync(dto));
 }

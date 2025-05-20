@@ -17,9 +17,7 @@ public interface IJobPostsService
 	Task<IProcessingState> GetByIdAsync(string id);
 	Task<IProcessingState> GetJobsListAsync( );
 	Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username);
-	Task<bool> CloseJobAsync(string jobId, string reason);
-	Task CloseMultipleJobsAsync(List<string> jobIds, string reason);
-
+	Task<IProcessingState> CloseMultipleJobsAsync(CloseMultipleJobsDto closeJobDto);
 }
 
 internal class JobPostsService(IJobPostRepository repository, IResolver<Job, EditJobDto> editJobResolver, IResolver<Job, JobListDto> jobListResolver) : IJobPostsService
@@ -84,36 +82,24 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		return new SuccessState(_messageBuilder.AddFormat(Messages.RECORD_DELETED_FORMAT).AddString(JOB_STRING).Build( ));
 	}
 
+	public async Task<IProcessingState> CloseMultipleJobsAsync(CloseMultipleJobsDto closeJobDto)
+	{
+		if (closeJobDto is { JobIds.Count: 0 })
+			return new BusinessErrorState(Messages.JOB_NOT_CLOSED);
+		foreach (var jobId in closeJobDto.JobIds)
+		{
+			var job = await _repository.GetByIdAsync(jobId);
+			if (job is null)
+				continue;
+			job.Status = JobStatus.Closed;
+			job.ClosedReason = !string.IsNullOrEmpty(closeJobDto.Reason) ? closeJobDto.Reason : Messages.JOB_CLOSE_NO_REASON;
+		}
+		return new SuccessState(Messages.JOB_CLOSED);
+	}
+
 	private string RecordNotFoundMessage( )
 	{
 		_messageBuilder.Clear( );
 		return _messageBuilder.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT).AddString(JOB_STRING).Build( );
 	}
-	public async Task<bool> CloseJobAsync(string jobId, string reason)
-	{
-		var job = await _repository.GetByIdAsync(jobId);
-		if (job is null)
-			return false;
-
-		job.Status = Domain.ValueObjects.JobStatus.Closed;
-		job.ClosedReason = reason;
-
-		return true;
-	}
-
-	public async Task CloseMultipleJobsAsync(List<string> jobIds, string reason)
-
-	{
-		foreach (var jobId in jobIds)
-		{
-			var job = await _repository.GetByIdAsync(jobId);
-			if (job is not null)
-			{
-				job.Status = JobStatus.Closed;
-				job.ClosedReason = reason;
-			}
-		}
-
-	}
-
 }

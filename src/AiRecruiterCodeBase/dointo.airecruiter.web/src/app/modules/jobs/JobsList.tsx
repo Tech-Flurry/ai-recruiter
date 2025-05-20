@@ -119,7 +119,7 @@ const JobPost: React.FC = () => {
 									</td>
 									<td>
 										<Link
-											to={`/jobs/id=${job.id}`}
+											to={`/jobs/create?id=${job.id}`}
 											className="text-primary text-hover-dark fw-bold"
 											style={{ textDecoration: "none" }}
 										>

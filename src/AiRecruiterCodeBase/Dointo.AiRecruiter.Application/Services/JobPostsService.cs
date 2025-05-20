@@ -92,7 +92,7 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 	public async Task<bool> CloseJobAsync(string jobId, string reason)
 	{
 		var job = await _repository.GetByIdAsync(jobId);
-		if (job == null)
+		if (job is null)
 			return false;
 
 		job.Status = Domain.ValueObjects.JobStatus.Closed;
@@ -107,7 +107,7 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		foreach (var jobId in jobIds)
 		{
 			var job = await _repository.GetByIdAsync(jobId);
-			if (job != null)
+			if (job is not null)
 			{
 				job.Status = JobStatus.Closed;
 				job.ClosedReason = reason;

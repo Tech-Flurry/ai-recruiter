@@ -54,8 +54,8 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 
 	//	return Ok(new { Message = "All job posts have been soft-deleted." });
 	//} //TODO: Need to confirm with the team if this is needed or not.
-	
-		// ✅ PATCH: api/JobPosts/{id}/close
+
+	// ✅ PATCH: api/JobPosts/{id}/close
 	[HttpPatch("{id}/close")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -67,7 +67,7 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 
 		var result = await _service.CloseJobAsync(id, dto.Reason);
 		if (!result)
-			return NotFound();
+			return NotFound( );
 
 		return Ok(new { Message = "Job post closed successfully." });
 	}
@@ -78,7 +78,7 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
 	public async Task<IActionResult> CloseMultipleJobPosts([FromBody] CloseMultipleJobsDto dto)
 	{
-		if (dto == null || dto.JobIds == null || !dto.JobIds.Any( ) || string.IsNullOrWhiteSpace(dto.Reason))
+		if (dto is { JobIds.Count: 0 } || string.IsNullOrWhiteSpace(dto.Reason))
 			return BadRequest(new { Message = "Invalid data: job IDs and reason are required." });
 
 		await _service.CloseMultipleJobsAsync(dto.JobIds, dto.Reason);

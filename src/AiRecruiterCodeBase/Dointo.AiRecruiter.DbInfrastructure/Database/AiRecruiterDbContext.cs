@@ -13,20 +13,19 @@ public class AiRecruiterDbContext(DbContextOptions<AiRecruiterDbContext> options
 	private readonly IMongoDatabase _mongoDatabase = mongoDatabase;
 	// Define DbSets as MongoDB collections
 	public DbSet<Job> Jobs { get; set; } = null!;
+	public DbSet<Candidate> Candidates { get; set; } = null!;
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
 		base.OnModelCreating(modelBuilder);
 		modelBuilder.Entity<Job>(entity =>
 		{
-			entity.ToCollection( );
-			entity.HasKey(e => e.Id);
-			entity.Property(e => e.Id).HasConversion<ObjectId>( ).HasValueGenerator<BsonIdValueGenerator>( ).ValueGeneratedOnAdd( );
+			entity.SetupBaseEntity( );
 			entity.Property(e => e.Title).IsRequired( );
 			entity.Property(e => e.JobDescription).IsRequired( );
-            entity.Property(e => e.Status).HasConversion<string>(x => x.ToString(), x => Enum.Parse<JobStatus>(x));
-            entity.Ignore(e => e.LastUpdated);
+			entity.Property(e => e.Status).HasConversion(x => x.ToString( ), x => Enum.Parse<JobStatus>(x));
 		});
+		modelBuilder.Entity<Candidate>(entity => entity.SetupBaseEntity( ));
 	}
 
 	public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

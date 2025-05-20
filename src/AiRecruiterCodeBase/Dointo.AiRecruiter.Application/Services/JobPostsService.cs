@@ -90,32 +90,30 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		return _messageBuilder.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT).AddString(JOB_STRING).Build( );
 	}
 	public async Task<bool> CloseJobAsync(string jobId, string reason)
-{
-    var job = await _repository.GetByIdAsync(jobId);
-    if (job == null)
-        return false;
+	{
+		var job = await _repository.GetByIdAsync(jobId);
+		if (job == null)
+			return false;
 
-    job.Status = Domain.ValueObjects.JobStatus.Closed;
-    job.ClosedReason = reason;
+		job.Status = Domain.ValueObjects.JobStatus.Closed;
+		job.ClosedReason = reason;
 
-    await _repository.SaveAsync(job, "system");
-    return true;
-}
+		return true;
+	}
 
-public async Task CloseMultipleJobsAsync(List<string> jobIds, string reason)
+	public async Task CloseMultipleJobsAsync(List<string> jobIds, string reason)
 
-{
-    foreach (var jobId in jobIds)
-{
-    var job = await _repository.GetByIdAsync(jobId); // jobId is already string
-    if (job != null)
-    {
-        job.Status = JobStatus.Closed;
-        job.ClosedReason = reason;
-        await _repository.SaveAsync(job, "system");
-    }
-}
+	{
+		foreach (var jobId in jobIds)
+		{
+			var job = await _repository.GetByIdAsync(jobId);
+			if (job != null)
+			{
+				job.Status = JobStatus.Closed;
+				job.ClosedReason = reason;
+			}
+		}
 
-}
+	}
 
 }

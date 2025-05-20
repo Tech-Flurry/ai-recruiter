@@ -10,6 +10,11 @@ import axios from "axios";
 import toastr from "toastr";
 import "toastr/build/toastr.min.css";
 
+interface JobPostResponse {
+	success?: boolean;
+	message?: string;
+	errors?: { propertyName: string; errorMessage: string }[];
+  }
 function JobPost() {
 	const navigate = useNavigate();
 	const tagifyRef = useRef<HTMLInputElement>(null);
@@ -105,19 +110,18 @@ function JobPost() {
 					withCredentials: true,
 				}
 			);
-			const responseData = response.data;
-			if (responseData?.success) {
-				toastr.success("Job post has been saved.");
+			const responseData = response.data as JobPostResponse;
+
+			if (responseData.success || response.status === 200) {
+				toastr.success(responseData.message || "Job post has been saved.");
 				navigate("/jobs/list");
 			} else {
-				toastr.error(`Failed to create job post: ${responseData?.message}`);
-				if (responseData?.errors) {
+				toastr.error(`Failed to create job post: ${responseData.message}`);
+				if (responseData.errors) {
 					const errors: { [key: string]: string } = {};
-					responseData.errors.forEach(
-						(err: { propertyName: string; errorMessage: string }) => {
-							errors[err.propertyName] = err.errorMessage;
-						}
-					);
+					responseData.errors.forEach((err: { propertyName: string; errorMessage: string }) => {
+						errors[err.propertyName] = err.errorMessage;
+					});
 					setServerErrors(errors);
 				}
 			}

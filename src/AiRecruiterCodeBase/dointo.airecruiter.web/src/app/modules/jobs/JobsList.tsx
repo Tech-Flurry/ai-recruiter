@@ -38,7 +38,7 @@ const JobPost: React.FC = () => {
 
 	const handleCloseJobs = () => {
 		axios
-			.post("https://localhost:7072/api/JobPosts/close-multiple", {
+			.post(`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/close-multiple`, {
 				jobIds: selectedJobs,
 				reason: closeReason,
 			})

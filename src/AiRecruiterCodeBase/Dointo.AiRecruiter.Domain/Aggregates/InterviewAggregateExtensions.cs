@@ -1,7 +1,7 @@
 ﻿using Dointo.AiRecruiter.Domain.Entities;
 
 namespace Dointo.AiRecruiter.Domain.Aggregates;
-public static class InterviewAggregatesExtensions
+public static class InterviewAggregateExtensions
 {
 	public static List<Interviewee> GetSortedInterviewees(this Job job, IQueryable<Interview> interviews, int? top = null)
 	{

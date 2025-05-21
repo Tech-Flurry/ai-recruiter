@@ -14,6 +14,9 @@ public class Interview : BaseEntity
 
 public record InterviewJob(string JobId, string JobTitle);
 
-public record Interviewee(string CandidateId, string Name, string Email, string Phone, int Experience);
+public record Interviewee(string CandidateId, string Name, string Email, string Phone, int Experience)
+{
+	public string? JobFitAnalysis { get; set; } = null;
+}
 
 public record ScoredQuestion(Question Question, double ScoreObtained, double TotalScore);

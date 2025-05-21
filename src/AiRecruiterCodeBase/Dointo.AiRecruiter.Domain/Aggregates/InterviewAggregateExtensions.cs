@@ -11,10 +11,4 @@ public static class InterviewAggregateExtensions
 		var percentage = totalScore is 0 ? 0 : interview.GetObtainedScore( ) / totalScore * 100;
 		return Math.Round(percentage, 2);
 	}
-	public static double GetFinalScore(this Interview interview)
-	{
-		var totalScore = interview.GetTotalScore( );
-		var percentage = ( totalScore is 0 ? 0 : interview.GetObtainedScore( ) / totalScore ) * 10;
-		return Math.Round(percentage, 1);
-	}
 }

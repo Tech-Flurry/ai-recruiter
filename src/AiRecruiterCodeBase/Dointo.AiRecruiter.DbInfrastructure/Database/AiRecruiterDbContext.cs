@@ -14,6 +14,7 @@ public class AiRecruiterDbContext(DbContextOptions<AiRecruiterDbContext> options
 	// Define DbSets as MongoDB collections
 	public DbSet<Job> Jobs { get; set; } = null!;
 	public DbSet<Candidate> Candidates { get; set; } = null!;
+	public DbSet<Interview> Interviews { get; set; } = null!;
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
@@ -26,6 +27,7 @@ public class AiRecruiterDbContext(DbContextOptions<AiRecruiterDbContext> options
 			entity.Property(e => e.Status).HasConversion(x => x.ToString( ), x => Enum.Parse<JobStatus>(x));
 		});
 		modelBuilder.Entity<Candidate>(entity => entity.SetupBaseEntity( ));
+		modelBuilder.Entity<Interview>(entity => entity.SetupBaseEntity( ));
 	}
 
 	public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

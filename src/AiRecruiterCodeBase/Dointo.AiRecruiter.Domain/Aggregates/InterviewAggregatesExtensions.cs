@@ -1,0 +1,37 @@
+﻿using Dointo.AiRecruiter.Domain.Entities;
+
+namespace Dointo.AiRecruiter.Domain.Aggregates;
+public static class InterviewAggregatesExtensions
+{
+	public static List<Interviewee> GetSortedInterviewees(this Job job, IQueryable<Interview> interviews, int? top = null)
+	{
+		var interviewList = interviews
+							.Where(x => x.Job.JobId == job.Id)
+							.Select(i => new { Interview = i, i.Interviewee, i.Questions })
+							.ToList( );
+
+		var sortedInterviewees = interviewList
+			.OrderByDescending(i => i.Interview.GetScorePercentage( ))
+			.Select(i => i.Interviewee);
+
+		if (top.HasValue)
+			sortedInterviewees = sortedInterviewees.Take(top.Value);
+
+		return [.. sortedInterviewees];
+	}
+
+	public static double GetObtainedScore(this Interview interview) => interview.Questions.Sum(s => s.ScoreObtained);
+	public static double GetTotalScore(this Interview interview) => interview.Questions.Sum(s => s.TotalScore);
+	public static double GetScorePercentage(this Interview interview)
+	{
+		var totalScore = interview.GetTotalScore( );
+		var percentage = totalScore is 0 ? 0 : interview.GetObtainedScore( ) / totalScore * 100;
+		return Math.Round(percentage, 2);
+	}
+	public static double GetFinalScore(this Interview interview)
+	{
+		var totalScore = interview.GetTotalScore( );
+		var percentage = ( totalScore is 0 ? 0 : interview.GetObtainedScore( ) / totalScore ) * 10;
+		return Math.Round(percentage, 1);
+	}
+}

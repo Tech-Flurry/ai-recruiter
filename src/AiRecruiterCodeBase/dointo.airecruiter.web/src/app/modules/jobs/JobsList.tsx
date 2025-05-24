@@ -114,6 +114,7 @@ const JobPost: React.FC = () => {
 										<input
 											type="checkbox"
 											checked={selectedJobs.includes(job.id)}
+											disabled={job.status === "Closed"}
 											onChange={() => toggleJobSelection(job.id)}
 										/>
 									</td>
@@ -171,30 +172,31 @@ const JobPost: React.FC = () => {
 										</button>
 
 										{/* Close Job Icon */}
-										<span
-											className="svg-icon svg-icon-2x"
-											style={{
-												cursor: "pointer",
-												color: selectedJobs.includes(job.id) ? "#F1416C" : "#A1A5B7",
-												transition: "color 0.2s ease",
-											}}
-											onClick={() => {
-												setSelectedJobs([job.id]);
-												setIsCloseModalOpen(true);
-											}}
-											title="Close Job"
-										>
-											<svg
-												xmlns="http://www.w3.org/2000/svg"
-												width="24px"
-												height="24px"
-												viewBox="0 0 24 24"
-												fill="currentColor"
+										{job.status !== "Closed" && (
+											<span
+												className="svg-icon svg-icon-2x"
+												style={{
+													cursor: "pointer",
+													color: selectedJobs.includes(job.id) ? "#F1416C" : "#A1A5B7",
+													transition: "color 0.2s ease",
+												}}
+												onClick={() => {
+													setSelectedJobs([job.id]);
+													setIsCloseModalOpen(true);
+												}}
+												title="Close Job"
 											>
-												<g stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
-													<rect x="0" y="0" width="24" height="24" />
-													<path
-														d="M12,22 C6.4771525,22 2,17.5228475 2,12 
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													width="24px"
+													height="24px"
+													viewBox="0 0 24 24"
+													fill="currentColor"
+												>
+													<g stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
+														<rect x="0" y="0" width="24" height="24" />
+														<path
+															d="M12,22 C6.4771525,22 2,17.5228475 2,12 
 														C2,6.4771525 6.4771525,2 12,2 
 														C17.5228475,2 22,6.4771525 22,12 
 														C22,17.5228475 17.5228475,22 12,22 Z 
@@ -209,13 +211,13 @@ const JobPost: React.FC = () => {
 														C4.5384079,18.6805435 4.5384079,18.0473785 4.92893219,17.6568542 
 														L17.6568542,4.92893219 
 														C18.0473785,4.5384079 18.6805435,4.5384079 19.0710678,4.92893219 Z"
-														fill="currentColor"
-														fillRule="nonzero"
-														opacity="0.9"
-													/>
-												</g>
-											</svg>
-										</span>
+															fill="currentColor"
+															fillRule="nonzero"
+															opacity="0.9"
+														/>
+													</g>
+												</svg>
+											</span>)}
 									</td>
 								</tr>
 							))}

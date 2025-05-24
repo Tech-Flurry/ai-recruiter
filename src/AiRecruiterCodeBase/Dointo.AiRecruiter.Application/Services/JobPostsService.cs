@@ -6,6 +6,7 @@ using Dointo.AiRecruiter.Core.States;
 using Dointo.AiRecruiter.Domain.Aggregates;
 using Dointo.AiRecruiter.Domain.Entities;
 using Dointo.AiRecruiter.Domain.Validators;
+using Dointo.AiRecruiter.Domain.ValueObjects;
 using Dointo.AiRecruiter.Dtos;
 using Humanizer;
 
@@ -17,6 +18,7 @@ public interface IJobPostsService
 	Task<IProcessingState> GetByIdAsync(string id);
 	Task<IProcessingState> GetJobsListAsync( );
 	Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username);
+	Task<IProcessingState> CloseMultipleJobsAsync(CloseMultipleJobsDto closeJobDto);
 }
 
 internal class JobPostsService(IJobPostRepository repository, IResolver<Job, EditJobDto> editJobResolver, IResolver<Job, JobListDto> jobListResolver, IReadOnlyRepository readOnlyRepository) : IJobPostsService
@@ -82,6 +84,21 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		jobPost.IsDeleted = true;
 		await _repository.SaveAsync(jobPost, string.Empty);
 		return new SuccessState(_messageBuilder.AddFormat(Messages.RECORD_DELETED_FORMAT).AddString(JOB_STRING).Build( ));
+	}
+
+	public async Task<IProcessingState> CloseMultipleJobsAsync(CloseMultipleJobsDto closeJobDto)
+	{
+		if (closeJobDto is { JobIds.Count: 0 })
+			return new BusinessErrorState(Messages.JOB_NOT_CLOSED);
+		foreach (var jobId in closeJobDto.JobIds)
+		{
+			var job = await _repository.GetByIdAsync(jobId);
+			if (job is null)
+				continue;
+			job.Status = JobStatus.Closed;
+			job.ClosedReason = !string.IsNullOrEmpty(closeJobDto.Reason) ? closeJobDto.Reason : Messages.JOB_CLOSE_NO_REASON;
+		}
+		return new SuccessState(Messages.JOB_CLOSED);
 	}
 
 	private string RecordNotFoundMessage( )

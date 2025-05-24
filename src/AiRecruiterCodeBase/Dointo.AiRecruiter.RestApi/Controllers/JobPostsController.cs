@@ -54,4 +54,11 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 
 	//	return Ok(new { Message = "All job posts have been soft-deleted." });
 	//} //TODO: Need to confirm with the team if this is needed or not.
+
+
+	// ✅ POST: api/JobPosts/close-multiple
+	[HttpPost("close-multiple")]
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest)]
+	public async Task<IActionResult> CloseMultipleJobPosts([FromBody] CloseMultipleJobsDto dto) => Ok(await _service.CloseMultipleJobsAsync(dto));
 }

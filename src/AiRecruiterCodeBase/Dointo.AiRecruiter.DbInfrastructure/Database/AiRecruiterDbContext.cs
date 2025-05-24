@@ -32,6 +32,7 @@ public class AiRecruiterDbContext(DbContextOptions<AiRecruiterDbContext> options
 
 	public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
 	{
+		Database.AutoTransactionBehavior = AutoTransactionBehavior.Never;
 		foreach (var entry in ChangeTracker.Entries( ))
 		{
 			if (entry.State is not EntityState.Modified && entry.State is not EntityState.Added)

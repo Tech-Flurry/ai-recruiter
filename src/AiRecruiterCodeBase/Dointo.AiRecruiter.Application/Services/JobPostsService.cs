@@ -18,6 +18,10 @@ public interface IJobPostsService
 	Task<IProcessingState> GetJobsListAsync( );
 	Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username);
 	Task<IProcessingState> CloseMultipleJobsAsync(CloseMultipleJobsDto closeJobDto);
+	Task<JobPostDto> GetJobStatusByIdAsync(string id);
+
+
+
 }
 
 internal class JobPostsService(IJobPostRepository repository, IResolver<Job, EditJobDto> editJobResolver, IResolver<Job, JobListDto> jobListResolver) : IJobPostsService
@@ -102,4 +106,28 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		_messageBuilder.Clear( );
 		return _messageBuilder.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT).AddString(JOB_STRING).Build( );
 	}
+	public async Task<JobPostDto> GetJobStatusByIdAsync(string id)
+	{
+		var job = await _repository.GetByIdAsync(id);
+		if (job == null) return null;
+
+		return new JobPostDto
+		{
+			Id = job.Id,
+			JobTitle = job.Title,
+			Status = job.Status.ToString( ),
+			HasInterviews = job.HasInterviews ?? false,
+
+			YearsOfExperience = job.Experience,
+			JobDescription = job.JobDescription,
+			RequiredSkills = job.RequiredSkills ?? new List<string>( ),
+			BudgetAmount = job.Budget?.Amount ?? 0,
+			BudgetCurrency = job.Budget?.CurrencySymbol ?? "USD",
+			AdditionalQuestions = string.Join(", ", job.AdditionalQuestions?.Select(q => q.ToBeAsked) ?? [ ])
+		};
+
+	}
+
+
+
 }

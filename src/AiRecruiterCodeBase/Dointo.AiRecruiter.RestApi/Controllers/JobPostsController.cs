@@ -14,7 +14,12 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 	[HttpGet("{id}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<IActionResult> GetJobPost(string id) => Ok(await _service.GetByIdAsync(id));
+	public async Task<IActionResult> GetJobPost(string id)
+	{
+		var jobDto = await _service.GetJobStatusByIdAsync(id); // ✅ This uses the service
+		if (jobDto == null) return NotFound( );
+		return Ok(new { data = jobDto });
+	}
 
 	[HttpGet]
 	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<JobListDto>))]
@@ -32,6 +37,7 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 		var result = await _service.SaveAsync(dto, User.Identity?.Name ?? "system");
 		return Ok(result);
 	}
+	
 
 	// ✅ DELETE: api/JobPosts/{id}
 	[HttpDelete("{id}")]

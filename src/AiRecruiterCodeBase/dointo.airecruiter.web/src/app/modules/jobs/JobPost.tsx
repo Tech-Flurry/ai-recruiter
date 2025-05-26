@@ -10,12 +10,28 @@ import axios from "axios";
 import toastr from "toastr";
 import "toastr/build/toastr.min.css";
 
+
+interface JobPost {
+	id: string;
+	jobTitle: string;
+	yearsOfExperience: number;
+	jobDescription: string;
+	requiredSkills: string[];
+	budgetAmount: number;
+	budgetCurrency: string;
+	status: "Open" | "Closed";
+	hasInterviews?: boolean;
+	additionalQuestions?: string;
+}
+
+
 interface JobPostResponse {
 	success?: boolean;
 	message?: string;
 	errors?: { propertyName: string; errorMessage: string }[];
   }
 function JobPost() {
+	const [status, setStatus] = useState<string>("");
 	const navigate = useNavigate();
 	const location = useLocation();
 	const tagifyRef = useRef<HTMLInputElement>(null);
@@ -56,43 +72,56 @@ function JobPost() {
 	}, []);
 
 	useEffect(() => {
-		if (isEditMode && jobId) {
-			const fetchJob = async () => {
-				try {
-					const res = await axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/${jobId}`, {
-						withCredentials: true
-					});
+	if (isEditMode && jobId) {
+		const fetchJob = async () => {
+			try {
+				const res = await axios.get<{ data: JobPost }>(
+					`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/${jobId}`,
+					{ withCredentials: true }
+				);
 
-					const job = res.data?.data;
+				const job = res.data?.data as JobPost;
 
-					setJobTitle(job.jobTitle || "");
-					setExperience(job.yearsOfExperience?.toString() || "");
-					setJobDescription(job.jobDescription || "");
-					setBudget(job.budgetAmount?.toString() || "");
 
-					if (job.status === "closed" || job.hasInterviews) {
-						setIsEditable(false);
+				console.log("🟢 Full job response:", job);
+
+				// Set form fields
+				setJobTitle(job.jobTitle || "");
+				setExperience(job.yearsOfExperience?.toString() || "");
+				setJobDescription(job.jobDescription || "");
+				setBudget(job.budgetAmount?.toString() || "");
+
+				// Set editable status
+				setIsEditable(job.status !== "Closed" && !job.hasInterviews);
+
+				// Set currency and additional questions
+				const currencyInput = formRef.current?.elements.namedItem("currency") as HTMLSelectElement;
+				const additionalInput = formRef.current?.elements.namedItem("additionalQuestions") as HTMLTextAreaElement;
+				if (currencyInput) currencyInput.value = job.budgetCurrency || "USD";
+				if (additionalInput) additionalInput.value = job.additionalQuestions || "";
+
+				// Set skills
+				setTimeout(() => {
+					if (tagifyInstanceRef.current && Array.isArray(job.requiredSkills)) {
+						tagifyInstanceRef.current.removeAllTags();
+						tagifyInstanceRef.current.addTags(
+							job.requiredSkills.map((skill: string) => ({ value: skill }))
+						);
 					}
+				}, 300);
 
-					const currencyInput = formRef.current?.elements.namedItem("currency") as HTMLSelectElement;
-					const additionalInput = formRef.current?.elements.namedItem("additionalQuestions") as HTMLTextAreaElement;
-					if (currencyInput) currencyInput.value = job.budgetCurrency || "USD";
-					if (additionalInput) additionalInput.value = job.additionalQuestions || "";
+			} catch (err) {
+				console.error("❌ Failed to load job post for edit:", err);
+				toastr.error("Unable to load job post.");
+			}
+		};
 
-					setTimeout(() => {
-						if (tagifyInstanceRef.current && Array.isArray(job.requiredSkills)) {
-							tagifyInstanceRef.current.removeAllTags();
-							tagifyInstanceRef.current.addTags(job.requiredSkills.map((skill: string) => ({ value: skill })));
-						}
-					}, 300);
-				} catch (err) {
-					console.error("Failed to load job post for edit:", err);
-					toastr.error("Unable to load job post.");
-				}
-			};
-			fetchJob();
-		}
-	}, [isEditMode, jobId]);
+		fetchJob();
+	}
+}, [isEditMode, jobId]);
+
+
+	  
 
 	const handleJobDescriptionChange = async (value: string) => {
 		setJobDescription(value);
@@ -106,7 +135,7 @@ function JobPost() {
 					{ headers: { "Content-Type": "application/json" }, withCredentials: true }
 				);
 
-				const skills: string[] = response.data;
+				const skills= response.data as string[] 
 				if (Array.isArray(skills)) {
 					tagifyInstanceRef.current?.removeAllTags();
 					tagifyInstanceRef.current?.addTags(skills.map(skill => ({ value: skill })));
@@ -319,6 +348,7 @@ function JobPost() {
 										)}
 									</Form.Group>
 								</Col>
+								
 							</Row>
 
 							<Form.Group className="mb-3">
@@ -422,7 +452,7 @@ function JobPost() {
 									type="submit"
 									variant="primary"
 									disabled={!isEditable}
-									title={!isEditable ? "Editing disabled for closed job or one with interviews" : ""}
+									title={!isEditable ? "Editing is disabled for closed job or one with interviews" : ""}
 								>
 									<span className="indicator-label">Save</span>
 									<span className="indicator-progress">
@@ -430,9 +460,17 @@ function JobPost() {
 										<span className="spinner-border spinner-border-sm ms-2 align-middle"></span>
 									</span>
 								</Button>
-								<Button type="button" variant="secondary" onClick={handleReset}>
+
+								<Button
+									type="button"
+									variant="secondary"
+									onClick={handleReset}
+									disabled={!isEditable}
+									title={!isEditable ? "Reset disabled because job is closed or has interviews" : ""}
+								>
 									Reset
 								</Button>
+
 								<Button
 									type="button"
 									variant="dark"

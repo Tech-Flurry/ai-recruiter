@@ -9,4 +9,5 @@ internal static class Messages
 	public const string JOB_CLOSED = "Jobs closed successfully";
 	public const string JOB_NOT_CLOSED = "No jobs were closed";
 	public const string JOB_CLOSE_NO_REASON = "No reason given to close";
+	public const string JOB_NOT_CLOSED_DUE_TO_INTERVIEWS = "This job post cannot be deleted because interviews have already occurred. You may close it instead.";
 }

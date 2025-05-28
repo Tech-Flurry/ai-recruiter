@@ -11,7 +11,5 @@ public class Job : BaseEntity
 	public Money? Budget { get; set; }
 	public JobStatus Status { get; set; } = JobStatus.Open;
 	public string? ClosedReason { get; set; }
-	public int? NumberOfInterviews { get; set; } = 0;
-	public bool? HasInterviews { get; set; }
 	public List<Question> AdditionalQuestions { get; set; } = null!;
 }

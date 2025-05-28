@@ -1,5 +1,4 @@
 ﻿using Dointo.AiRecruiter.Application.Services;
-using Dointo.AiRecruiter.Core.States;
 using Dointo.AiRecruiter.Dtos;
 using Microsoft.AspNetCore.Mvc;
 
@@ -26,49 +25,13 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 	[HttpPost]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
-	public async Task<IActionResult> CreateOrUpdateJobPost([FromBody] EditJobDto dto)
-	{
-		if (dto is null)
-			return BadRequest(new { Message = "Invalid job post data." });
-
-		var result = await _service.SaveAsync(dto, User.Identity?.Name ?? "system");
-		return Ok(result);
-	}
-
+	public async Task<IActionResult> CreateOrUpdateJobPost([FromBody] EditJobDto dto) => Ok(await _service.SaveAsync(dto, User.Identity?.Name ?? "system"));
 
 	// ✅ DELETE: api/JobPosts/{id}
 	[HttpDelete("{id}")]
 	[ProducesResponseType(StatusCodes.Status204NoContent)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<IActionResult> DeleteJobPost(string id)
-	{
-		var result = await _service.DeleteAsync(id);
-
-		if (result is BusinessErrorState error)
-			return BadRequest(new { success = false, message = error.Message });
-
-		return Ok(new { success = true, message = result.Message });
-	}
-
-
-
-
-	//[HttpPost("reset")]
-	//[ProducesResponseType(StatusCodes.Status200OK)]
-	//public async Task<IActionResult> ResetAllJobPosts( )
-	//{
-	//	_logger.LogWarning("Resetting all job posts by marking them deleted.");
-
-	//	var posts = await _repository.GetByOwnerAsync("system", true); // Adjust owner logic as needed
-	//	foreach (var post in posts)
-	//	{
-	//		post.IsDeleted = true;
-	//		await _repository.SaveAsync(post, "system");
-	//	}
-
-	//	return Ok(new { Message = "All job posts have been soft-deleted." });
-	//} //TODO: Need to confirm with the team if this is needed or not.
-
+	public async Task<IActionResult> DeleteJobPost(string id) => Ok(await _service.DeleteAsync(id));
 
 	// ✅ POST: api/JobPosts/close-multiple
 	[HttpPost("close-multiple")]

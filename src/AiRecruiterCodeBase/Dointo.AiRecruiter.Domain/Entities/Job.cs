@@ -10,5 +10,6 @@ public class Job : BaseEntity
 	public List<string> RequiredSkills { get; set; } = [ ];
 	public Money? Budget { get; set; }
 	public JobStatus Status { get; set; } = JobStatus.Open;
-	public List<Question> AdditionalQuestions { get; set; } = null!;
+	public string? ClosedReason { get; set; }
+	public List<Question> AdditionalQuestions { get; set; } = [ ];
 }

@@ -32,6 +32,7 @@ bld/
 [Ll]og/
 [Ll]ogs/
 /src/AiRecruiterCodeBase/dointo.airecruiter.web/public/theme/
+/src/AiRecruiterCodeBase/dointo.airecruiter.web/obj/Debug/package.g.props
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/

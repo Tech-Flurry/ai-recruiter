@@ -56,6 +56,7 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		var jobPostDtos = jobs.Select(x =>
 		{
 			var dto = _jobListResolver.Resolve(x);
+			dto.NumberOfInterviews = x.NumberOfInterviews ?? 0;
 			dto.IsEditable = x.Status != Domain.ValueObjects.JobStatus.Closed;
 			dto.URL = $"/jobs/conduct/{x.Id}?usp=share";
 			dto.Posted = x.CreatedAt.Humanize( );
@@ -77,14 +78,22 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 	public async Task<IProcessingState> DeleteAsync(string id)
 	{
 		_messageBuilder.Clear( );
+
 		var jobPost = await _repository.GetByIdAsync(id);
 		if (jobPost is null)
 			return new BusinessErrorState(RecordNotFoundMessage( ));
 
+		if (jobPost.HasInterviews == true)
+			return new BusinessErrorState("This job post cannot be deleted because interviews have already occurred. You may close it instead.");
+
 		jobPost.IsDeleted = true;
 		await _repository.SaveAsync(jobPost, string.Empty);
-		return new SuccessState(_messageBuilder.AddFormat(Messages.RECORD_DELETED_FORMAT).AddString(JOB_STRING).Build( ));
+
+		return new SuccessState(
+		 _messageBuilder.AddFormat(Messages.RECORD_DELETED_FORMAT).AddString(JOB_STRING).Build( )
+		);
 	}
+
 
 	public async Task<IProcessingState> CloseMultipleJobsAsync(CloseMultipleJobsDto closeJobDto)
 	{

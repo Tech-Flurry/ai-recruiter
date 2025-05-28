@@ -10,7 +10,6 @@ import axios from "axios";
 import toastr from "toastr";
 import "toastr/build/toastr.min.css";
 
-
 interface JobPost {
 	id: string;
 	jobTitle: string;
@@ -24,12 +23,11 @@ interface JobPost {
 	additionalQuestions?: string;
 }
 
-
 interface JobPostResponse {
 	success?: boolean;
 	message?: string;
 	errors?: { propertyName: string; errorMessage: string }[];
-  }
+}
 function JobPost() {
 	const [status, setStatus] = useState<string>("");
 	const navigate = useNavigate();
@@ -51,7 +49,9 @@ function JobPost() {
 	const [descriptionTouched, setDescriptionTouched] = useState(false);
 	const [budget, setBudget] = useState("");
 	const [budgetTouched, setBudgetTouched] = useState(false);
-	const [serverErrors, setServerErrors] = useState<{ [key: string]: string }>({});
+	const [serverErrors, setServerErrors] = useState<{ [key: string]: string }>(
+		{}
+	);
 	const [isEditable, setIsEditable] = useState(true); // NEW
 
 	useEffect(() => {
@@ -72,56 +72,59 @@ function JobPost() {
 	}, []);
 
 	useEffect(() => {
-	if (isEditMode && jobId) {
-		const fetchJob = async () => {
-			try {
-				const res = await axios.get<{ data: JobPost }>(
-					`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/${jobId}`,
-					{ withCredentials: true }
-				);
+		if (isEditMode && jobId) {
+			const fetchJob = async () => {
+				try {
+					const res = await axios.get<{ data: JobPost }>(
+						`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/${jobId}`,
+						{ withCredentials: true }
+					);
 
-				const job = res.data?.data as JobPost;
+					const job = res.data?.data as JobPost;
 
+					console.log("🟢 Full job response:", job);
 
-				console.log("🟢 Full job response:", job);
+					// Set form fields
+					setJobTitle(job.jobTitle || "");
+					setExperience(job.yearsOfExperience?.toString() || "");
+					setJobDescription(job.jobDescription || "");
+					setBudget(job.budgetAmount?.toString() || "");
 
-				// Set form fields
-				setJobTitle(job.jobTitle || "");
-				setExperience(job.yearsOfExperience?.toString() || "");
-				setJobDescription(job.jobDescription || "");
-				setBudget(job.budgetAmount?.toString() || "");
+					// Set editable status
+					setIsEditable(job.status !== "Closed" && !job.hasInterviews);
 
-				// Set editable status
-				setIsEditable(job.status !== "Closed" && !job.hasInterviews);
+					// Set currency and additional questions
+					const currencyInput = formRef.current?.elements.namedItem(
+						"currency"
+					) as HTMLSelectElement;
+					const additionalInput = formRef.current?.elements.namedItem(
+						"additionalQuestions"
+					) as HTMLTextAreaElement;
+					if (currencyInput) currencyInput.value = job.budgetCurrency || "USD";
+					if (additionalInput)
+						additionalInput.value = job.additionalQuestions || "";
 
-				// Set currency and additional questions
-				const currencyInput = formRef.current?.elements.namedItem("currency") as HTMLSelectElement;
-				const additionalInput = formRef.current?.elements.namedItem("additionalQuestions") as HTMLTextAreaElement;
-				if (currencyInput) currencyInput.value = job.budgetCurrency || "USD";
-				if (additionalInput) additionalInput.value = job.additionalQuestions || "";
+					// Set skills
+					setTimeout(() => {
+						if (
+							tagifyInstanceRef.current &&
+							Array.isArray(job.requiredSkills)
+						) {
+							tagifyInstanceRef.current.removeAllTags();
+							tagifyInstanceRef.current.addTags(
+								job.requiredSkills.map((skill: string) => ({ value: skill }))
+							);
+						}
+					}, 300);
+				} catch (err) {
+					console.error("❌ Failed to load job post for edit:", err);
+					toastr.error("Unable to load job post.");
+				}
+			};
 
-				// Set skills
-				setTimeout(() => {
-					if (tagifyInstanceRef.current && Array.isArray(job.requiredSkills)) {
-						tagifyInstanceRef.current.removeAllTags();
-						tagifyInstanceRef.current.addTags(
-							job.requiredSkills.map((skill: string) => ({ value: skill }))
-						);
-					}
-				}, 300);
-
-			} catch (err) {
-				console.error("❌ Failed to load job post for edit:", err);
-				toastr.error("Unable to load job post.");
-			}
-		};
-
-		fetchJob();
-	}
-}, [isEditMode, jobId]);
-
-
-	  
+			fetchJob();
+		}
+	}, [isEditMode, jobId]);
 
 	const handleJobDescriptionChange = async (value: string) => {
 		setJobDescription(value);
@@ -132,13 +135,18 @@ function JobPost() {
 				const response = await axios.post(
 					`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/extract-skills`,
 					{ jobDescription: value },
-					{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+					{
+						headers: { "Content-Type": "application/json" },
+						withCredentials: true,
+					}
 				);
 
-				const skills= response.data as string[] 
+				const skills = response.data as string[];
 				if (Array.isArray(skills)) {
 					tagifyInstanceRef.current?.removeAllTags();
-					tagifyInstanceRef.current?.addTags(skills.map(skill => ({ value: skill })));
+					tagifyInstanceRef.current?.addTags(
+						skills.map((skill) => ({ value: skill }))
+					);
 				}
 			} catch (err) {
 				console.error("❌ Failed to extract skills", err);
@@ -157,7 +165,9 @@ function JobPost() {
 		// Clear previous server errors
 		setServerErrors({});
 
-		const requiredSkills = (tagifyInstanceRef.current?.value ?? []).map((tag: any) => tag.value);
+		const requiredSkills = (tagifyInstanceRef.current?.value ?? []).map(
+			(tag: any) => tag.value
+		);
 
 		if (
 			jobTitle.trim().length < 3 ||
@@ -207,14 +217,20 @@ function JobPost() {
 				toastr.error(`Failed to create job post: ${responseData.message}`);
 				if (responseData.errors) {
 					const errors: { [key: string]: string } = {};
-					responseData.errors.forEach((err: { propertyName: string; errorMessage: string }) => {
-						errors[err.propertyName] = err.errorMessage;
-					});
+					responseData.errors.forEach(
+						(err: { propertyName: string; errorMessage: string }) => {
+							errors[err.propertyName] = err.errorMessage;
+						}
+					);
 					setServerErrors(errors);
 				}
 			}
 		} catch (error: any) {
-			toastr.error(`Failed to ${isEditMode ? "update" : "create"} job post: ${error.response?.data?.message ?? error.message}`);
+			toastr.error(
+				`Failed to ${isEditMode ? "update" : "create"} job post: ${
+					error.response?.data?.message ?? error.message
+				}`
+			);
 		} finally {
 			btnSaveRef.current?.removeAttribute("data-kt-indicator");
 			btnSaveRef.current?.classList.remove("disabled");
@@ -348,7 +364,6 @@ function JobPost() {
 										)}
 									</Form.Group>
 								</Col>
-								
 							</Row>
 
 							<Form.Group className="mb-3">
@@ -452,7 +467,11 @@ function JobPost() {
 									type="submit"
 									variant="primary"
 									disabled={!isEditable}
-									title={!isEditable ? "Editing is disabled for closed job or one with interviews" : ""}
+									title={
+										!isEditable
+											? "Editing is disabled for closed job or one with interviews"
+											: ""
+									}
 								>
 									<span className="indicator-label">Save</span>
 									<span className="indicator-progress">
@@ -466,7 +485,11 @@ function JobPost() {
 									variant="secondary"
 									onClick={handleReset}
 									disabled={!isEditable}
-									title={!isEditable ? "Reset disabled because job is closed or has interviews" : ""}
+									title={
+										!isEditable
+											? "Reset disabled because job is closed or has interviews"
+											: ""
+									}
 								>
 									Reset
 								</Button>
@@ -482,7 +505,8 @@ function JobPost() {
 
 							{!isEditable && (
 								<div className="text-danger fw-semibold mt-3">
-									This job post is either closed or already has interviews. You cannot edit it.
+									This job post is either closed or already has interviews. You
+									cannot edit it.
 								</div>
 							)}
 						</Form>

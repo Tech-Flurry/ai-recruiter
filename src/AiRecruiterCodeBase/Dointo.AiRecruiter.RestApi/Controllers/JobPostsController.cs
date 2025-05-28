@@ -1,6 +1,8 @@
 ﻿using Dointo.AiRecruiter.Application.Services;
 using Dointo.AiRecruiter.Dtos;
 using Microsoft.AspNetCore.Mvc;
+using Dointo.AiRecruiter.Core.States;
+
 
 namespace Dointo.AiRecruiter.RestApi.Controllers;
 
@@ -37,13 +39,24 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 		var result = await _service.SaveAsync(dto, User.Identity?.Name ?? "system");
 		return Ok(result);
 	}
-	
+
 
 	// ✅ DELETE: api/JobPosts/{id}
 	[HttpDelete("{id}")]
 	[ProducesResponseType(StatusCodes.Status204NoContent)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<IActionResult> DeleteJobPost(string id) => Ok(await _service.DeleteAsync(id));
+	public async Task<IActionResult> DeleteJobPost(string id)
+	{
+		var result = await _service.DeleteAsync(id);
+
+		if (result is BusinessErrorState error)
+			return BadRequest(new { success = false, message = error.Message });
+
+		return Ok(new { success = true, message = result.Message });
+	}
+
+
+
 
 	//[HttpPost("reset")]
 	//[ProducesResponseType(StatusCodes.Status200OK)]

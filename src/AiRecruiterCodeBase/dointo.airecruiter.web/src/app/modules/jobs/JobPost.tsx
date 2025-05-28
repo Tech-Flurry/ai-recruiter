@@ -125,6 +125,9 @@ function JobPost() {
 		}
 	}, [isEditMode, jobId]);
 
+
+
+
 	const handleJobDescriptionChange = async (value: string) => {
 		setJobDescription(value);
 		const wordCount = value.trim().split(/\s+/).length;
@@ -216,11 +219,9 @@ function JobPost() {
 				toastr.error(`Failed to create job post: ${responseData.message}`);
 				if (responseData.errors) {
 					const errors: { [key: string]: string } = {};
-					responseData.errors.forEach(
-						(err: { propertyName: string; errorMessage: string }) => {
-							errors[err.propertyName] = err.errorMessage;
-						}
-					);
+					responseData.errors.forEach((err: { propertyName: string; errorMessage: string }) => {
+						errors[err.propertyName] = err.errorMessage;
+					});
 					setServerErrors(errors);
 				}
 			}
@@ -362,6 +363,7 @@ function JobPost() {
 										)}
 									</Form.Group>
 								</Col>
+
 							</Row>
 
 							<Form.Group className="mb-3">

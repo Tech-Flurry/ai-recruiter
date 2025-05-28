@@ -19,10 +19,6 @@ public interface IJobPostsService
 	Task<IProcessingState> GetJobsListAsync( );
 	Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username);
 	Task<IProcessingState> CloseMultipleJobsAsync(CloseMultipleJobsDto closeJobDto);
-	Task<JobPostDto> GetJobStatusByIdAsync(string id);
-
-
-
 }
 
 internal class JobPostsService(IJobPostRepository repository, IResolver<Job, EditJobDto> editJobResolver, IResolver<Job, JobListDto> jobListResolver, IReadOnlyRepository readOnlyRepository) : IJobPostsService
@@ -56,16 +52,17 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 	{
 		var jobs = await _repository.GetByOwnerAsync("system");
 		var interviewsSet = _readOnlyRepository.Query<Interview>( );
+		_messageBuilder.Clear( );
 		var jobPostDtos = jobs.Select(x =>
 		{
 			var dto = _jobListResolver.Resolve(x);
-			dto.IsEditable = x.Status != Domain.ValueObjects.JobStatus.Closed;
+			dto.IsEditable = x.Status != JobStatus.Closed;
 			dto.URL = $"/jobs/conduct/{x.Id}?usp=share";
 			dto.Posted = x.CreatedAt.Humanize( );
 			dto.NumberOfInterviews = x.GetInterviewCount(interviewsSet);
 			return dto;
 		}).ToList( );
-		return new SuccessState<List<JobListDto>>("Job posts retrieved successfully", jobPostDtos);
+		return new SuccessState<List<JobListDto>>(_messageBuilder.AddFormat(Messages.RECORD_RETRIEVED_FORMAT).AddString(JOB_STRING).Build( ), jobPostDtos);
 	}
 
 	public async Task<IProcessingState> GetByIdAsync(string id)
@@ -81,14 +78,24 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 	public async Task<IProcessingState> DeleteAsync(string id)
 	{
 		_messageBuilder.Clear( );
+
 		var jobPost = await _repository.GetByIdAsync(id);
 		if (jobPost is null)
 			return new BusinessErrorState(RecordNotFoundMessage( ));
 
+		var interviewCount = jobPost.GetInterviewCount(_readOnlyRepository.Query<Interview>( ));
+
+		if (interviewCount > 0)
+			return new BusinessErrorState(_messageBuilder.AddFormat(Messages.JOB_NOT_CLOSED_DUE_TO_INTERVIEWS).AddString(JOB_STRING).Build( ));
+
 		jobPost.IsDeleted = true;
 		await _repository.SaveAsync(jobPost, string.Empty);
-		return new SuccessState(_messageBuilder.AddFormat(Messages.RECORD_DELETED_FORMAT).AddString(JOB_STRING).Build( ));
+
+		return new SuccessState(
+		 _messageBuilder.AddFormat(Messages.RECORD_DELETED_FORMAT).AddString(JOB_STRING).Build( )
+		);
 	}
+
 
 	public async Task<IProcessingState> CloseMultipleJobsAsync(CloseMultipleJobsDto closeJobDto)
 	{
@@ -110,28 +117,5 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		_messageBuilder.Clear( );
 		return _messageBuilder.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT).AddString(JOB_STRING).Build( );
 	}
-	public async Task<JobPostDto> GetJobStatusByIdAsync(string id)
-	{
-		var job = await _repository.GetByIdAsync(id);
-		if (job == null) return null;
-
-		return new JobPostDto
-		{
-			Id = job.Id,
-			JobTitle = job.Title,
-			Status = job.Status.ToString( ),
-			HasInterviews = job.HasInterviews ?? false,
-
-			YearsOfExperience = job.Experience,
-			JobDescription = job.JobDescription,
-			RequiredSkills = job.RequiredSkills ?? new List<string>( ),
-			BudgetAmount = job.Budget?.Amount ?? 0,
-			BudgetCurrency = job.Budget?.CurrencySymbol ?? "USD",
-			AdditionalQuestions = string.Join(", ", job.AdditionalQuestions?.Select(q => q.Text) ?? [ ])
-		};
-
-	}
-
-
 
 }

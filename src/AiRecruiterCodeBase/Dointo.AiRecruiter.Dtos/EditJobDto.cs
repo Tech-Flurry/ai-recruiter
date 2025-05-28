@@ -10,4 +10,6 @@ public class EditJobDto
 	public string? AdditionalQuestions { get; set; }
 	public double? BudgetAmount { get; set; }
 	public string? BudgetCurrency { get; set; }
+	public string? Status { get; set; } = null!;
+	public bool HasInterviews { get; set; }
 }

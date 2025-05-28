@@ -29,7 +29,6 @@ interface JobPostResponse {
 	errors?: { propertyName: string; errorMessage: string }[];
 }
 function JobPost() {
-	const [status, setStatus] = useState<string>("");
 	const navigate = useNavigate();
 	const location = useLocation();
 	const tagifyRef = useRef<HTMLInputElement>(null);
@@ -127,7 +126,7 @@ function JobPost() {
 	}, [isEditMode, jobId]);
 
 
-	  
+
 
 	const handleJobDescriptionChange = async (value: string) => {
 		setJobDescription(value);
@@ -364,7 +363,7 @@ function JobPost() {
 										)}
 									</Form.Group>
 								</Col>
-								
+
 							</Row>
 
 							<Form.Group className="mb-3">

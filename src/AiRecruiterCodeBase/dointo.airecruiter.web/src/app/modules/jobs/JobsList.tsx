@@ -171,17 +171,14 @@ const JobPost: React.FC = () => {
 									</td>
 									<td>
 										<span
-											className={`badge ${
-												job.status === "Open" ? "bg-success" : "bg-danger"
-											}`}
+											className={`badge ${job.status === "Open" ? "bg-success" : "bg-danger"
+												}`}
 										>
 											{job.status}
 										</span>
 									</td>
 									<td>
-										{job.posted
-											? new Date(job.posted).toLocaleDateString()
-											: "N/A"}
+										{job.posted}
 									</td>
 									<td>{job.numberOfInterviews}</td>
 									<td>

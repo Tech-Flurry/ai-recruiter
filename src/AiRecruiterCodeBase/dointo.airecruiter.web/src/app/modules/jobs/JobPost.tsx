@@ -29,7 +29,6 @@ interface JobPostResponse {
 	errors?: { propertyName: string; errorMessage: string }[];
 }
 function JobPost() {
-	const [status, setStatus] = useState<string>("");
 	const navigate = useNavigate();
 	const location = useLocation();
 	const tagifyRef = useRef<HTMLInputElement>(null);
@@ -227,8 +226,7 @@ function JobPost() {
 			}
 		} catch (error: any) {
 			toastr.error(
-				`Failed to ${isEditMode ? "update" : "create"} job post: ${
-					error.response?.data?.message ?? error.message
+				`Failed to ${isEditMode ? "update" : "create"} job post: ${error.response?.data?.message ?? error.message
 				}`
 			);
 		} finally {
@@ -304,7 +302,7 @@ function JobPost() {
 	}
 
 	return (
-		<Container className="my-5 d-flex justify-content-center">
+		<Container className="d-flex justify-content-center my-5">
 			<div style={{ maxWidth: "900px", width: "100%" }}>
 				<KTCard className="rounded shadow">
 					<KTCardBody>
@@ -461,7 +459,7 @@ function JobPost() {
 									</Form.Group>
 								</Col>
 							</Row>
-							<div className="d-flex justify-content-end gap-3 mt-4">
+							<div className="d-flex justify-content-end mt-4 gap-3">
 								<Button
 									ref={btnSaveRef}
 									type="submit"

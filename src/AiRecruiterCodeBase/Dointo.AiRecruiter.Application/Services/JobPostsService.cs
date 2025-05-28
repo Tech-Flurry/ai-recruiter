@@ -3,6 +3,7 @@ using Dointo.AiRecruiter.Application.Utils;
 using Dointo.AiRecruiter.Core.Abstractions;
 using Dointo.AiRecruiter.Core.Extensions;
 using Dointo.AiRecruiter.Core.States;
+using Dointo.AiRecruiter.Domain.Aggregates;
 using Dointo.AiRecruiter.Domain.Entities;
 using Dointo.AiRecruiter.Domain.Validators;
 using Dointo.AiRecruiter.Domain.ValueObjects;
@@ -24,12 +25,13 @@ public interface IJobPostsService
 
 }
 
-internal class JobPostsService(IJobPostRepository repository, IResolver<Job, EditJobDto> editJobResolver, IResolver<Job, JobListDto> jobListResolver) : IJobPostsService
+internal class JobPostsService(IJobPostRepository repository, IResolver<Job, EditJobDto> editJobResolver, IResolver<Job, JobListDto> jobListResolver, IReadOnlyRepository readOnlyRepository) : IJobPostsService
 {
 	private const string JOB_STRING = nameof(Job);
 	private readonly IJobPostRepository _repository = repository;
 	private readonly IResolver<Job, EditJobDto> _editJobResolver = editJobResolver;
 	private readonly IResolver<Job, JobListDto> _jobListResolver = jobListResolver;
+	private readonly IReadOnlyRepository _readOnlyRepository = readOnlyRepository;
 	private readonly MessageBuilder _messageBuilder = new( );
 
 	public async Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username)
@@ -53,12 +55,14 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 	public async Task<IProcessingState> GetJobsListAsync( )
 	{
 		var jobs = await _repository.GetByOwnerAsync("system");
+		var interviewsSet = _readOnlyRepository.Query<Interview>( );
 		var jobPostDtos = jobs.Select(x =>
 		{
 			var dto = _jobListResolver.Resolve(x);
 			dto.IsEditable = x.Status != Domain.ValueObjects.JobStatus.Closed;
 			dto.URL = $"/jobs/conduct/{x.Id}?usp=share";
 			dto.Posted = x.CreatedAt.Humanize( );
+			dto.NumberOfInterviews = x.GetInterviewCount(interviewsSet);
 			return dto;
 		}).ToList( );
 		return new SuccessState<List<JobListDto>>("Job posts retrieved successfully", jobPostDtos);
@@ -123,7 +127,7 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 			RequiredSkills = job.RequiredSkills ?? new List<string>( ),
 			BudgetAmount = job.Budget?.Amount ?? 0,
 			BudgetCurrency = job.Budget?.CurrencySymbol ?? "USD",
-			AdditionalQuestions = string.Join(", ", job.AdditionalQuestions?.Select(q => q.ToBeAsked) ?? [ ])
+			AdditionalQuestions = string.Join(", ", job.AdditionalQuestions?.Select(q => q.Text) ?? [ ])
 		};
 
 	}

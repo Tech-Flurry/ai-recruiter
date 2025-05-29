@@ -169,10 +169,6 @@ function JobPost() {
 		}
 	};
 
-	const handleJobDescriptionChange = (value: string) => {
-		setJobDescription(value);
-	};
-
 	const handleGenerateSkillsClick = async () => {
 		if (jobDescription.trim().split(/\s+/).length < 30) {
 			toastr.warning("Job description must be at least 30 words to generate skills.");
@@ -372,12 +368,12 @@ function JobPost() {
 
 							{/* Magic AI Button aligned with Required Skills label */}
 							<Form.Group className="mb-3">
-								<div className="d-flex align-items-center gap-2 mb-1">
+								<div className="d-flex align-items-center mb-1 gap-2">
 									<Form.Label className="mb-0">
 										Required Skills <span className="text-danger">*</span>
 									</Form.Label>
 									<Button
-										variant="light"
+										variant="info"
 										size="sm"
 										onClick={handleGenerateSkillsClick}
 										disabled={isGenerating}
@@ -387,7 +383,7 @@ function JobPost() {
 										{isGenerating ? (
 											<span className="spinner-border spinner-border-sm text-primary"></span>
 										) : (
-											<i className="bi bi-stars" style={{ color: "#FFD700", fontSize: "16px" }}></i>
+											<i className="bi bi-stars"></i>
 										)}
 									</Button>
 								</div>

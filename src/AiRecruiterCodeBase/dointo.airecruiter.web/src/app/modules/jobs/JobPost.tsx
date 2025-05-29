@@ -29,8 +29,8 @@ function JobPost() {
 	const [budget, setBudget] = useState("");
 	const [budgetTouched, setBudgetTouched] = useState(false);
 	const [serverErrors, setServerErrors] = useState<{ [key: string]: string }>({});
+	const [isGenerating, setIsGenerating] = useState(false);
 
-	// ✅ Fetch skills from API and set them in Tagify whitelist
 	useEffect(() => {
 		const fetchSkills = async () => {
 			try {
@@ -45,14 +45,13 @@ function JobPost() {
 							enabled: 0,
 							maxItems: 100,
 							closeOnSelect: false,
-							highlightFirst: true
-						}
+							highlightFirst: true,
+						},
 					});
-					tagifyInstanceRef.current.on('focus', () => {
+					tagifyInstanceRef.current.on("focus", () => {
 						tagifyInstanceRef.current.dropdown.show.call(tagifyInstanceRef.current);
 					});
 				}
-
 			} catch (error) {
 				console.error("❌ Failed to fetch skills:", error);
 			}
@@ -61,25 +60,37 @@ function JobPost() {
 		fetchSkills();
 	}, []);
 
-	const handleJobDescriptionChange = async (value: string) => {
+	const handleJobDescriptionChange = (value: string) => {
 		setJobDescription(value);
+	};
 
-		const wordCount = value.trim().split(/\s+/).length;
-		if (wordCount >= 30) {
-			try {
-				const response = await axios.post(
-					`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/extract-skills`,
-					{ jobDescription: value },
-					{ headers: { "Content-Type": "application/json" }, withCredentials: true }
-				);
-				const skills: string[] = response.data;
-				if (Array.isArray(skills)) {
-					tagifyInstanceRef.current?.removeAllTags();
-					tagifyInstanceRef.current?.addTags(skills);
+	const handleGenerateSkillsClick = async () => {
+		if (jobDescription.trim().split(/\s+/).length < 30) {
+			toastr.warning("Job description must be at least 30 words to generate skills.");
+			return;
+		}
+
+		setIsGenerating(true);
+		try {
+			const response = await axios.post(
+				`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/extract-skills`,
+				{ jobDescription },
+				{
+					headers: { "Content-Type": "application/json" },
+					withCredentials: true,
 				}
-			} catch (err) {
-				console.error("❌ Failed to extract skills", err);
+			);
+			const skills: string[] = response.data;
+			if (Array.isArray(skills)) {
+				tagifyInstanceRef.current?.removeAllTags();
+				tagifyInstanceRef.current?.addTags(skills);
+				toastr.success("Skills generated successfully!");
 			}
+		} catch (err) {
+			console.error("❌ Failed to extract skills", err);
+			toastr.error("Failed to generate skills.");
+		} finally {
+			setIsGenerating(false);
 		}
 	};
 
@@ -187,7 +198,9 @@ function JobPost() {
 							<Row>
 								<Col md={6}>
 									<Form.Group className="mb-3">
-										<Form.Label>Job Title <span className="text-danger">*</span></Form.Label>
+										<Form.Label>
+											Job Title <span className="text-danger">*</span>
+										</Form.Label>
 										<Form.Control
 											type="text"
 											name="jobTitle"
@@ -200,13 +213,14 @@ function JobPost() {
 										{jobTitleTouched && jobTitle.trim().length < 3 && (
 											<div className="invalid-feedback">Job Title must be at least 3 characters.</div>
 										)}
-
 									</Form.Group>
 								</Col>
 
 								<Col md={6}>
 									<Form.Group className="mb-3">
-										<Form.Label>Years of Experience <span className="text-danger">*</span></Form.Label>
+										<Form.Label>
+											Years of Experience <span className="text-danger">*</span>
+										</Form.Label>
 										<Form.Control
 											type="number"
 											name="yearsOfExperience"
@@ -219,13 +233,14 @@ function JobPost() {
 										{experienceTouched && (!experience || parseInt(experience) < 0) && (
 											<div className="invalid-feedback">Experience must be a non-negative number.</div>
 										)}
-
 									</Form.Group>
 								</Col>
 							</Row>
 
-							<Form.Group className="mb-3">
-								<Form.Label>Job Description <span className="text-danger">*</span></Form.Label>
+							<Form.Group className="mb-1">
+								<Form.Label>
+									Job Description <span className="text-danger">*</span>
+								</Form.Label>
 								<Form.Control
 									as="textarea"
 									name="jobDescription"
@@ -241,11 +256,29 @@ function JobPost() {
 										Job Description must be at least 30 words. (Current: {getJobDescriptionWordCount()})
 									</div>
 								)}
-
 							</Form.Group>
 
+							{/* Magic AI Button aligned with Required Skills label */}
 							<Form.Group className="mb-3">
-								<Form.Label>Required Skills <span className="text-danger">*</span></Form.Label>
+								<div className="d-flex align-items-center gap-2 mb-1">
+									<Form.Label className="mb-0">
+										Required Skills <span className="text-danger">*</span>
+									</Form.Label>
+									<Button
+										variant="light"
+										size="sm"
+										onClick={handleGenerateSkillsClick}
+										disabled={isGenerating}
+										title="Generate Skills with AI"
+										style={{ minWidth: "28px", height: "24px", padding: "0 4px" }}
+									>
+										{isGenerating ? (
+											<span className="spinner-border spinner-border-sm text-primary"></span>
+										) : (
+											<i className="bi bi-stars" style={{ color: "#FFD700", fontSize: "16px" }}></i>
+										)}
+									</Button>
+								</div>
 								<Form.Control
 									ref={tagifyRef}
 									name="requiredSkills"
@@ -254,13 +287,14 @@ function JobPost() {
 								{serverErrors.requiredSkills && (
 									<div className="invalid-feedback d-block">{serverErrors.requiredSkills}</div>
 								)}
-
 							</Form.Group>
 
 							<Row>
 								<Col md={6}>
 									<Form.Group className="mb-3">
-										<Form.Label>Hiring Budget <span className="text-danger">*</span></Form.Label>
+										<Form.Label>
+											Hiring Budget <span className="text-danger">*</span>
+										</Form.Label>
 										<div className="d-flex">
 											<Form.Control
 												type="number"
@@ -305,8 +339,12 @@ function JobPost() {
 										<span className="spinner-border spinner-border-sm ms-2"></span>
 									</span>
 								</Button>
-								<Button type="button" variant="secondary" onClick={handleReset}>Reset</Button>
-								<Button type="button" variant="dark" onClick={() => navigate("/jobs/list")}>Cancel</Button>
+								<Button type="button" variant="secondary" onClick={handleReset}>
+									Reset
+								</Button>
+								<Button type="button" variant="dark" onClick={() => navigate("/jobs/list")}>
+									Cancel
+								</Button>
 							</div>
 						</Form>
 					</KTCardBody>

@@ -2,67 +2,52 @@
 using Dointo.AiRecruiter.Dtos;
 using Microsoft.AspNetCore.Mvc;
 
+
 namespace Dointo.AiRecruiter.RestApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class JobPostsController(IJobPostsService jobPostsService) : ControllerBase
+public class JobPostsController(IJobPostsService service) : ControllerBase
 {
-	private readonly IJobPostsService _jobPostsService = jobPostsService;
+	private readonly IJobPostsService _service = service;
 
 	// ✅ GET: api/JobPosts/{id}
 	[HttpGet("{id}")]
-	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(EditJobDto))]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<IActionResult> GetJobPost(string id)
-	{
-		var result = await _jobPostsService.GetByIdAsync(id);
-		return Ok(result);
-	}
+	public async Task<IActionResult> GetJobPost(string id) => Ok(await _service.GetByIdAsync(id));
 
-	// ✅ POST: api/JobPosts
+	[HttpGet]
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<JobListDto>))]
+	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	public async Task<IActionResult> GetJobsList( ) => Ok(await _service.GetJobsListAsync( ));
+
 	[HttpPost]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
-	public async Task<IActionResult> CreateOrUpdateJobPost([FromBody] EditJobDto dto)
-	{
-		if (dto is null)
-			return BadRequest(new { Message = "Invalid job post data." });
-
-		var result = await _jobPostsService.SaveAsync(dto, User.Identity?.Name ?? "system");
-		return Ok(result);
-	}
+	public async Task<IActionResult> CreateOrUpdateJobPost([FromBody] EditJobDto dto) => Ok(await _service.SaveAsync(dto, User.Identity?.Name ?? "system"));
 
 	// ✅ DELETE: api/JobPosts/{id}
 	[HttpDelete("{id}")]
 	[ProducesResponseType(StatusCodes.Status204NoContent)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<IActionResult> DeleteJobPost(string id)
-	{
-		var result = await _jobPostsService.DeleteAsync(id);
-		return Ok(result);
-	}
+	public async Task<IActionResult> DeleteJobPost(string id) => Ok(await _service.DeleteAsync(id));
+
 	// ✅ POST: api/JobPosts/extract-skills
 	[HttpPost("extract-skills")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
-	public async Task<IActionResult> ExtractSkillsFromDescription([FromBody] JobDescriptionDto dto)
-	{
-		if (string.IsNullOrWhiteSpace(dto?.JobDescription))
-			return BadRequest("Job description is required.");
+	public async Task<IActionResult> ExtractSkillsFromDescription([FromBody] JobDescriptionDto dto) => Ok(await _service.ExtractSkillsFromDescriptionAsync(dto.JobDescription));
 
-		var skills = await _jobPostsService.ExtractSkillsFromDescriptionAsync(dto.JobDescription);
-		return Ok(skills);
-	}
+	// ✅ POST: api/JobPosts/close-multiple
+	[HttpPost("close-multiple")]
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest)]
+	public async Task<IActionResult> CloseMultipleJobPosts([FromBody] CloseMultipleJobsDto dto) => Ok(await _service.CloseMultipleJobsAsync(dto));
+
 	// ✅ GET: api/JobPosts/skills
 	[HttpGet("skills")]
-	[ProducesResponseType(StatusCodes.Status200OK)]
-	public IActionResult GetAllSkills( )
-	{
-		var skills = _jobPostsService.GetAllSkills( );
-		return Ok(skills);
-	}
-
-
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SkillDto))]
+	public IActionResult GetAllSkills( ) => Ok(_service.GetAllSkills( ));
 }
 

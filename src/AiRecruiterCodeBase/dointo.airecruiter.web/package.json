@@ -19,7 +19,7 @@
     "@tanstack/react-query-devtools": "^5.59.20",
     "@tanstack/react-table": "^8.20.5",
     "@vitejs/plugin-react": "^4.3.4",
-    "@yaireo/tagify": "^4.35.0",
+    "@yaireo/tagify": "^4.35.1",
     "animate.css": "4.1.1",
     "apexcharts": "3.51.0",
     "axios": "1.7.2",

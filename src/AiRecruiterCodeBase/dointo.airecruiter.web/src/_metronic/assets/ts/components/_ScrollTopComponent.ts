@@ -37,18 +37,23 @@ class ScrollTopComponent {
   }
 
   private _handlers = () => {
-    let timer: number
+    let timer: number | undefined = undefined; // ✅ Declare with proper type and initial value
+  
     window.addEventListener('scroll', () => {
-      throttle(timer, () => {
-        this._scroll()
-      })
-    })
-
+      if (!timer) {
+        timer = window.setTimeout(() => {
+          this._scroll();
+          timer = undefined; // ✅ Clear the timer after execution
+        }, 200); // you can adjust delay as needed
+      }
+    });
+  
     this.element.addEventListener('click', (e: Event) => {
-      e.preventDefault()
-      this._go()
-    })
+      e.preventDefault();
+      this._go();
+    });
   }
+  
 
   private _scroll = () => {
     const offset = parseInt(this._getOption('offset') as string)

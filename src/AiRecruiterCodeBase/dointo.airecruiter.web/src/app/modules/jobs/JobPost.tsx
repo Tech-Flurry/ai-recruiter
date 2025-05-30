@@ -28,6 +28,7 @@ interface JobPostResponse {
 	message?: string;
 	errors?: { propertyName: string; errorMessage: string }[];
 }
+
 function JobPost() {
 	const navigate = useNavigate();
 	const location = useLocation();
@@ -48,20 +49,35 @@ function JobPost() {
 	const [descriptionTouched, setDescriptionTouched] = useState(false);
 	const [budget, setBudget] = useState("");
 	const [budgetTouched, setBudgetTouched] = useState(false);
-	const [serverErrors, setServerErrors] = useState<{ [key: string]: string }>(
-		{}
-	);
+	const [serverErrors, setServerErrors] = useState<{ [key: string]: string }>({});
 	const [isEditable, setIsEditable] = useState(true);
 	const [isGenerating, setIsGenerating] = useState(false);
 
+	// Initialize Tagify only once, destroy previous instance if any
 	useEffect(() => {
 		const fetchSkills = async () => {
 			try {
-				const response = await axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/skills`, {
-					withCredentials: true,
-				});
-				const skills = response.data.map((skill: { name: string }) => skill.name);
+				const response = await axios.get(
+					`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/skills`,
+					{ withCredentials: true }
+				);
+				console.log("Skills API response:", response.data);
+
+				const skills = response.data.data
+					.map((skill: any) => {
+						if (typeof skill === "string") return skill;
+						if ("name" in skill) return skill.name;
+						if ("value" in skill) return skill.value;
+						return "";
+					})
+					.filter(Boolean);
+
 				if (tagifyRef.current) {
+					// Destroy previous Tagify instance if exists
+					if (tagifyInstanceRef.current) {
+						tagifyInstanceRef.current.destroy();
+					}
+
 					tagifyInstanceRef.current = new Tagify(tagifyRef.current, {
 						whitelist: skills,
 						dropdown: {
@@ -71,6 +87,7 @@ function JobPost() {
 							highlightFirst: true,
 						},
 					});
+
 					tagifyInstanceRef.current.on("focus", () => {
 						tagifyInstanceRef.current.dropdown.show.call(tagifyInstanceRef.current);
 					});
@@ -83,6 +100,7 @@ function JobPost() {
 		fetchSkills();
 	}, []);
 
+	// Load job data for edit mode and fill form including skills
 	useEffect(() => {
 		if (isEditMode && jobId) {
 			const fetchJob = async () => {
@@ -94,18 +112,13 @@ function JobPost() {
 
 					const job = res.data?.data as JobPost;
 
-					console.log("🟢 Full job response:", job);
-
-					// Set form fields
 					setJobTitle(job.jobTitle || "");
 					setExperience(job.yearsOfExperience?.toString() || "");
 					setJobDescription(job.jobDescription || "");
 					setBudget(job.budgetAmount?.toString() || "");
-
-					// Set editable status
 					setIsEditable(job.status !== "Closed" && !job.hasInterviews);
 
-					// Set currency and additional questions
+					// Set currency and additional questions inputs
 					const currencyInput = formRef.current?.elements.namedItem(
 						"currency"
 					) as HTMLSelectElement;
@@ -113,15 +126,11 @@ function JobPost() {
 						"additionalQuestions"
 					) as HTMLTextAreaElement;
 					if (currencyInput) currencyInput.value = job.budgetCurrency || "USD";
-					if (additionalInput)
-						additionalInput.value = job.additionalQuestions || "";
+					if (additionalInput) additionalInput.value = job.additionalQuestions || "";
 
-					// Set skills
+					// Delay to ensure Tagify is initialized
 					setTimeout(() => {
-						if (
-							tagifyInstanceRef.current &&
-							Array.isArray(job.requiredSkills)
-						) {
+						if (tagifyInstanceRef.current && Array.isArray(job.requiredSkills)) {
 							tagifyInstanceRef.current.removeAllTags();
 							tagifyInstanceRef.current.addTags(
 								job.requiredSkills.map((skill: string) => ({ value: skill }))
@@ -138,9 +147,7 @@ function JobPost() {
 		}
 	}, [isEditMode, jobId]);
 
-
-
-
+	// Auto-extract skills while typing if description > 30 words
 	const handleJobDescriptionChange = async (value: string) => {
 		setJobDescription(value);
 		const wordCount = value.trim().split(/\s+/).length;
@@ -169,6 +176,7 @@ function JobPost() {
 		}
 	};
 
+	// Button-triggered skill generation with full control and toastr feedback
 	const handleGenerateSkillsClick = async () => {
 		if (jobDescription.trim().split(/\s+/).length < 30) {
 			toastr.warning("Job description must be at least 30 words to generate skills.");
@@ -186,10 +194,13 @@ function JobPost() {
 				}
 			);
 			const skills: string[] = response.data;
-			if (Array.isArray(skills)) {
+			console.log("Extracted skills:", skills); // Debug skills output here
+			if (Array.isArray(skills) && skills.length > 0) {
 				tagifyInstanceRef.current?.removeAllTags();
-				tagifyInstanceRef.current?.addTags(skills);
+				tagifyInstanceRef.current?.addTags(skills.map((skill) => ({ value: skill })));
 				toastr.success("Skills generated successfully!");
+			} else {
+				toastr.warning("No skills found from extraction.");
 			}
 		} catch (err) {
 			console.error("❌ Failed to extract skills", err);
@@ -268,8 +279,7 @@ function JobPost() {
 			}
 		} catch (error: any) {
 			toastr.error(
-				`Failed to ${isEditMode ? "update" : "create"} job post: ${error.response?.data?.message ?? error.message
-				}`
+				`Failed to ${isEditMode ? "update" : "create"} job post: ${error.response?.data?.message ?? error.message}`
 			);
 		} finally {
 			btnSaveRef.current?.removeAttribute("data-kt-indicator");
@@ -342,7 +352,6 @@ function JobPost() {
 										)}
 									</Form.Group>
 								</Col>
-
 							</Row>
 
 							<Form.Group className="mb-1">
@@ -366,7 +375,7 @@ function JobPost() {
 								)}
 							</Form.Group>
 
-							{/* Magic AI Button aligned with Required Skills label */}
+							{/* Required Skills with AI Button */}
 							<Form.Group className="mb-3">
 								<div className="d-flex align-items-center mb-1 gap-2">
 									<Form.Label className="mb-0">
@@ -391,6 +400,7 @@ function JobPost() {
 									ref={tagifyRef}
 									name="requiredSkills"
 									placeholder="Type skills and press Enter"
+									type="text" // Ensure type is text for Tagify
 								/>
 								{serverErrors.requiredSkills && (
 									<div className="invalid-feedback d-block">{serverErrors.requiredSkills}</div>
@@ -438,6 +448,7 @@ function JobPost() {
 									</Form.Group>
 								</Col>
 							</Row>
+
 							<div className="d-flex justify-content-end mt-4 gap-3">
 								<Button
 									ref={btnSaveRef}

@@ -122,14 +122,51 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 	public async Task<IProcessingState> ExtractSkillsFromDescriptionAsync(string jobDescription)
 	{
 		_messageBuilder.Clear( );
+
+		// Validate input
 		if (string.IsNullOrWhiteSpace(jobDescription))
-			return new BusinessErrorState(_messageBuilder.AddFormat(Messages.PROPERTY_REQUIRED_FORMAT).AddString(nameof(jobDescription).Humanize( )).Build( ));
-		var predefinedSkills = QuerySkills( )
-			.Select(skillDto => skillDto.Name)
-			.ToList( );
-		var extracted = await _jobsAgent.ExtractSkillsAsync(jobDescription, predefinedSkills);
-		return new SuccessState<List<string>>(_messageBuilder.AddFormat(Messages.RECORD_RETRIEVED_FORMAT).AddString(SKILL_STRING).Build( ), extracted);
+		{
+			return new BusinessErrorState(
+				_messageBuilder
+					.AddFormat(Messages.PROPERTY_REQUIRED_FORMAT)
+					.AddString(nameof(jobDescription).Humanize( ))
+					.Build( ));
+		}
+
+		try
+		{
+			// Get predefined skills from database or in-memory repository
+			var predefinedSkills = QuerySkills( )
+				.Select(skillDto => skillDto.Name)
+				.ToList( );
+
+			// Call AI agent to extract skills (make sure this method is implemented correctly)
+			var extractedSkills = await _jobsAgent.ExtractSkillsAsync(jobDescription, predefinedSkills);
+
+			// Return success with extracted skills
+			return new SuccessState<List<string>>(
+				_messageBuilder
+					.AddFormat(Messages.RECORD_RETRIEVED_FORMAT)
+					.AddString("Skill")
+					.Build( ),
+				extractedSkills);
+		}
+		catch (Exception ex)
+		{
+			// Log the exception here - replace with your logger if you have one
+			Console.WriteLine($"Error in ExtractSkillsFromDescriptionAsync: {ex.Message}");
+			Console.WriteLine(ex.StackTrace);
+
+			// Return a controlled error state with the exception message
+			return new ExceptionState(
+				_messageBuilder
+					.AddFormat(Messages.ERROR_OCCURRED_FORMAT)
+					.AddString("Skill")
+					.Build( ),
+				ex.Message);
+		}
 	}
+
 
 	public IProcessingState GetAllSkills( )
 	{

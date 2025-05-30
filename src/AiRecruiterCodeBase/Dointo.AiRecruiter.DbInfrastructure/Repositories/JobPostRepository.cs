@@ -36,11 +36,4 @@ public class JobPostRepository(AiRecruiterDbContext dbContext) : RepositoryBase<
 			return added.Entity;
 		}
 	}
-
-	public async Task<List<Job>> GetAllAsync( )
-	{
-		return await QueryableEntity
-			.Where(job => !job.IsDeleted)
-			.ToListAsync( );
-	}
 }

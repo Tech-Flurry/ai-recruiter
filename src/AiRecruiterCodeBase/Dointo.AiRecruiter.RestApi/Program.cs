@@ -1,4 +1,5 @@
-﻿using Dointo.AiRecruiter.Application;
+﻿using Dointo.AiRecruiter.AiInfrastructure.Config;
+using Dointo.AiRecruiter.Application;
 using Dointo.AiRecruiter.DbInfrastructure;
 using Dointo.AiRecruiter.RestApi.Middleware;
 using Microsoft.OpenApi.Models;
@@ -32,8 +33,11 @@ builder.Services.AddSwaggerGen(c =>
 	});
 });
 
+// ✅ Register Mongo + App dependencies
 builder.Services.AddDbInfrastructure("MongoDb:ConnectionString", "MongoDb:DatabaseName");
 builder.Services.AddApplication( );
+builder.Services.AddAiInfrastructure("OpenAi");
+
 
 var app = builder.Build( );
 

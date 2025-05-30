@@ -12,4 +12,15 @@
 		</InternalsVisibleTo>
 	</ItemGroup>
 
+	<ItemGroup>
+	  <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.4" />
+	  <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.4" />
+	  <PackageReference Include="NJsonSchema" Version="11.3.2" />
+	  <PackageReference Include="OpenAI" Version="2.1.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\Dointo.AiRecruiter.Application\Dointo.AiRecruiter.Application.csproj" />
+	</ItemGroup>
+
 </Project>

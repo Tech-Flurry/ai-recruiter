@@ -16,11 +16,6 @@ interface JobPost {
 	numberOfInterviews: number;
 }
 
-interface DeleteResponse {
-	success: boolean;
-	message: string;
-}
-
 const JobPost: React.FC = () => {
 	const [jobPosts, setJobPosts] = useState<JobPost[]>([]);
 	const [selectedJobs, setSelectedJobs] = useState<string[]>([]);

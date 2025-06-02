@@ -13,7 +13,7 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 
 	// ✅ GET: api/JobPosts/{id}
 	[HttpGet("{id}")]
-	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(EditJobDto))]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	public async Task<IActionResult> GetJobPost(string id) => Ok(await _service.GetByIdAsync(id));
 
@@ -33,9 +33,21 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	public async Task<IActionResult> DeleteJobPost(string id) => Ok(await _service.DeleteAsync(id));
 
+	// ✅ POST: api/JobPosts/extract-skills
+	[HttpPost("extract-skills")]
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest)]
+	public async Task<IActionResult> ExtractSkillsFromDescription([FromBody] JobDescriptionDto dto) => Ok(await _service.ExtractSkillsFromDescriptionAsync(dto.JobDescription));
+
 	// ✅ POST: api/JobPosts/close-multiple
 	[HttpPost("close-multiple")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
 	public async Task<IActionResult> CloseMultipleJobPosts([FromBody] CloseMultipleJobsDto dto) => Ok(await _service.CloseMultipleJobsAsync(dto));
+
+	// ✅ GET: api/JobPosts/skills
+	[HttpGet("skills")]
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SkillDto))]
+	public IActionResult GetAllSkills( ) => Ok(_service.GetAllSkills( ));
 }
+

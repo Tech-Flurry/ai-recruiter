@@ -53,6 +53,16 @@ function JobPost() {
 	const [isEditable, setIsEditable] = useState(true);
 	const [isGenerating, setIsGenerating] = useState(false);
 
+	// Helper to normalize API skill formats to string[]
+	const normalizeSkills = (skills: any[]): string[] =>
+		skills
+			.map((s) => {
+				if (typeof s === "string") return s;
+				if (typeof s === "object") return s.name || s.value || "";
+				return "";
+			})
+			.filter(Boolean);
+
 	// Initialize Tagify only once, destroy previous instance if any
 	useEffect(() => {
 		const fetchSkills = async () => {
@@ -63,17 +73,9 @@ function JobPost() {
 				);
 				console.log("Skills API response:", response.data);
 
-				const skills = response.data.data
-					.map((skill: any) => {
-						if (typeof skill === "string") return skill;
-						if ("name" in skill) return skill.name;
-						if ("value" in skill) return skill.value;
-						return "";
-					})
-					.filter(Boolean);
+				const skills = normalizeSkills(response.data.data);
 
 				if (tagifyRef.current) {
-					// Destroy previous Tagify instance if exists
 					if (tagifyInstanceRef.current) {
 						tagifyInstanceRef.current.destroy();
 					}
@@ -118,7 +120,6 @@ function JobPost() {
 					setBudget(job.budgetAmount?.toString() || "");
 					setIsEditable(job.status !== "Closed" && !job.hasInterviews);
 
-					// Set currency and additional questions inputs
 					const currencyInput = formRef.current?.elements.namedItem(
 						"currency"
 					) as HTMLSelectElement;
@@ -128,7 +129,6 @@ function JobPost() {
 					if (currencyInput) currencyInput.value = job.budgetCurrency || "USD";
 					if (additionalInput) additionalInput.value = job.additionalQuestions || "";
 
-					// Delay to ensure Tagify is initialized
 					setTimeout(() => {
 						if (tagifyInstanceRef.current && Array.isArray(job.requiredSkills)) {
 							tagifyInstanceRef.current.removeAllTags();
@@ -147,33 +147,9 @@ function JobPost() {
 		}
 	}, [isEditMode, jobId]);
 
-	// Auto-extract skills while typing if description > 30 words
-	const handleJobDescriptionChange = async (value: string) => {
+	// *** Changed here: only update description state, no auto skill extraction ***
+	const handleJobDescriptionChange = (value: string) => {
 		setJobDescription(value);
-		const wordCount = value.trim().split(/\s+/).length;
-
-		if (wordCount >= 30) {
-			try {
-				const response = await axios.post(
-					`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/extract-skills`,
-					{ jobDescription: value },
-					{
-						headers: { "Content-Type": "application/json" },
-						withCredentials: true,
-					}
-				);
-
-				const skills = response.data as string[];
-				if (Array.isArray(skills)) {
-					tagifyInstanceRef.current?.removeAllTags();
-					tagifyInstanceRef.current?.addTags(
-						skills.map((skill) => ({ value: skill }))
-					);
-				}
-			} catch (err) {
-				console.error("❌ Failed to extract skills", err);
-			}
-		}
 	};
 
 	// Button-triggered skill generation with full control and toastr feedback
@@ -193,9 +169,10 @@ function JobPost() {
 					withCredentials: true,
 				}
 			);
-			const skills: string[] = response.data;
-			console.log("Extracted skills:", skills); // Debug skills output here
-			if (Array.isArray(skills) && skills.length > 0) {
+			const skillsRaw = response.data?.data;
+			console.log("Extracted skills:", skillsRaw);
+			if (Array.isArray(skillsRaw) && skillsRaw.length > 0) {
+				const skills = normalizeSkills(skillsRaw);
 				tagifyInstanceRef.current?.removeAllTags();
 				tagifyInstanceRef.current?.addTags(skills.map((skill) => ({ value: skill })));
 				toastr.success("Skills generated successfully!");
@@ -400,7 +377,7 @@ function JobPost() {
 									ref={tagifyRef}
 									name="requiredSkills"
 									placeholder="Type skills and press Enter"
-									type="text" // Ensure type is text for Tagify
+									type="text"
 								/>
 								{serverErrors.requiredSkills && (
 									<div className="invalid-feedback d-block">{serverErrors.requiredSkills}</div>

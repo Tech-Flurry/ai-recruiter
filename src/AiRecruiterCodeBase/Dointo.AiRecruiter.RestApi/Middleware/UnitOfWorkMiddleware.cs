@@ -13,13 +13,14 @@ public class UnitOfWorkMiddleware(RequestDelegate next, ILogger<UnitOfWorkMiddle
 		try
 		{
 			await _next(context);
-			await dbContext.SaveChangesAsync( );
+			if (dbContext.ChangeTracker.HasChanges( ))
+				await dbContext.SaveChangesAsync( );
 		}
 		catch (Exception ex)
 		{
-			_logger.LogError(ex, "Transaction failed. Rolling back.");
 			context.Response.StatusCode = StatusCodes.Status500InternalServerError;
 			await context.Response.WriteAsJsonAsync(new ErrorState("An error occurred while processing your request."));
+			_logger.LogError(ex, "Transaction failed. Rolling back.");
 		}
 	}
 }

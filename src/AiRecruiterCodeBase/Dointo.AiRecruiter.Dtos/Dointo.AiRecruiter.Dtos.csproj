@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Dointo.AiRecruiter.Domain\Dointo.AiRecruiter.Domain.csproj" />
+  </ItemGroup>
+
 </Project>

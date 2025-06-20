@@ -1,19 +1,14 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { KTCard, KTCardBody } from "../../../_metronic/helpers";
-import {
-	Table,
-	Dropdown,
-	Form,
-	InputGroup,
-	FormControl,
-} from "react-bootstrap";
+import { Table, Dropdown, Form, InputGroup, FormControl } from "react-bootstrap";
 import toastr from "toastr";
 import "toastr/build/toastr.min.css";
 import axios from "axios";
 
 type Candidate = {
 	id: number;
+	candidateId: string;
 	name: string;
 	email: string;
 	phoneNumber?: string;
@@ -57,6 +52,7 @@ const JobScreen: React.FC = () => {
 				if (response.data.success) {
 					const apiCandidates = response.data.data.map((cand: any, index: number) => ({
 						id: index + 1,
+						candidateId: cand.candidateId, // Must be included in API DTO
 						name: cand.name,
 						email: cand.email,
 						phoneNumber: cand.phone ?? "",
@@ -79,29 +75,44 @@ const JobScreen: React.FC = () => {
 				toastr.error("Error fetching candidates.");
 			}
 		};
-		if (jobId) {
-			fetchCandidates();
-		}
+		if (jobId) fetchCandidates();
 	}, [jobId]);
 
 	useEffect(() => {
-		let filtered = candidates;
-		if (searchTerm.trim()) {
-			const term = searchTerm.toLowerCase();
-			filtered = filtered.filter(
-				(cand) =>
-					cand.name.toLowerCase().includes(term) ||
-					cand.email.toLowerCase().includes(term)
-			);
-		}
+		const term = searchTerm.toLowerCase();
+		const filtered = candidates.filter(
+			(cand) =>
+				cand.name.toLowerCase().includes(term) ||
+				cand.email.toLowerCase().includes(term)
+		);
 		setFilteredCandidates(filtered);
 	}, [searchTerm, candidates]);
 
-	const updateStatus = (id: number, newStatus: Candidate["status"]) => {
-		setCandidates((prev) =>
-			prev.map((cand) => (cand.id === id ? { ...cand, status: newStatus } : cand))
-		);
-		toastr.success(`Candidate status updated to "${newStatus}"`);
+	const updateStatus = async (id: number, newStatus: Candidate["status"]) => {
+		const candidate = candidates.find(c => c.id === id);
+		if (!candidate) return;
+
+		try {
+			const response = await axios.patch(
+				`https://localhost:7072/api/Candidates/update-status/${candidate.candidateId}`,
+				{ status: newStatus },
+				{ headers: { "Content-Type": "application/json" } }
+			);
+
+			if (response.status === 200 && response.data.success) {
+				setCandidates((prev) =>
+					prev.map((cand) =>
+						cand.id === id ? { ...cand, status: newStatus } : cand
+					)
+				);
+				toastr.success(`Candidate status updated to "${newStatus}"`);
+			} else {
+				toastr.error(response.data.message || "Failed to update status.");
+			}
+		} catch (error: any) {
+			console.error("Failed to update status:", error);
+			toastr.error("Error updating candidate status.");
+		}
 	};
 
 	const toggleCandidateSelection = (id: number) => {
@@ -130,7 +141,7 @@ const JobScreen: React.FC = () => {
 				return "badge badge-light-danger fw-bold";
 			case "Screened":
 			default:
-				return "badge badge-light-primary fw-bold text-primary"; // Blue styled
+				return "badge badge-light-primary fw-bold text-primary";
 		}
 	};
 

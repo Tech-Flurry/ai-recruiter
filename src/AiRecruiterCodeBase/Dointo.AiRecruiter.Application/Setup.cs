@@ -14,11 +14,13 @@ public static class Setup
 		//3rd party services
 
 		//resolvers
-		services.AddScoped<IResolver<Job, EditJobDto>, EditJobDtoResolver>( );
-		services.AddScoped<IResolver<Job, JobListDto>, JobListDtoResolver>( );
-		services.AddScoped<IResolver<Skill, SkillDto>, SkillDtoResolver>( );
+		services.AddTransient<IResolver<Job, EditJobDto>, EditJobDtoResolver>( );
+		services.AddTransient<IResolver<Job, JobListDto>, JobListDtoResolver>( );
+		services.AddTransient<IResolver<Skill, SkillDto>, SkillDtoResolver>( );
+		services.AddTransient<IResolver<Candidate, CreateCandidateDto>, CreateCandidateDtoResolver>( );
 
 		//services
 		services.AddTransient<IJobPostsService, JobPostsService>( );
+		services.AddTransient<IInterviewsService, InterviewsService>( );
 	}
 }

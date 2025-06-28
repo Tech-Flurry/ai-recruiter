@@ -52,7 +52,7 @@
   <!-- Education, Certifications, Experiences, and Skills can be implemented as sub-forms or lists -->
   <div class="form-group my-2">
     <label>Education History</label>
-    <button type="button" class="btn btn-secondary btn-sm mb-2" @onclick="AddEducation">Add Education</button>
+    <button type="button" class="btn btn-secondary btn-sm mb-2" @onclick="AddEducation"><i class="bi bi-plus"></i></button>
     @foreach (var edu in candidate.EducationHistory)
     {
       <div class="mb-2">
@@ -73,7 +73,7 @@
 
   <div class="form-group my-2">
     <label>Certifications</label>
-    <button type="button" class="btn btn-secondary btn-sm mb-2" @onclick="AddCertification">Add Certification</button>
+    <button type="button" class="btn btn-secondary btn-sm mb-2" @onclick="AddCertification"><i class="bi bi-plus"></i></button>
     @foreach (var cert in candidate.Certifications)
     {
       <div class="mb-2">
@@ -94,7 +94,7 @@
 
   <div class="form-group my-2">
     <label>Experiences</label>
-    <button type="button" class="btn btn-secondary btn-sm mb-2" @onclick="AddExperience">Add Experience</button>
+    <button type="button" class="btn btn-secondary btn-sm mb-2" @onclick="AddExperience"><i class="bi bi-plus"></i></button>
     @foreach (var exp in candidate.Experiences)
     {
       <div class="mb-2">
@@ -121,7 +121,7 @@
 
   <div class="form-group my-2">
     <label>Skills</label>
-    <button type="button" class="btn btn-secondary btn-sm mb-2" @onclick="AddSkill">Add Skill</button>
+    <button type="button" class="btn btn-secondary btn-sm mb-2" @onclick="AddSkill"><i class="bi bi-plus"></i></button>
     @foreach (var skill in candidate.SKills)
     {
       <div class="mb-2">

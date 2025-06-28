@@ -1,0 +1,176 @@
+﻿@using Dointo.AiRecruiter.Dtos
+@using System.ComponentModel.DataAnnotations
+
+<h3>Create Candidate</h3>
+
+<EditForm Model="@candidate" OnValidSubmit="HandleValidSubmit">
+  <DataAnnotationsValidator />
+  <ValidationSummary />
+
+  <div class="form-group">
+    <label>First Name</label>
+    <InputText @bind-Value="candidate.FirstName" class="form-control" />
+    <ValidationMessage For="@(() => candidate.FirstName)" />
+  </div>
+
+  <div class="form-group">
+    <label>Last Name</label>
+    <InputText @bind-Value="candidate.LastName" class="form-control" />
+    <ValidationMessage For="@(() => candidate.LastName)" />
+  </div>
+
+  <div class="form-group">
+    <label>Date of Birth</label>
+    <InputDate @bind-Value="candidate.DateOfBirth" class="form-control" />
+    <ValidationMessage For="@(() => candidate.DateOfBirth)" />
+  </div>
+
+  <div class="form-group">
+    <label>Email</label>
+    <InputText @bind-Value="candidate.Email" class="form-control" type="email" />
+    <ValidationMessage For="@(() => candidate.Email)" />
+  </div>
+
+  <div class="form-group">
+    <label>Phone</label>
+    <InputText @bind-Value="candidate.Phone" class="form-control" />
+    <ValidationMessage For="@(() => candidate.Phone)" />
+  </div>
+
+  <div class="form-group">
+    <label>Job Title</label>
+    <InputText @bind-Value="candidate.JobTitle" class="form-control" />
+    <ValidationMessage For="@(() => candidate.JobTitle)" />
+  </div>
+
+  <div class="form-group">
+    <label>Location</label>
+    <InputText @bind-Value="candidate.Location" class="form-control" />
+    <ValidationMessage For="@(() => candidate.Location)" />
+  </div>
+
+  <!-- Education, Certifications, Experiences, and Skills can be implemented as sub-forms or lists -->
+  <div class="form-group">
+    <label>Education History</label>
+    <button type="button" class="btn btn-secondary" @onclick="AddEducation">Add Education</button>
+    @foreach (var edu in candidate.EducationHistory)
+    {
+      <div class="mb-2">
+        <div class="row">
+          <div class="col-md-4">
+            <InputText @bind-Value="edu.Certificate" class="form-control" placeholder="Degree" />
+          </div>
+          <div class="col-md-4">
+            <InputText @bind-Value="edu.Institution" class="form-control" placeholder="Name of Institution" />
+          </div>
+          <div class="col-md-4">
+            <InputDate @bind-Value="edu.YearOfCompletion" class="form-control" placeholder="Completion Date" />
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label>Certifications</label>
+    <button type="button" class="btn btn-secondary" @onclick="AddCertification">Add Certification</button>
+    @foreach (var cert in candidate.Certifications)
+    {
+      <div class="mb-2">
+        <div class="row">
+          <div class="col-md-4">
+            <InputText @bind-Value="cert.Certificate" class="form-control" placeholder="Certificate" />
+          </div>
+          <div class="col-md-4">
+            <InputText @bind-Value="cert.Institution" class="form-control" placeholder="Institution" />
+          </div>
+          <div class="col-md-4">
+            <InputDate @bind-Value="cert.YearOfCompletion" class="form-control" placeholder="Year of Completion" />
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label>Experiences</label>
+    <button type="button" class="btn btn-secondary" @onclick="AddExperience">Add Experience</button>
+    @foreach (var exp in candidate.Experiences)
+    {
+      <div class="mb-2">
+        <div class="row">
+          <div class="col-md-3">
+            <InputText @bind-Value="exp.JobTitle" class="form-control" placeholder="Job Title" />
+          </div>
+          <div class="col-md-3">
+            <InputText @bind-Value="exp.Company" class="form-control" placeholder="Company" />
+          </div>
+          <div class="col-md-3">
+            <InputText @bind-Value="exp.Details" class="form-control" placeholder="Details" />
+          </div>
+          <div class="col-md-1">
+            <InputDate @bind-Value="exp.StartDate" class="form-control" placeholder="Start Date" />
+          </div>
+          <div class="col-md-2">
+            <InputDate @bind-Value="exp.EndDate" class="form-control" placeholder="End Date (optional)" />
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label>Skills</label>
+    <button type="button" class="btn btn-secondary" @onclick="AddSkill">Add Skill</button>
+    @foreach (var skill in candidate.SKills)
+    {
+      <div class="mb-2">
+        <div class="row">
+          <div class="col-md-8">
+            <InputText @bind-Value="skill.Skill" class="form-control" placeholder="Skill" />
+          </div>
+          <div class="col-md-4">
+            <select @bind="skill.Rating" class="form-control">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <button type="submit" class="btn btn-primary">Submit</button>
+</EditForm>
+
+@code {
+  private CreateCandidateDto candidate = new();
+
+  private void HandleValidSubmit()
+  {
+    // Handle form submission (e.g., call API or service)
+  }
+
+  private void AddEducation()
+  {
+    candidate.EducationHistory.Add(new CredentialDto());
+  }
+
+  private void AddCertification()
+  {
+    candidate.Certifications.Add(new CredentialDto());
+  }
+
+  private void AddExperience()
+  {
+    candidate.Experiences.Add(new ExperienceDto());
+  }
+
+  private void AddSkill()
+  {
+    candidate.SKills.Add(new SkillRatingDto { Rating = 5 });
+  }
+}

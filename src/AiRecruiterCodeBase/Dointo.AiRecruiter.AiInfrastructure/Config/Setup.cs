@@ -23,5 +23,6 @@ public static class Setup
 		});
 		//agents  
 		services.AddTransient<IJobsAgent, JobsAgent>( );
+		services.AddTransient<ICandidatesAgent, CandidatesAgent>( );
 	}
 }

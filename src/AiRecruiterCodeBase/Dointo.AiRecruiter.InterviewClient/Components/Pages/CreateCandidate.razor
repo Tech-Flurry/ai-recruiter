@@ -56,15 +56,20 @@
     @foreach (var edu in candidate.EducationHistory)
     {
       <div class="mb-2">
-        <div class="row">
+        <div class="row align-items-center">
           <div class="col-md-4">
             <InputText @bind-Value="edu.Certificate" class="form-control" placeholder="Degree" />
           </div>
           <div class="col-md-4">
             <InputText @bind-Value="edu.Institution" class="form-control" placeholder="Name of Institution" />
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
             <InputDate @bind-Value="edu.YearOfCompletion" class="form-control" placeholder="Completion Date" />
+          </div>
+          <div class="col-md-1 text-end">
+            <button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => RemoveEducation(edu)">
+              <i class="bi bi-trash"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -77,15 +82,20 @@
     @foreach (var cert in candidate.Certifications)
     {
       <div class="mb-2">
-        <div class="row">
+        <div class="row align-items-center">
           <div class="col-md-4">
             <InputText @bind-Value="cert.Certificate" class="form-control" placeholder="Certificate" />
           </div>
           <div class="col-md-4">
             <InputText @bind-Value="cert.Institution" class="form-control" placeholder="Institution" />
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
             <InputDate @bind-Value="cert.YearOfCompletion" class="form-control" placeholder="Year of Completion" />
+          </div>
+          <div class="col-md-1 text-end">
+            <button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => RemoveCertification(cert)">
+              <i class="bi bi-trash"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -98,7 +108,7 @@
     @foreach (var exp in candidate.Experiences)
     {
       <div class="mb-2">
-        <div class="row">
+        <div class="row align-items-center">
           <div class="col-md-3">
             <InputText @bind-Value="exp.JobTitle" class="form-control" placeholder="Job Title" />
           </div>
@@ -111,8 +121,13 @@
           <div class="col-md-1">
             <InputDate @bind-Value="exp.StartDate" class="form-control" placeholder="Start Date" />
           </div>
-          <div class="col-md-2">
+          <div class="col-md-1">
             <InputDate @bind-Value="exp.EndDate" class="form-control" placeholder="End Date (optional)" />
+          </div>
+          <div class="col-md-1 text-end">
+            <button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => RemoveExperience(exp)">
+              <i class="bi bi-trash"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -125,11 +140,11 @@
     @foreach (var skill in candidate.SKills)
     {
       <div class="mb-2">
-        <div class="row">
+        <div class="row align-items-center">
           <div class="col-md-8">
             <InputText @bind-Value="skill.Skill" class="form-control" placeholder="Skill" />
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
             <select @bind="skill.Rating" class="form-control">
               <option value="1">1</option>
               <option value="2">2</option>
@@ -137,6 +152,11 @@
               <option value="4">4</option>
               <option value="5">5</option>
             </select>
+          </div>
+          <div class="col-md-1 text-end">
+            <button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => RemoveSkill(skill)">
+              <i class="bi bi-trash"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -172,5 +192,24 @@
   private void AddSkill()
   {
     candidate.SKills.Add(new SkillRatingDto { Rating = 5 });
+  }
+  private void RemoveEducation(CredentialDto edu)
+  {
+    candidate.EducationHistory.Remove(edu);
+  }
+
+  private void RemoveCertification(CredentialDto cert)
+  {
+    candidate.Certifications.Remove(cert);
+  }
+
+  private void RemoveExperience(ExperienceDto exp)
+  {
+    candidate.Experiences.Remove(exp);
+  }
+
+  private void RemoveSkill(SkillRatingDto skill)
+  {
+    candidate.SKills.Remove(skill);
   }
 }

@@ -16,8 +16,24 @@ public class CreateCandidateDto
 }
 
 
-public record CredentialDto(string Certificate, string Institution, DateTime YearOfCompletion);
+public class CredentialDto
+{
+	public string Certificate { get; set; } = null!;
+	public string Institution { get; set; } = null!;
+	public DateTime YearOfCompletion { get; set; }
+}
 
-public record ExperienceDto(string JobTitle, string Company, string Details, DateTime StartDate, DateTime? EndDate);
+public class ExperienceDto
+{
+	public string JobTitle { get; set; } = null!;
+	public string Company { get; set; } = null!;
+	public string Details { get; set; } = null!;
+	public DateTime StartDate { get; set; }
+	public DateTime? EndDate { get; set; }
+}
 
-public record SkillRatingDto(string Skill, int Rating);
+public class SkillRatingDto
+{
+	public string Skill { get; set; } = null!;
+	public int Rating { get; set; }
+}

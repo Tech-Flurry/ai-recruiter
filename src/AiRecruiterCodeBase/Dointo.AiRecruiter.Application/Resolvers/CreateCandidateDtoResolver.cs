@@ -23,10 +23,10 @@ internal class CreateCandidateDtoResolver : ResolverBase<Candidate, CreateCandid
 					   LastName = src.LastName
 				   }))
 				   .ForMember(dest => dest.Summary, opt => opt.Ignore( ));
-				cfg.CreateMap<Credential, CredentialDto>( ).ConstructUsing(src => new CredentialDto(src.Certificate, src.Institution, src.YearOfCompletion))
+				cfg.CreateMap<Credential, CredentialDto>( )
 				.ReverseMap( );
-				cfg.CreateMap<Experience, ExperienceDto>( ).ConstructUsing(src => new ExperienceDto(src.JobTitle, src.Company, src.Details, src.StartDate, src.EndDate)).ReverseMap( );
-				cfg.CreateMap<SkillRating, SkillRatingDto>( ).ConstructUsing(src => new SkillRatingDto(src.Skill, src.Rating)).ReverseMap( );
+				cfg.CreateMap<Experience, ExperienceDto>( ).ReverseMap( );
+				cfg.CreateMap<SkillRating, SkillRatingDto>( ).ReverseMap( );
 			});
 			return new AutoMapperProvider(configuration.CreateMapper( ));
 		}

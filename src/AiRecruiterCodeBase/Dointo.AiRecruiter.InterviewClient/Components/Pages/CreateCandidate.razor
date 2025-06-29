@@ -2,6 +2,7 @@
 @using Dointo.AiRecruiter.Dtos
 @using System.ComponentModel.DataAnnotations
 @using Dointo.AiRecruiter.InterviewClient.Utils
+@using System.Text.Json
 @inject IHttpClientFactory HttpClientFactory
 
 <h3>Create Candidate</h3>
@@ -148,7 +149,13 @@
       <div class="mb-2">
         <div class="row align-items-center">
           <div class="col-md-8">
-            <InputText @bind-Value="skill.Skill" class="form-control" placeholder="Skill" />
+            <select @bind="skill.Skill" class="form-control">
+              <option value="">Select skill</option>
+              @foreach (var s in availableSkills)
+              {
+                <option value="@s.Name">@s.Name</option>
+              }
+            </select>
           </div>
           <div class="col-md-3">
             <select @bind="skill.Rating" class="form-control">
@@ -188,12 +195,40 @@
   private string statusMessage = string.Empty;
   private string statusAlertClass = "alert-info";
   private bool isProcessing = false;
+  private List<SkillDto> availableSkills = new();
+  private JsonSerializerOptions jsonSerializerOptions = new()
+  {
+    PropertyNameCaseInsensitive = true,
+    Converters = { new ProcessingStateJsonConverter() }
+  };
 
   protected override void OnInitialized()
   {
     base.OnInitialized();
     httpClient = HttpClientFactory.CreateClient(Constants.API_CLIENT_NAME);
   }
+
+  protected async override Task OnInitializedAsync()
+  {
+    await base.OnInitializedAsync();
+    await LoadSkillsAsync();
+  }
+
+  private async Task LoadSkillsAsync()
+  {
+    try
+    {
+      var response = await httpClient.GetFromJsonAsync<SuccessState<List<SkillDto>>>(
+        "api/JobPosts/skills");
+      availableSkills = response?.Data ?? [];
+    }
+    catch
+    {
+      availableSkills = [];
+    }
+    StateHasChanged();
+  }
+
 
   private async void HandleValidSubmit()
   {
@@ -208,15 +243,11 @@
 
       if (response.IsSuccessStatusCode)
       {
-        var processingState = await response.Content.ReadFromJsonAsync<IProcessingState>(new System.Text.Json.JsonSerializerOptions
-        {
-          PropertyNameCaseInsensitive = true,
-          Converters = { new ProcessingStateJsonConverter() }
-        });
+        var processingState = await response.Content.ReadFromJsonAsync<IProcessingState>(jsonSerializerOptions);
 
-        if (processingState is SuccessState success)
+        if (processingState is { Success: true })
         {
-          statusMessage = success.Message;
+          statusMessage = processingState.Message;
           statusAlertClass = "alert-success";
           candidate = new();
         }

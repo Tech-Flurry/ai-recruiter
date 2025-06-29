@@ -15,6 +15,9 @@ internal class CandidatesAgent(AiProviderFactory aiProviderFactory) : ICandidate
 		var prompt = @$"**Candidate Profile**:{candidateJson}
 **Instructions**:
 - Generate a concise summary of the candidate's profile that highlights their most relevant skills and experiences for the job.
+- Write the summary in a professional tone suitable for a hiring manager.
+- Ensure the summary is clear, concise, and free of jargon.
+- Write the summary in first person, as if the candidate is introducing themselves.
 - The summary should be no longer than 200 words.
 - Focus on the candidate's strengths and how they align with the job requirements.
 - Your output should be a single paragraph without any additional formatting or bullet points.";

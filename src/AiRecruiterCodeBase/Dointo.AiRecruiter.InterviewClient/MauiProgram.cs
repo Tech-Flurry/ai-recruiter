@@ -14,12 +14,17 @@ public static class MauiProgram
 			});
 
 		builder.Services.AddMauiBlazorWebView( );
-
+		builder.Services.AddHttpClient(Constants.API_CLIENT_NAME, x => x.BaseAddress = new Uri("https://localhost:7072"));
 #if DEBUG
-		builder.Services.AddBlazorWebViewDeveloperTools();
-		builder.Logging.AddDebug();
+		builder.Services.AddBlazorWebViewDeveloperTools( );
+		builder.Logging.AddDebug( );
 #endif
 
 		return builder.Build( );
 	}
+}
+
+public static class Constants
+{
+	public const string API_CLIENT_NAME = "Api";
 }

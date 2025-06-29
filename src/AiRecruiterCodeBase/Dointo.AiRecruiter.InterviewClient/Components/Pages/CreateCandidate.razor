@@ -1,8 +1,14 @@
-﻿@using Dointo.AiRecruiter.Dtos
+﻿@using Dointo.AiRecruiter.Core.States
+@using Dointo.AiRecruiter.Dtos
 @using System.ComponentModel.DataAnnotations
+@using Dointo.AiRecruiter.InterviewClient.Utils
+@inject IHttpClientFactory HttpClientFactory
 
 <h3>Create Candidate</h3>
-
+@if (!string.IsNullOrEmpty(statusMessage))
+{
+  <div class="alert @statusAlertClass">@statusMessage</div>
+}
 <EditForm Model="@candidate" OnValidSubmit="HandleValidSubmit">
   <DataAnnotationsValidator />
   <ValidationSummary />
@@ -168,10 +174,67 @@
 
 @code {
   private CreateCandidateDto candidate = new();
+  private HttpClient httpClient = null!;
+  private string statusMessage = string.Empty;
+  private string statusAlertClass = "alert-info";
 
-  private void HandleValidSubmit()
+  protected override void OnInitialized()
   {
-    // Handle form submission (e.g., call API or service)
+    base.OnInitialized();
+    httpClient = HttpClientFactory.CreateClient(Constants.API_CLIENT_NAME);
+  }
+
+  private async void HandleValidSubmit()
+  {
+    statusMessage = string.Empty;
+    statusAlertClass = "alert-info";
+    try
+    {
+      candidate.Id = string.Empty;
+      var response = await httpClient.PostAsJsonAsync("api/interviews/create-candidate", candidate);
+
+      if (response.IsSuccessStatusCode)
+      {
+        var processingState = await response.Content.ReadFromJsonAsync<IProcessingState>(new System.Text.Json.JsonSerializerOptions
+        {
+          PropertyNameCaseInsensitive = true,
+          Converters = { new ProcessingStateJsonConverter() }
+        });
+
+        if (processingState is SuccessState success)
+        {
+          statusMessage = success.Message;
+          statusAlertClass = "alert-success";
+          candidate = new(); 
+        }
+        else if (processingState is ValidationErrorState validation)
+        {
+          statusMessage = validation.Message + string.Join("<br/>", validation.Errors.Select(e => $"{e.PropertyName}: {e.ErrorMessage}"));
+          statusAlertClass = "alert-warning";
+        }
+        else if (processingState is ExceptionState exception)
+        {
+          statusMessage = exception.Message + (string.IsNullOrWhiteSpace(exception.ExceptionMessage) ? "" : $"<br/>{exception.ExceptionMessage}");
+          statusAlertClass = "alert-danger";
+        }
+        else
+        {
+          statusMessage = "Unknown response from server.";
+          statusAlertClass = "alert-danger";
+        }
+      }
+      else
+      {
+        statusMessage = $"Server error: {response.ReasonPhrase}";
+        statusAlertClass = "alert-danger";
+      }
+    }
+    catch (Exception ex)
+    {
+      statusMessage = $"An error occurred: {ex.Message}";
+      statusAlertClass = "alert-danger";
+    }
+    StateHasChanged();
   }
 
   private void AddEducation()

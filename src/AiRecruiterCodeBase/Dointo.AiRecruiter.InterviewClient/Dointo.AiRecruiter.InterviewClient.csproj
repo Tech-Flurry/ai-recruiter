@@ -68,6 +68,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Dointo.AiRecruiter.Core\Dointo.AiRecruiter.Core.csproj" />
       <ProjectReference Include="..\Dointo.AiRecruiter.Dtos\Dointo.AiRecruiter.Dtos.csproj" />
     </ItemGroup>
 

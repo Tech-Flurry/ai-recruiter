@@ -13,5 +13,25 @@
         "DebugTarget": "localhost (Chrome)"
       }
     ]
+  },
+  {
+    "Name": "Launch Web + Interview",
+    "Projects": [
+      {
+        "Path": "Dointo.AiRecruiter.RestApi\\Dointo.AiRecruiter.RestApi.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      },
+      {
+        "Path": "dointo.airecruiter.web\\dointo.airecruiter.web.esproj",
+        "Action": "Start",
+        "DebugTarget": "localhost (Chrome)"
+      },
+      {
+        "Path": "Dointo.AiRecruiter.InterviewClient\\Dointo.AiRecruiter.InterviewClient.csproj",
+        "Action": "Start",
+        "DebugTarget": "Windows Machine"
+      }
+    ]
   }
 ]

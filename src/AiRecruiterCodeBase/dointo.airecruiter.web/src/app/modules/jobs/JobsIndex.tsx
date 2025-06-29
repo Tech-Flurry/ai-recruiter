@@ -2,6 +2,7 @@
 import { PageLink, PageTitle } from '../../../_metronic/layout/core'
 import JobsList from "./JobsList"
 import JobPost from "./JobPost" // 👈 You need to import this too
+import InterviewResultWrapper from './InterviewResultWrapper' // ✅ NEW import
 
 const jobsBreadCrumbs: Array<PageLink> = [
 	{
@@ -40,6 +41,17 @@ function JobsIndex() {
 						<>
 							<PageTitle breadcrumbs={jobsBreadCrumbs}>Create Job Post</PageTitle>
 							<JobPost />
+						</>
+					}
+				/>
+
+				{/* ✅ Interview Result Page */}
+				<Route
+					path='interview/:jobId' // Dynamic route for interview result
+					element={
+						<>
+							<PageTitle breadcrumbs={jobsBreadCrumbs}>Interview Result</PageTitle>
+							<InterviewResultWrapper /> {/* Display Interview Results */}
 						</>
 					}
 				/>

@@ -169,7 +169,17 @@
     }
   </div>
 
-  <button type="submit" class="btn btn-primary">Submit</button>
+  <button type="submit" class="btn btn-primary" disabled="@isProcessing">
+    @if (isProcessing)
+    {
+      <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+      <text>Submitting...</text>
+    }
+    else
+    {
+      <text>Submit</text>
+    }
+  </button>
 </EditForm>
 
 @code {
@@ -177,6 +187,7 @@
   private HttpClient httpClient = null!;
   private string statusMessage = string.Empty;
   private string statusAlertClass = "alert-info";
+  private bool isProcessing = false;
 
   protected override void OnInitialized()
   {
@@ -188,6 +199,8 @@
   {
     statusMessage = string.Empty;
     statusAlertClass = "alert-info";
+    isProcessing = true;
+    StateHasChanged();
     try
     {
       candidate.Id = string.Empty;
@@ -205,7 +218,7 @@
         {
           statusMessage = success.Message;
           statusAlertClass = "alert-success";
-          candidate = new(); 
+          candidate = new();
         }
         else if (processingState is ValidationErrorState validation)
         {
@@ -234,7 +247,11 @@
       statusMessage = $"An error occurred: {ex.Message}";
       statusAlertClass = "alert-danger";
     }
-    StateHasChanged();
+    finally
+    {
+      isProcessing = false;
+      StateHasChanged();
+    }
   }
 
   private void AddEducation()

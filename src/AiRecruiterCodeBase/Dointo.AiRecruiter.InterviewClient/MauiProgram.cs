@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Dointo.AiRecruiter.InterviewClient.Services;
+using Microsoft.Extensions.Logging;
 
 namespace Dointo.AiRecruiter.InterviewClient;
 public static class MauiProgram
@@ -15,6 +16,7 @@ public static class MauiProgram
 
 		builder.Services.AddMauiBlazorWebView( );
 		builder.Services.AddHttpClient(Constants.API_CLIENT_NAME, x => x.BaseAddress = new Uri("https://localhost:7072"));
+		builder.Services.AddSingleton<DeepLinkingService>( );
 #if DEBUG
 		builder.Services.AddBlazorWebViewDeveloperTools( );
 		builder.Logging.AddDebug( );

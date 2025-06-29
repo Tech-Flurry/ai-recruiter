@@ -1,14 +1,22 @@
-﻿namespace Dointo.AiRecruiter.InterviewClient;
+﻿using Dointo.AiRecruiter.InterviewClient.Services;
+
+namespace Dointo.AiRecruiter.InterviewClient;
 
 public partial class App : Application
 {
-	public App( )
+	private readonly DeepLinkingService _deepLinkingService;
+
+	public App(DeepLinkingService deepLinkingService)
 	{
 		InitializeComponent( );
+		_deepLinkingService = deepLinkingService;
 	}
 
-	protected override Window CreateWindow(IActivationState? activationState)
+	protected override void OnAppLinkRequestReceived(Uri uri)
 	{
-		return new Window(new MainPage( )) { Title = "Dointo.AiRecruiter.InterviewClient" };
+		base.OnAppLinkRequestReceived(uri);
+		_deepLinkingService.ProcessUri(uri.ToString( ));
 	}
+
+	protected override Window CreateWindow(IActivationState? activationState) => new Window(new MainPage( )) { Title = "Dointo Ai Recruiter" };
 }

@@ -1,8 +1,8 @@
 ﻿import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { PageLink, PageTitle } from '../../../_metronic/layout/core'
 import JobsList from "./JobsList"
-import JobPost from "./JobPost" // 👈 You need to import this too
-import InterviewResultWrapper from './InterviewResultWrapper' // ✅ NEW import
+import JobPost from "./JobPost"
+import InterviewResult from './InterviewResult' // <- Direct import
 
 const jobsBreadCrumbs: Array<PageLink> = [
 	{
@@ -23,7 +23,6 @@ function JobsIndex() {
 	return (
 		<Routes>
 			<Route element={<Outlet />}>
-				{/* ✅ Jobs List Page */}
 				<Route
 					path='list'
 					element={
@@ -34,7 +33,6 @@ function JobsIndex() {
 					}
 				/>
 
-				{/* ✅ Job Create Page */}
 				<Route
 					path='create'
 					element={
@@ -45,18 +43,16 @@ function JobsIndex() {
 					}
 				/>
 
-				{/* ✅ Interview Result Page */}
 				<Route
-					path='interview/:jobId' // Dynamic route for interview result
+					path='interview/:jobId'
 					element={
 						<>
 							<PageTitle breadcrumbs={jobsBreadCrumbs}>Interview Result</PageTitle>
-							<InterviewResultWrapper /> {/* Display Interview Results */}
+							<InterviewResult />
 						</>
 					}
 				/>
 
-				{/* ✅ Default redirect */}
 				<Route index element={<Navigate to='/jobs/list' />} />
 			</Route>
 		</Routes>

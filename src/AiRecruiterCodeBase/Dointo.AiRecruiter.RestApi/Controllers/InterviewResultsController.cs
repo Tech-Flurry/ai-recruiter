@@ -1,5 +1,4 @@
 ﻿using Dointo.AiRecruiter.Application.Services;             // ✅ Correct namespace
-using Dointo.AiRecruiter.Core.States;
 using Dointo.AiRecruiter.Dtos;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,14 +6,9 @@ namespace Dointo.AiRecruiter.RestApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class InterviewResultsController : ControllerBase
+public class InterviewResultsController(IInterviewResultService service) : ControllerBase
 {
-	private readonly IInterviewResultService _service;
-
-	public InterviewResultsController(IInterviewResultService service)
-	{
-		_service = service;
-	}
+	private readonly IInterviewResultService _service = service;
 
 	[HttpGet("{interviewId}")]
 	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(InterviewResultDto))]

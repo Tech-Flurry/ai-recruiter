@@ -11,5 +11,5 @@ public class Candidate : BaseEntity
 	public List<Credential> EducationHistory { get; set; } = [ ];
 	public List<Credential> Certifications { get; set; } = [ ];
 	public List<Experience> Experiences { get; set; } = [ ];
-	public List<SkillRating> SKills { get; set; } = [ ];
+	public List<SkillRating> Skills { get; set; } = [ ];
 }

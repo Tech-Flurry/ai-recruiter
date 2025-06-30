@@ -8,5 +8,5 @@ public class Interview : BaseEntity
 	public double AiScore { get; set; }
 	public List<SkillRating> ScoredSkills { get; set; } = [ ];
 	public List<ScoredQuestion> Questions { get; set; } = [ ];
-	public List<string>? Violations { get; set; } = [ ];
+	public List<string> Violations { get; set; } = [ ];
 }

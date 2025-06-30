@@ -1,5 +1,6 @@
 ﻿import React, { useEffect, useState } from 'react'
 import axios from 'axios'
+import { useParams } from 'react-router-dom'
 import { ListGroup, Row, Col, Table } from 'react-bootstrap'
 
 interface InterviewQuestion {
@@ -44,113 +45,53 @@ interface InterviewResultData {
 	systemFeedback?: string
 	experience?: Experience[]
 	credentials?: Credential[]
+	education?: Credential[]
+	certifications?: Credential[]
 	skillRatings?: SkillRating[]
 	name: string
 	email: string
 	phone: string
 	jobTitle: string
 	location: string
+	feedback?: string
 }
 
-interface InterviewResultProps {
-	jobId: string
-}
-
-const InterviewResult: React.FC<InterviewResultProps> = ({ jobId }) => {
+const InterviewResult: React.FC = () => {
+	const { jobId } = useParams<{ jobId: string }>()
 	const [data, setData] = useState<InterviewResultData | null>(null)
 	const [loading, setLoading] = useState(true)
+	const [error, setError] = useState<string | null>(null)
 
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
+				console.log('Fetching interview result for ID:', jobId)
 				const res = await axios.get(
 					`${import.meta.env.VITE_APP_API_BASE_URL}/InterviewResults/${jobId}`
 				)
 				setData(res.data.data)
-			} catch {
-				console.warn('API failed. Loading mock data...')
-				setData({
-					jobId,
-					fullName: 'John Doe',
-					totalScore: 85,
-					skillWiseScore: {
-						JavaScript: 90,
-						React: 80,
-						Node: 85,
-					},
-					questions: [
-						{
-							question: 'What is a closure in JavaScript?',
-							answer: 'A closure is a function that remembers its outer scope.',
-							isRecruiterAdded: true,
-							scoreObtained: 4,
-							totalScore: 5,
-						},
-						{
-							question: 'Explain useEffect in React.',
-							answer: 'It’s used to handle side effects like fetching or subscriptions.',
-							isRecruiterAdded: false,
-							scoreObtained: 5,
-							totalScore: 5,
-						},
-					],
-					violations: ['Switched tab twice', 'AI-generated answer detected'],
-					personalityAnalysis: 'Proactive and detail-oriented',
-					systemFeedback: 'Recommended for frontend developer role.',
-					name: 'John Doe',
-					email: 'john.doe@example.com',
-					phone: '+1 234 567 890',
-					jobTitle: 'Frontend Developer',
-					location: 'Remote',
-					experience: [
-						{
-							jobTitle: 'Founder',
-							company: 'Dointo',
-							details: 'Building user-centric micro-SaaS products.',
-							startDate: '2024-08-01',
-							endDate: undefined,
-						},
-						{
-							jobTitle: 'Sr. Software Engineer (Blazor)',
-							company: 'Tkxel',
-							details: 'Worked on enterprise Blazor applications.',
-							startDate: '2023-09-01',
-							endDate: '2024-08-01',
-						},
-					],
-					credentials: [
-						{
-							certificate: 'B.Sc. Computer Science',
-							institution: 'FAST-NUCES',
-							yearOfCompletion: '2022-06-01',
-						},
-						{
-							certificate: 'AWS Certified Developer',
-							institution: 'Amazon',
-							yearOfCompletion: '2023-03-01',
-						},
-					],
-					skillRatings: [
-						{ skill: 'JavaScript', rating: 5 },
-						{ skill: 'React', rating: 4 },
-						{ skill: 'Node.js', rating: 4 },
-					],
-				})
+			} catch (err: never) {
+				console.error('API call failed:', err)
+				setError('Failed to load interview result. Please try again later.')
 			} finally {
 				setLoading(false)
 			}
 		}
 
-		fetchData()
+		if (jobId) {
+			fetchData()
+		}
 	}, [jobId])
 
 	if (loading) return <div className="p-4">Loading interview result...</div>
+	if (error) return <div className="p-4 text-danger">{error}</div>
 	if (!data) return <div className="p-4 text-danger">Interview result not found.</div>
 
 	return (
 		<div className="container py-4">
 			<Row className="gutters-sm">
 				<Col md={4} className="mb-3">
+					{/* Candidate Profile */}
 					<div className="card card-custom mb-4">
 						<div className="card-header"><h3 className="card-title">Candidate Profile</h3></div>
 						<div className="card-body text-center">
@@ -163,17 +104,14 @@ const InterviewResult: React.FC<InterviewResultProps> = ({ jobId }) => {
 							<h4>{data.fullName}</h4>
 							<p className="text-muted">{data.location}</p>
 							<p className="text-secondary">{data.jobId}</p>
-							<a href="#" className="btn btn-link btn-color-info btn-active-color-primary me-5 mb-2">
-								Contact
-							</a>
 						</div>
 					</div>
 
+					{/* Candidate Details */}
 					<div className="card card-custom mb-4">
 						<div className="card-header"><h3 className="card-title">Candidate Details</h3></div>
 						<div className="card-body">
 							{[
-								['Name', data.name],
 								['Email', data.email],
 								['Phone', data.phone],
 								['Job Title', data.jobTitle],
@@ -187,7 +125,8 @@ const InterviewResult: React.FC<InterviewResultProps> = ({ jobId }) => {
 						</div>
 					</div>
 
-					{data.experience?.length && data.experience.length > 0 && (
+					{/* Experience */}
+					{Array.isArray(data.experience) && data.experience.length > 0 && (
 						<div className="card card-custom mb-4">
 							<div className="card-header"><h3 className="card-title">Experience</h3></div>
 							<div className="card-body">
@@ -208,16 +147,20 @@ const InterviewResult: React.FC<InterviewResultProps> = ({ jobId }) => {
 						</div>
 					)}
 
-					{data.credentials?.length && data.credentials.length > 0 && (
+					{/* Education */}
+					{Array.isArray(data.education) && data.education.length > 0 && (
 						<div className="card card-custom mb-4">
 							<div className="card-header"><h3 className="card-title">Education</h3></div>
 							<div className="card-body">
-								{data.credentials.map((cred, idx) => (
+								{data.education.map((edu, idx) => (
 									<div key={idx} className="mb-4 border-bottom pb-3">
-										<h6 className="fw-bold text-dark mb-1">{cred.certificate}</h6>
-										<p className="mb-1 text-muted">{cred.institution}</p>
+										<h6 className="fw-bold text-dark mb-1">{edu.certificate}</h6>
+										<p className="mb-1 text-muted">{edu.institution}</p>
 										<p className="mb-0 text-muted">
-											{new Date(cred.yearOfCompletion).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+											{new Date(edu.yearOfCompletion).toLocaleDateString('en-US', {
+												month: 'short',
+												year: 'numeric'
+											})}
 										</p>
 									</div>
 								))}
@@ -225,7 +168,29 @@ const InterviewResult: React.FC<InterviewResultProps> = ({ jobId }) => {
 						</div>
 					)}
 
-					{data.skillRatings?.length && data.skillRatings.length > 0 && (
+					{/* Certifications */}
+					{Array.isArray(data.certifications) && data.certifications.length > 0 && (
+						<div className="card card-custom mb-4">
+							<div className="card-header"><h3 className="card-title">Certifications</h3></div>
+							<div className="card-body">
+								{data.certifications.map((cert, idx) => (
+									<div key={idx} className="mb-4 border-bottom pb-3">
+										<h6 className="fw-bold text-dark mb-1">{cert.certificate}</h6>
+										<p className="mb-1 text-muted">{cert.institution}</p>
+										<p className="mb-0 text-muted">
+											{new Date(cert.yearOfCompletion).toLocaleDateString('en-US', {
+												month: 'short',
+												year: 'numeric'
+											})}
+										</p>
+									</div>
+								))}
+							</div>
+						</div>
+					)}
+
+					{/* Skill Ratings */}
+					{Array.isArray(data.skillRatings) && data.skillRatings.length > 0 && (
 						<div className="card card-custom mb-4">
 							<div className="card-header"><h3 className="card-title">Skill Ratings</h3></div>
 							<div className="card-body">
@@ -241,6 +206,7 @@ const InterviewResult: React.FC<InterviewResultProps> = ({ jobId }) => {
 				</Col>
 
 				<Col md={8}>
+					{/* Skill-wise Scores */}
 					<div className="card card-custom mb-4">
 						<div className="card-header"><h3 className="card-title">Skill-wise Scores</h3></div>
 						<div className="card-body">
@@ -256,6 +222,8 @@ const InterviewResult: React.FC<InterviewResultProps> = ({ jobId }) => {
 							</Table>
 						</div>
 					</div>
+
+					{/* Total Score */}
 					<div className="card card-custom mb-4">
 						<div className="card-header"><h3 className="card-title">Total Score</h3></div>
 						<div className="card-body">
@@ -264,7 +232,15 @@ const InterviewResult: React.FC<InterviewResultProps> = ({ jobId }) => {
 						</div>
 					</div>
 
-					{/* Interview Questions With Per-Question Score */}
+					{/* Feedback */}
+					{data.feedback && (
+						<div className="card card-custom mb-4">
+							<div className="card-header"><h3 className="card-title">Candidate Fit Feedback</h3></div>
+							<div className="card-body"><p>{data.feedback}</p></div>
+						</div>
+					)}
+
+					{/* Questions */}
 					<div className="card card-custom mb-4">
 						<div className="card-header"><h3 className="card-title">Interview Questions</h3></div>
 						<div className="card-body">
@@ -300,6 +276,7 @@ const InterviewResult: React.FC<InterviewResultProps> = ({ jobId }) => {
 						</div>
 					</div>
 
+					{/* Violations */}
 					<div className="card card-custom mb-4">
 						<div className="card-header"><h3 className="card-title">Violations</h3></div>
 						<div className="card-body">
@@ -313,15 +290,21 @@ const InterviewResult: React.FC<InterviewResultProps> = ({ jobId }) => {
 						</div>
 					</div>
 
-					<div className="card card-custom mb-4">
-						<div className="card-header"><h3 className="card-title">Personality Analysis</h3></div>
-						<div className="card-body"><p>{data.personalityAnalysis}</p></div>
-					</div>
+					{/* Personality Analysis */}
+					{data.personalityAnalysis && (
+						<div className="card card-custom mb-4">
+							<div className="card-header"><h3 className="card-title">Personality Analysis</h3></div>
+							<div className="card-body"><p>{data.personalityAnalysis}</p></div>
+						</div>
+					)}
 
-					<div className="card card-custom mb-4">
-						<div className="card-header"><h3 className="card-title">System Feedback</h3></div>
-						<div className="card-body"><p>{data.systemFeedback}</p></div>
-					</div>
+					{/* System Feedback */}
+					{data.systemFeedback && (
+						<div className="card card-custom mb-4">
+							<div className="card-header"><h3 className="card-title">System Feedback</h3></div>
+							<div className="card-body"><p>{data.systemFeedback}</p></div>
+						</div>
+					)}
 				</Col>
 			</Row>
 		</div>

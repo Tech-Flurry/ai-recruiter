@@ -333,12 +333,11 @@ const JobPost: React.FC = () => {
 												<path d="M3 6h18v2H3zm2 3h14l-1.5 12.5c-.1.8-.8 1.5-1.7 1.5H8.2c-.9 0-1.6-.7-1.7-1.5L5 9zm5 2v9h2v-9H10zm4 0v9h2v-9h-2z" />
 											</svg>
 										</button>
-										<Link
-											to={`/jobs/interview/${job.id}`} // Always visible, no condition
-											className="btn btn-sm btn-info"
-										>
+										<Link to={`/jobs/interview/${job.id}`} className="btn btn-sm btn-primary">
 											View Result
 										</Link>
+
+
 									</td>
 								</tr>
 							))}

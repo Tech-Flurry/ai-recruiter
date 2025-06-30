@@ -2,3 +2,9 @@
 @page "/interview/{JobId}"
 
 <CreateCandidate />
+
+
+@code {
+  [Parameter]
+  public string? JobId { get; set; }
+}

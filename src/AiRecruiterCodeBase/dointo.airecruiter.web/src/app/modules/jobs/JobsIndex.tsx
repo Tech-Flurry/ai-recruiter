@@ -1,7 +1,8 @@
 ﻿import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { PageLink, PageTitle } from '../../../_metronic/layout/core'
 import JobsList from "./JobsList"
-import JobPost from "./JobPost" // 👈 You need to import this too
+import JobPost from "./JobPost"
+import ConductJob from "./ConductJob" // ✅ New import for the "Launch App" page
 
 const jobsBreadCrumbs: Array<PageLink> = [
 	{
@@ -44,7 +45,18 @@ function JobsIndex() {
 					}
 				/>
 
-				{/* ✅ Default redirect */}
+				{/* ✅ Conduct Job Interview Page (Shared Link) */}
+				<Route
+					path='conduct/:jobId'
+					element={
+						<>
+							<PageTitle breadcrumbs={jobsBreadCrumbs}>Interview Launch</PageTitle>
+							<ConductJob />
+						</>
+					}
+				/>
+
+				{/* ✅ Default Redirect */}
 				<Route index element={<Navigate to='/jobs/list' />} />
 			</Route>
 		</Routes>

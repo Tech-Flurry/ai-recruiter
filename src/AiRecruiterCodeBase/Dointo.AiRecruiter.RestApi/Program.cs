@@ -1,8 +1,13 @@
 ﻿using Dointo.AiRecruiter.AiInfrastructure.Config;
 using Dointo.AiRecruiter.Application;
+using Dointo.AiRecruiter.Application.Services;
 using Dointo.AiRecruiter.DbInfrastructure;
 using Dointo.AiRecruiter.RestApi.Middleware;
+using Dointo.AiRecruiter.RestApi.Utils;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,9 +24,21 @@ builder.Services.AddCors(options =>
 	});
 });
 
-// ✅ Controllers
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+	.AddJwtBearer(options =>
+	{
+		var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!);
+		options.TokenValidationParameters = new TokenValidationParameters
+		{
+			ValidateIssuerSigningKey = true,
+			IssuerSigningKey = new SymmetricSecurityKey(key),
+			ValidateIssuer = true,
+			ValidateAudience = false
+		};
+	});
+builder.Services.AddSingleton<ITokenService, TokenService>( );
+builder.Services.AddAuthorization( );
 builder.Services.AddControllers( );
-
 builder.Services.AddEndpointsApiExplorer( );
 builder.Services.AddSwaggerGen(c =>
 {
@@ -59,7 +76,7 @@ app.UseHttpsRedirection( );
 app.UseRouting( );
 
 app.UseCors( );
-
+app.UseAuthentication( );
 app.UseAuthorization( );
 app.MapControllers( );
 

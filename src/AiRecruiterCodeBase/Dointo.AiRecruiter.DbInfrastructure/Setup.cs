@@ -11,7 +11,7 @@ public static class Setup
 {
 	public static void AddDbInfrastructure(this IServiceCollection services, string connectionStringName, string aiRecruiterDbName)
 	{
-		services.AddScoped(sp =>
+		services.AddSingleton(sp =>
 		{
 			var configuration = sp.GetRequiredService<IConfiguration>( );
 			var mongoClient = new MongoClient(configuration[connectionStringName]!);
@@ -21,5 +21,6 @@ public static class Setup
 		// Registering the repositories
 		services.AddScoped<IReadOnlyRepository, ReadOnlyRepository>( );
 		services.AddScoped<IJobPostRepository, JobPostRepository>( );
+		services.AddSingleton<IUsersRepository, UsersRepository>( );
 	}
 }

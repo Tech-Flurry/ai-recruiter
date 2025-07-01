@@ -18,6 +18,7 @@ public static class Setup
 		services.AddTransient<IResolver<Job, JobListDto>, JobListDtoResolver>( );
 		services.AddTransient<IResolver<Skill, SkillDto>, SkillDtoResolver>( );
 		services.AddTransient<IResolver<Candidate, CreateCandidateDto>, CreateCandidateDtoResolver>( );
+		services.AddTransient<IResolver<Interview, InterviewGeneratedDto>, InterviewGeneratedDtoResolver>( );
 
 		//services
 		services.AddTransient<IJobPostsService, JobPostsService>( );

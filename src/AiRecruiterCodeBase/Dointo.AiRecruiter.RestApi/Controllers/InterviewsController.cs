@@ -13,4 +13,9 @@ public class InterviewsController(IInterviewsService service) : ControllerBase
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
 	public async Task<IActionResult> CreateCandidate([FromBody] CreateCandidateDto dto) => Ok(await _service.CreateCandidateAsync(dto, User.Identity?.Name ?? "system"));
+
+	[HttpGet("generate-interview/{candidateId}/{jobId}")]
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(InterviewGeneratedDto))]
+	[ProducesResponseType(StatusCodes.Status400BadRequest)]
+	public async Task<IActionResult> GenerateInterview(string candidateId, string jobId) => Ok(await _service.GenerateInterviewAsync(candidateId, jobId));
 }

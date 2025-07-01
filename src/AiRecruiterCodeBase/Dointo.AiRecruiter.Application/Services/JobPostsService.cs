@@ -10,6 +10,7 @@ using Dointo.AiRecruiter.Domain.Validators;
 using Dointo.AiRecruiter.Domain.ValueObjects;
 using Dointo.AiRecruiter.Dtos;
 using Humanizer;
+using System.Security.Claims;
 
 namespace Dointo.AiRecruiter.Application.Services;
 
@@ -17,7 +18,7 @@ public interface IJobPostsService
 {
 	Task<IProcessingState> DeleteAsync(string id);
 	Task<IProcessingState> GetByIdAsync(string id);
-	Task<IProcessingState> GetJobsListAsync( );
+	Task<IProcessingState> GetJobsListAsync(System.Security.Claims.ClaimsPrincipal user);
 	Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username);
 	Task<IProcessingState> CloseMultipleJobsAsync(CloseMultipleJobsDto closeJobDto);
 	Task<IProcessingState> ExtractSkillsFromDescriptionAsync(string jobDescription);
@@ -55,9 +56,10 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		}
 	}
 
-	public async Task<IProcessingState> GetJobsListAsync( )
+	public async Task<IProcessingState> GetJobsListAsync(ClaimsPrincipal user)
 	{
-		var jobs = await _repository.GetByOwnerAsync("system");
+		var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+		var jobs = await _repository.GetByOwnerAsync(userId);
 		var interviewsSet = _readOnlyRepository.Query<Interview>( );
 		_messageBuilder.Clear( );
 		var jobPostDtos = jobs.Select(x =>

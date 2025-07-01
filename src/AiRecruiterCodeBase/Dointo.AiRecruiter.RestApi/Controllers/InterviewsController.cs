@@ -18,4 +18,12 @@ public class InterviewsController(IInterviewsService service) : ControllerBase
 	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(InterviewGeneratedDto))]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
 	public async Task<IActionResult> GenerateInterview(string candidateId, string jobId) => Ok(await _service.GenerateInterviewAsync(candidateId, jobId));
+
+	[HttpPost("next-question/{interviewId}")]
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(NextQuestionDto))]
+	public async Task<IActionResult> NextQuestion([FromBody] QuestionDto questionDto, string interviewId)
+	{
+		var result = await _service.NextQuestionAsync(questionDto, interviewId);
+		return Ok(result);
+	}
 }

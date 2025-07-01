@@ -2,6 +2,11 @@
 
 public class SkillRating
 {
+	public SkillRating( )
+	{
+		Skill = string.Empty;
+		Rating = 0;
+	}
 	private SkillRating(string skill, int rating)
 	{
 		Skill = skill;

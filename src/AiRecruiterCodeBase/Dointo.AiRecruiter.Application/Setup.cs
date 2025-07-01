@@ -2,6 +2,7 @@
 using Dointo.AiRecruiter.Application.Services;
 using Dointo.AiRecruiter.Core.Abstractions;
 using Dointo.AiRecruiter.Domain.Entities;
+using Dointo.AiRecruiter.Domain.ValueObjects;
 using Dointo.AiRecruiter.Dtos;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -19,6 +20,7 @@ public static class Setup
 		services.AddTransient<IResolver<Skill, SkillDto>, SkillDtoResolver>( );
 		services.AddTransient<IResolver<Candidate, CreateCandidateDto>, CreateCandidateDtoResolver>( );
 		services.AddTransient<IResolver<Interview, InterviewGeneratedDto>, InterviewGeneratedDtoResolver>( );
+		services.AddTransient<IResolver<Question, QuestionDto>, QuestionDtoResolver>( );
 
 		//services
 		services.AddTransient<IJobPostsService, JobPostsService>( );

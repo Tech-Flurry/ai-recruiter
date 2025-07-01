@@ -18,5 +18,5 @@ public partial class App : Application
 		_deepLinkingService.ProcessUri(uri.ToString( ));
 	}
 
-	protected override Window CreateWindow(IActivationState? activationState) => new Window(new MainPage( )) { Title = "Dointo Ai Recruiter" };
+	protected override Window CreateWindow(IActivationState? activationState) => new(new MainPage( )) { Title = "Dointo Ai Recruiter" };
 }

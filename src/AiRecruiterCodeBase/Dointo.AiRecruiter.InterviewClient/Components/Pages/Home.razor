@@ -7,4 +7,8 @@
 @code {
   [Parameter]
   public string? JobId { get; set; }
+  protected override Task OnInitializedAsync()
+  {
+    return base.OnInitializedAsync();
+  }
 }

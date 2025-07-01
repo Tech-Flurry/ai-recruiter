@@ -6,7 +6,7 @@ const ConductJob: React.FC = () => {
 	const location = useLocation();
 
 	const isShared = new URLSearchParams(location.search).get("usp") === "share";
-	const deepLink = `airecruiter:jobs/conduct/${jobId}`;
+	const deepLink = `airecruiter://jobs/conduct/${jobId}`;
 
 	return (
 		<div

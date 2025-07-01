@@ -12,12 +12,6 @@ internal class WriteOnlyRepository(AiRecruiterDbContext dbContext) : IWriteOnlyR
 		await dbContext.SaveChangesAsync( );
 	}
 
-	public async Task UpdateAsync<T>(T entity) where T : BaseEntity
-	{
-		dbContext.Set<T>( ).Update(entity);
-		await dbContext.SaveChangesAsync( );
-	}
-
 	public async Task DeleteAsync<T>(T entity) where T : BaseEntity
 	{
 		dbContext.Set<T>( ).Remove(entity);

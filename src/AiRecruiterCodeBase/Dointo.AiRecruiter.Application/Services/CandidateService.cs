@@ -1,8 +1,6 @@
 ﻿using Dointo.AiRecruiter.Application.Repositories;
-using Dointo.AiRecruiter.Application.Resolvers;
 using Dointo.AiRecruiter.Application.Utils;
 using Dointo.AiRecruiter.Core.Abstractions;
-using Dointo.AiRecruiter.Core.Extensions;
 using Dointo.AiRecruiter.Core.States;
 using Dointo.AiRecruiter.Domain.Entities;
 using Dointo.AiRecruiter.Dtos;
@@ -12,7 +10,8 @@ namespace Dointo.AiRecruiter.Application.Services;
 public interface ICandidateService
 {
 	Task<IProcessingState> GetCandidatesByJobIdAsync(string jobId);
-	Task<IProcessingState> UpdateCandidateStatusAsync(string candidateId, string newStatus);
+	IProcessingState UpdateInterviewStatus(string interviewId, string newStatus);
+	Task<IProcessingState> GetJobTitleByJobIdAsync(string jobId);
 }
 
 internal class CandidateService(
@@ -63,34 +62,49 @@ internal class CandidateService(
 		);
 	}
 
-	public async Task<IProcessingState> UpdateCandidateStatusAsync(string candidateId, string newStatus)
+	public IProcessingState UpdateInterviewStatus(string interviewId, string newStatus)
 	{
 		_messageBuilder.Clear( );
 
-		// ✅ Update Candidate (Main source of truth for frontend)
-		var candidate = _readOnlyRepository.Query<Candidate>( )
-			.FirstOrDefault(c => c.Id == candidateId);
+		if (string.IsNullOrWhiteSpace(interviewId))
+			return new BusinessErrorState(_messageBuilder.AddString("Interview Id is required.").Build( ));
 
-		if (candidate is null)
-		{
-			return new BusinessErrorState(_messageBuilder.AddString("Candidate not found.").Build( ));
-		}
-
-		candidate.Status = newStatus;
-		await _writeOnlyRepository.UpdateAsync(candidate);
-
-		// 🔄 Optional: Also update Interviewee.Status if needed
 		var interview = _readOnlyRepository.Query<Interview>( )
-			.FirstOrDefault(i => i.Interviewee.CandidateId == candidateId);
+			.FirstOrDefault(i => i.Id == interviewId);
 
-		if (interview is not null)
-		{
-			interview.Interviewee.Status = newStatus;
-			await _writeOnlyRepository.UpdateAsync(interview);
-		}
+		if (interview is null)
+			return new BusinessErrorState(_messageBuilder.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT).AddString(nameof(Interview)).Build( ));
+
+		interview.Interviewee.Status = newStatus;
 
 		return new SuccessState(
 			_messageBuilder.AddString("Candidate status updated successfully.").Build( )
 		);
 	}
+
+	// Fix: Replace 'JobId' with 'Id' since the 'Job' class does not have a 'JobId' property but inherits 'Id' from 'BaseEntity'.
+	public Task<IProcessingState> GetJobTitleByJobIdAsync(string jobId)
+	{
+		_messageBuilder.Clear( );
+
+		var job = _readOnlyRepository.Query<Job>( )
+			.FirstOrDefault(j => j.Id == jobId); 
+
+		if (job is null)
+		{
+			return Task.FromResult<IProcessingState>(
+				new BusinessErrorState(
+					_messageBuilder.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT).AddString(nameof(Job)).Build( )
+				)
+			);
+		}
+
+		return Task.FromResult<IProcessingState>(
+			new SuccessState<string>(
+				_messageBuilder.AddString("Job title retrieved successfully.").Build( ),
+				job.Title
+			)
+		);
+	}
+
 }

@@ -8,7 +8,7 @@ import axios from "axios";
 
 type Candidate = {
 	id: number;
-	candidateId: string;
+	interviewId: string;
 	name: string;
 	email: string;
 	phoneNumber?: string;
@@ -44,15 +44,17 @@ const JobScreen: React.FC = () => {
 	const [filteredCandidates, setFilteredCandidates] = useState<Candidate[]>([]);
 	const [selectedCandidates, setSelectedCandidates] = useState<Set<number>>(new Set());
 	const [searchTerm, setSearchTerm] = useState("");
+	const [updatingId, setUpdatingId] = useState<number | null>(null);
+	const [jobTitle, setJobTitle] = useState<string>("Loading...");
 
 	useEffect(() => {
 		const fetchCandidates = async () => {
 			try {
-				const response = await axios.get(`https://localhost:7072/api/Candidates/by-job/${jobId}`);
+				const response = await axios.get(`https://localhost:7072/api/candidates/by-job/${jobId}`);
 				if (response.data.success) {
 					const apiCandidates = response.data.data.map((cand: any, index: number) => ({
 						id: index + 1,
-						candidateId: cand.candidateId, // Must be included in API DTO
+						interviewId: cand.interviewId,
 						name: cand.name,
 						email: cand.email,
 						phoneNumber: cand.phone ?? "",
@@ -75,7 +77,25 @@ const JobScreen: React.FC = () => {
 				toastr.error("Error fetching candidates.");
 			}
 		};
-		if (jobId) fetchCandidates();
+
+		const fetchJobTitle = async () => {
+			try {
+				const res = await axios.get(`https://localhost:7072/api/candidates/job-title/${jobId}`);
+				if (res.data?.success && res.data.jobTitle) {
+					setJobTitle(res.data.jobTitle);
+				} else {
+					setJobTitle("Unknown");
+				}
+			} catch (err) {
+				console.error("Error fetching job title", err);
+				setJobTitle("Unknown");
+			}
+		};
+
+		if (jobId) {
+			fetchCandidates();
+			fetchJobTitle();
+		}
 	}, [jobId]);
 
 	useEffect(() => {
@@ -92,26 +112,33 @@ const JobScreen: React.FC = () => {
 		const candidate = candidates.find(c => c.id === id);
 		if (!candidate) return;
 
+		setUpdatingId(id);
+
 		try {
 			const response = await axios.patch(
-				`https://localhost:7072/api/Candidates/update-status/${candidate.candidateId}`,
-				{ status: newStatus },
+				`https://localhost:7072/api/candidates/update-status`,
+				{
+					interviewId: candidate.interviewId,
+					status: newStatus
+				},
 				{ headers: { "Content-Type": "application/json" } }
 			);
 
-			if (response.status === 200 && response.data.success) {
+			if (response.status === 200 && response.data?.success !== false) {
 				setCandidates((prev) =>
 					prev.map((cand) =>
 						cand.id === id ? { ...cand, status: newStatus } : cand
 					)
 				);
-				toastr.success(`Candidate status updated to "${newStatus}"`);
+				toastr.success(`Candidate marked as "${newStatus}"`);
 			} else {
 				toastr.error(response.data.message || "Failed to update status.");
 			}
-		} catch (error: any) {
+		} catch (error) {
 			console.error("Failed to update status:", error);
 			toastr.error("Error updating candidate status.");
+		} finally {
+			setUpdatingId(null);
 		}
 	};
 
@@ -145,12 +172,12 @@ const JobScreen: React.FC = () => {
 		}
 	};
 
-	const jobTitle = candidates.find((c) => c.jobId === jobId)?.jobTitle ?? "Unknown";
-
 	return (
 		<KTCard className="mt-5">
 			<KTCardBody>
-				<h3 className="mb-4">Screened Candidates for Job: <span className="text-primary fw-bold">{jobTitle}</span></h3>
+				<h3 className="mb-4">
+					Screened Candidates for Job: <span className="text-primary fw-bold">{jobTitle}</span>
+				</h3>
 
 				<div className="d-flex align-items-center justify-content-start mb-4 flex-wrap gap-2">
 					<InputGroup style={{ maxWidth: "320px", minWidth: "220px", flexGrow: 1 }}>
@@ -229,13 +256,22 @@ const JobScreen: React.FC = () => {
 											<Dropdown.Item onClick={() => alert(`Email: ${email}\nPhone: ${phoneNumber || "N/A"}`)}>
 												View Contact
 											</Dropdown.Item>
-											<Dropdown.Item onClick={() => updateStatus(id, "Selected")} disabled={status === "Selected"}>
+											<Dropdown.Item
+												onClick={() => updateStatus(id, "Selected")}
+												disabled={status === "Selected" || updatingId === id}
+											>
 												Mark as Selected
 											</Dropdown.Item>
-											<Dropdown.Item onClick={() => updateStatus(id, "Rejected")} disabled={status === "Rejected"}>
+											<Dropdown.Item
+												onClick={() => updateStatus(id, "Rejected")}
+												disabled={status === "Rejected" || updatingId === id}
+											>
 												Mark as Rejected
 											</Dropdown.Item>
-											<Dropdown.Item onClick={() => updateStatus(id, "Screened")} disabled={status === "Screened"}>
+											<Dropdown.Item
+												onClick={() => updateStatus(id, "Screened")}
+												disabled={status === "Screened" || updatingId === id}
+											>
 												Mark as Screened
 											</Dropdown.Item>
 										</Dropdown.Menu>
@@ -251,4 +287,3 @@ const JobScreen: React.FC = () => {
 };
 
 export default JobScreen;
-

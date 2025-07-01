@@ -14,13 +14,14 @@ internal class CandidateListDtoResolver : ResolverBase<Interview, CandidateListD
 		var config = new MapperConfiguration(cfg =>
 		{
 			cfg.CreateMap<Interview, CandidateListDto>( )
-	       .ForMember(dest => dest.CandidateId, opt => opt.MapFrom(src => src.Interviewee.CandidateId)) // ✅ Map real ID
-	       .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Interviewee.Name))
-	       .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Interviewee.Email))
-	       .ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.Interviewee.Phone))
-	       .ForMember(dest => dest.Score, opt => opt.MapFrom(src => (int)Math.Round(src.AiScore)))
-	       .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Interviewee.Status))
-	       .ForMember(dest => dest.LastInterviewed, opt => opt.MapFrom(src => src.StartTime));
+           .ForMember(dest => dest.InterviewId, opt => opt.MapFrom(src => src.Id))
+           .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Interviewee.Name))
+           .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Interviewee.Email))
+           .ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.Interviewee.Phone))
+           .ForMember(dest => dest.Score, opt => opt.MapFrom(src => (int)Math.Round(src.AiScore)))
+           .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Interviewee.Status))
+           .ForMember(dest => dest.LastInterviewed, opt => opt.MapFrom(src => src.StartTime))
+           .ForMember(dest => dest.JobTitle, opt => opt.MapFrom(src => src.Job.JobTitle)); 
 
 		});
 

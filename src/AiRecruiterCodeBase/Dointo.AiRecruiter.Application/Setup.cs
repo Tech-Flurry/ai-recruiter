@@ -30,5 +30,6 @@ public static class Setup
 		services.AddTransient<IInterviewsService, InterviewsService>( );
 		services.AddTransient<IAuthenticationService, AuthenticationService>( );
 		services.AddTransient<ICandidateService, CandidateService>( );
+		services.AddTransient<IDashboardService, DashboardService>( );
 	}
 }

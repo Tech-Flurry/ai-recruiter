@@ -1,24 +1,32 @@
-
 import { FC } from 'react'
-import {KTIcon} from '../../../helpers'
-import {Dropdown1} from '../../content/dropdown/Dropdown1'
+import { KTIcon } from '../../../helpers'
+import { Dropdown1 } from '../../content/dropdown/Dropdown1'
+
+type Item = {
+  icon: string
+  color: string
+  title: string
+  subtitle: string
+}
 
 type Props = {
   className: string
+  title?: string
+  subtitle?: string
+  items?: Item[]
 }
 
-const ListsWidget1: FC<Props> = ({className}) => {
+const ListsWidget1: FC<Props> = ({ className, title = 'Job Pipeline Overview', subtitle = 'Track the progress across stages', items = [] }) => {
   return (
     <div className={`card ${className}`}>
-      {/* begin::Header */}
+      {/* Header */}
       <div className='card-header border-0 pt-5'>
         <h3 className='card-title align-items-start flex-column'>
-          <span className='card-label fw-bold text-gray-900'>Tasks Overview</span>
-          <span className='text-muted mt-1 fw-semibold fs-7'>Pending 10 tasks</span>
+          <span className='card-label fw-bold text-gray-900'>{title}</span>
+          <span className='text-muted mt-1 fw-semibold fs-7'>{subtitle}</span>
         </h3>
 
         <div className='card-toolbar'>
-          {/* begin::Menu */}
           <button
             type='button'
             className='btn btn-sm btn-icon btn-color-primary btn-active-light-primary'
@@ -29,112 +37,31 @@ const ListsWidget1: FC<Props> = ({className}) => {
             <KTIcon iconName='category' className='fs-2' />
           </button>
           <Dropdown1 />
-          {/* end::Menu */}
         </div>
       </div>
-      {/* end::Header */}
 
-      {/* begin::Body */}
+      {/* Body */}
       <div className='card-body pt-5'>
-        {/* begin::Item */}
-        <div className='d-flex align-items-center mb-7'>
-          {/* begin::Symbol */}
-          <div className='symbol symbol-50px me-5'>
-            <span className='symbol-label bg-light-success'>
-              <KTIcon iconName='abstract-26' className='fs-2x text-success' />
-            </span>
+        {items.map((item, index) => (
+          <div className='d-flex align-items-center mb-6' key={index}>
+            {/* Icon Box */}
+            <div className='symbol symbol-45px me-5'>
+              <span className={`symbol-label bg-light-${item.color}`}>
+                <KTIcon iconName={item.icon} iconType="duotone" className={`fs-2 text-${item.color}`} />
+
+              </span>
+            </div>
+
+            {/* Text */}
+            <div className='d-flex flex-column'>
+              <span className='text-gray-900 fw-bold fs-6'>{item.title}</span>
+              <span className='text-muted fw-semibold'>{item.subtitle}</span>
+            </div>
           </div>
-          {/* end::Symbol */}
-          {/* begin::Text */}
-          <div className='d-flex flex-column'>
-            <a href='#' className='text-gray-900 text-hover-primary fs-6 fw-bold'>
-              Project Briefing
-            </a>
-            <span className='text-muted fw-semibold'>Project Manager</span>
-          </div>
-          {/* end::Text */}
-        </div>
-        {/* end::Item */}
-        {/* begin::Item */}
-        <div className='d-flex align-items-center mb-7'>
-          {/* begin::Symbol */}
-          <div className='symbol symbol-50px me-5'>
-            <span className='symbol-label bg-light-warning'>
-              <KTIcon iconName='pencil' className='fs-2x text-warning' />
-            </span>
-          </div>
-          {/* end::Symbol */}
-          {/* begin::Text */}
-          <div className='d-flex flex-column'>
-            <a href='#' className='text-gray-900 text-hover-primary fs-6 fw-bold'>
-              Concept Design
-            </a>
-            <span className='text-muted fw-semibold'>Art Director</span>
-          </div>
-          {/* end::Text */}
-        </div>
-        {/* end::Item */}
-        {/* begin::Item */}
-        <div className='d-flex align-items-center mb-7'>
-          {/* begin::Symbol */}
-          <div className='symbol symbol-50px me-5'>
-            <span className='symbol-label bg-light-primary'>
-              <KTIcon iconName='message-text-2' className='fs-2x text-primary' />
-            </span>
-          </div>
-          {/* end::Symbol */}
-          {/* begin::Text */}
-          <div className='d-flex flex-column'>
-            <a href='#' className='text-gray-900 text-hover-primary fs-6 fw-bold'>
-              Functional Logics
-            </a>
-            <span className='text-muted fw-semibold'>Lead Developer</span>
-          </div>
-          {/* end::Text */}
-        </div>
-        {/* end::Item */}
-        {/* begin::Item */}
-        <div className='d-flex align-items-center mb-7'>
-          {/* begin::Symbol */}
-          <div className='symbol symbol-50px me-5'>
-            <span className='symbol-label bg-light-danger'>
-              <KTIcon iconName='disconnect' className='fs-2x text-danger' />
-            </span>
-          </div>
-          {/* end::Symbol */}
-          {/* begin::Text */}
-          <div className='d-flex flex-column'>
-            <a href='#' className='text-gray-900 text-hover-primary fs-6 fw-bold'>
-              Development
-            </a>
-            <span className='text-muted fw-semibold'>DevOps</span>
-          </div>
-          {/* end::Text */}
-        </div>
-        {/* end::Item */}
-        {/* begin::Item */}
-        <div className='d-flex align-items-center'>
-          {/* begin::Symbol */}
-          <div className='symbol symbol-50px me-5'>
-            <span className='symbol-label bg-light-info'>
-              <KTIcon iconName='security-user' className='fs-2x text-info' />
-            </span>
-          </div>
-          {/* end::Symbol */}
-          {/* begin::Text */}
-          <div className='d-flex flex-column'>
-            <a href='#' className='text-gray-900 text-hover-primary fs-6 fw-bold'>
-              Testing
-            </a>
-            <span className='text-muted fw-semibold'>QA Managers</span>
-          </div>
-          {/* end::Text */}
-        </div>
-        {/* end::Item */}
+        ))}
       </div>
-      {/* end::Body */}
     </div>
   )
 }
 
-export {ListsWidget1}
+export { ListsWidget1 }

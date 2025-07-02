@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 namespace Dointo.AiRecruiter.Dtos;
 public class UpdateCandidateStatusDto
 {
+	public string InterviewId { get; set; } = string.Empty;
 	public string Status { get; set; } = null!;
 }
 

@@ -9,8 +9,6 @@ const ConductJob: React.FC = () => {
 	const [candidateId, setCandidateId] = useState<string>('');
 
 	const isShared = new URLSearchParams(location.search).get("usp") === "share";
-	if (!candidateId)
-		setCandidateId('68641cd5087603214d93f83d');
 	return (<> {!candidateId && (<CandidateInfo onCandidateCreated={(newId) => setCandidateId(newId)} />)}
 		{candidateId && (<InterviewRoom jobId={jobId} candidateId={candidateId} />)}
 	</>

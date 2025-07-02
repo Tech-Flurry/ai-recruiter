@@ -237,7 +237,7 @@ const JobScreen: React.FC = () => {
 										</div>
 									</div>
 								</td>
-								<td>{score}%</td>
+								<td>{score}</td>
 								<td>
 									<span className={getStatusBadgeClass(status)}>{status}</span>
 								</td>

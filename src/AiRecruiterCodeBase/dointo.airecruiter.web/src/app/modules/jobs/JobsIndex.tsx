@@ -2,7 +2,8 @@
 import { PageLink, PageTitle } from '../../../_metronic/layout/core'
 import JobsList from "./JobsList"
 import JobPost from "./JobPost"
-import JobScreening from "./JobScreening"  // Import your candidate list page
+import ConductJob from "./ConductJob"
+import JobScreening from "./JobScreening"
 
 const jobsBreadCrumbs: Array<PageLink> = [
 	{
@@ -45,6 +46,18 @@ function JobsIndex() {
 					}
 				/>
 
+				{/* ✅ Conduct Job Interview Page (Shared Link) */}
+				<Route
+					path='conduct/:jobId'
+					element={
+						<>
+							<PageTitle breadcrumbs={jobsBreadCrumbs}>Interview Launch</PageTitle>
+							<ConductJob />
+						</>
+					}
+				/>
+
+				{/* ✅ Default Redirect */}
 				{/* Job Screening (Candidates per job) Page */}
 				<Route
 					path=':jobId/interviews'

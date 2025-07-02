@@ -84,7 +84,7 @@ internal class DashboardService(IReadOnlyRepository readOnlyRepository) : IDashb
 				.Where(x => !x.IsDeleted)
 				.ToList( );
 
-			if (interviews == null || !interviews.Any( ))
+			if (interviews is { Count: 0 })
 			{
 				return Task.FromResult<IProcessingState>(new BusinessErrorState(
 					_messageBuilder

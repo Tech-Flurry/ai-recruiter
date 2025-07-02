@@ -26,7 +26,7 @@ Instructions:
 	public async Task<string> GenerateNextQuestionAsync(Interview interview, Candidate candidate)
 	{
 		var aiProvider = _aiProviderFactory.GetProvider(AiProviders.OpenAi);
-		var context = "You are a technical recruitment expert and you need to generate the next question for a candidate in an interview.";
+		var context = "You are a technical recruitment expert and you need to generate the next question for a candidate in an interview. You're a human not a bot.";
 		var prompt = @$"You are hiring for the job: {interview.Job.JobTitle}. Required Experience for the job is {interview.Job.RequiredExperience} years. The name of the candidate in front of you is ""{interview.Interviewee.Name}"". The candidate has answered the following questions:
 {JsonSerializer.Serialize(interview.Questions.Select(x => x.Question))}
 Required skills for the job are: {string.Join(", ", interview.Job.RequiredSkills)}.
@@ -42,11 +42,13 @@ Instructions:
 - The question should not be too long or too short, it should be concise and to the point
 - The question can be related to the candidate's past experiences, skills, or knowledge Experiences -> {JsonSerializer.Serialize(candidate.Experiences)}, Skills -> {JsonSerializer.Serialize(candidate.Skills)}
 - You can ask role based questions instead of simple techincal definitions
+- Beyond these given technical skills, you should also ask questions about soft skills like team work, team building, agile project management etc. 
 - Use simple English words and avoid jargons or fluff
 - You should maintain a friendly tone
 - You should sound like a real human instead of a bot
 - Change the pattern of your sentence each time to make it realistic
-- Do not call candidate's name every time";
+- Do not call candidate's name every time
+- You should always sound natural";
 		var completion = await aiProvider.GetCompletionAsync(OpenAiModels.GPT_4_1, context, prompt, JsonUtils.GetJsonSchemaOf(typeof(QuestionCompletionDto)), "question");
 		return JsonSerializer.Deserialize<QuestionCompletionDto>(completion)?.Question ?? string.Empty;
 	}

@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
+interface CandidateInfoProps { onCandidateCreated?: (candidateId: string) => void }
 interface Credential {
 	certificate: string;
 	institution: string;
@@ -71,7 +72,7 @@ const initialCandidate: Candidate = {
 	skills: [],
 };
 
-const CandidateInfo: React.FC = () => {
+const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => {
 	const [candidate, setCandidate] = useState<Candidate>(initialCandidate);
 	const [availableSkills, setAvailableSkills] = useState<Skill[]>([]);
 	const [statusMessage, setStatusMessage] = useState('');
@@ -191,6 +192,9 @@ const CandidateInfo: React.FC = () => {
 
 			const result = response.data;
 			if (result.success) {
+				if (onCandidateCreated && result.data?.id) {
+					onCandidateCreated(result.data.id)
+				}
 				setStatusMessage(result.message);
 				setStatusAlertClass('alert-success');
 				setCandidate(initialCandidate);
@@ -496,7 +500,7 @@ const CandidateInfo: React.FC = () => {
 							Submitting...
 						</>
 					) : (
-						'Submit'
+						'Start Interview'
 					)}
 				</button>
 			</form>

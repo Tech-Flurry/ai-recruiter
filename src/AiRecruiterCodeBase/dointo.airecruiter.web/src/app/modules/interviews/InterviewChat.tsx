@@ -1,7 +1,6 @@
 import React, { FC, useState, useRef, useEffect } from 'react'
 import clsx from 'clsx'
 import { toAbsoluteUrl } from '../../../_metronic/helpers'
-import axios from "axios";
 
 type Message = {
 	user: 'riku' | 'candidate'
@@ -11,11 +10,9 @@ type Message = {
 
 const rikuAvatar = 'avatars/300-1.jpg'
 const candidateAvatar = 'avatars/blank.png'
+interface InterviewChatProps { jobId: string, candidateId: string }
 
-const jobId = '68639b3c8e7171b948242b8b'
-const candidateId = '68617d2c942bf7e519443808'
-
-const InterviewChat: FC = () => {
+const InterviewChat: FC<InterviewChatProps> = ({ jobId, candidateId }) => {
 	const [messages, setMessages] = useState<Message[]>([])
 	const [message, setMessage] = useState('')
 	const [interviewId, setInterviewId] = useState<string>('')

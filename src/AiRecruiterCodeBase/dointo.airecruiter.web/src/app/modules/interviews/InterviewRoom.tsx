@@ -2,7 +2,9 @@ import React from 'react'
 import { Dropdown1 } from '../../../_metronic/partials'
 import InterviewChat from './InterviewChat'
 
-const InterviewRoom: React.FC = () => {
+interface InterviewRoomProps { jobId: string, candidateId: string }
+
+const InterviewRoom: React.FC<InterviewRoomProps> = ({ jobId, candidateId }) => {
 	return (
 		<div className="interview-room d-flex flex-column align-items-center py-10">
 			<div className="card w-100 w-lg-600px" id="kt_interview_messenger">
@@ -36,7 +38,7 @@ const InterviewRoom: React.FC = () => {
 						</div>
 					</div>
 				</div>
-				<InterviewChat />
+				<InterviewChat jobId={jobId} candidateId={candidateId} />
 			</div>
 		</div>
 	)

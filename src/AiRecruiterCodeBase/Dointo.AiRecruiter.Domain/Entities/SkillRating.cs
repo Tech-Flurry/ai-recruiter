@@ -14,7 +14,7 @@ public class SkillRating
 	}
 
 	public string Skill { get; set; }
-	public int Rating { get; set; }
+	public double Rating { get; set; }
 	public override string ToString( ) => Skill;
 
 	public static implicit operator string(SkillRating skillRating) => skillRating.Skill;

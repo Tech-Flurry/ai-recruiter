@@ -33,7 +33,7 @@ const AppRoutes: FC = () => {
               <Route index element={<Navigate to='/dashboard' />} />
             </>
           ) : (
-            <>c
+            <>
               <Route path='auth/*' element={<AuthPage />} />
               <Route path='*' element={<Navigate to='/auth' />} />
             </>

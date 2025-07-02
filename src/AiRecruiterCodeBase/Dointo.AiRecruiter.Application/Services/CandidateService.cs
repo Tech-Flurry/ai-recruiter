@@ -16,12 +16,10 @@ public interface ICandidateService
 
 internal class CandidateService(
 	IReadOnlyRepository readOnlyRepository,
-	IWriteOnlyRepository writeOnlyRepository,
 	IResolver<Interview, CandidateListDto> resolver
 ) : ICandidateService
 {
 	private readonly IReadOnlyRepository _readOnlyRepository = readOnlyRepository;
-	private readonly IWriteOnlyRepository _writeOnlyRepository = writeOnlyRepository;
 	private readonly IResolver<Interview, CandidateListDto> _resolver = resolver;
 	private readonly MessageBuilder _messageBuilder = new( );
 
@@ -81,8 +79,6 @@ internal class CandidateService(
 			_messageBuilder.AddString("Candidate status updated successfully.").Build( )
 		);
 	}
-
-	// Fix: Replace 'JobId' with 'Id' since the 'Job' class does not have a 'JobId' property but inherits 'Id' from 'BaseEntity'.
 	public Task<IProcessingState> GetJobTitleByJobIdAsync(string jobId)
 	{
 		_messageBuilder.Clear( );

@@ -22,10 +22,7 @@ public static class Setup
 
 			return new AiRecruiterDbContext(options, mongoClient.GetDatabase(configuration[aiRecruiterDbName]));
 		});
-
-		// ✅ Register repositories
 		services.AddScoped<IReadOnlyRepository, ReadOnlyRepository>( );
-		services.AddScoped<IWriteOnlyRepository, WriteOnlyRepository>( ); // ✅ Add this
 		services.AddScoped<IJobPostRepository, JobPostRepository>( );
 	}
 }

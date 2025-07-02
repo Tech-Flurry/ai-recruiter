@@ -4,7 +4,7 @@ namespace Dointo.AiRecruiter.Domain.Entities;
 
 public class Candidate : BaseEntity
 {
-	public FullName Name { get; set; } = null!;
+	public Name Name { get; set; } = null!;
 	public string Email { get; set; } = null!;
 	public string Phone { get; set; } = null!;
 	public string JobTitle { get; set; } = null!;

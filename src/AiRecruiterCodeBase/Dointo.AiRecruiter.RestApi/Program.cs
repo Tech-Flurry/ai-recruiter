@@ -1,6 +1,5 @@
 ﻿using Dointo.AiRecruiter.Application;
 using Dointo.AiRecruiter.Application.Resolvers;
-
 using Dointo.AiRecruiter.DbInfrastructure;
 using Dointo.AiRecruiter.DbInfrastructure.Repositories;
 using Dointo.AiRecruiter.RestApi.Middleware;
@@ -20,22 +19,7 @@ builder.Services.AddCors(options =>
 			  .AllowCredentials( );
 	});
 });
-
-builder.Services.AddCors(options =>
-{
-	options.AddPolicy("AllowReactApp", policy =>
-	{
-		policy.WithOrigins("http://localhost:3000") // ✅ Your React URL
-			  .AllowAnyHeader( )
-			  .AllowAnyMethod( )
-			  .AllowCredentials( );
-	});
-});
-
-
-// ✅ Controllers
 builder.Services.AddControllers( );
-
 builder.Services.AddEndpointsApiExplorer( );
 builder.Services.AddSwaggerGen(c =>
 {
@@ -49,10 +33,6 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddDbInfrastructure("MongoDb:ConnectionString", "MongoDb:DatabaseName");
 builder.Services.AddApplication( );
-
-
-
-
 var app = builder.Build( );
 
 // ✅ Middleware

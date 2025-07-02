@@ -15,7 +15,7 @@ namespace Dointo.AiRecruiter.Application.Services;
 
 public interface IInterviewsService
 {
-	Task<IProcessingState> CreateCandidateAsync(CreateCandidateDto candidate, string username);
+	Task<IProcessingState> CreateCandidateAsync(CreateCandidateDto candidateDto, string username);
 	Task<IProcessingState> GenerateInterviewAsync(string candidateId, string jobId);
 	Task<IProcessingState> GetInterviewResultAsync(string interviewId);
 	Task<IProcessingState> NextQuestionAsync(QuestionDto questionDto, string interviewId);

@@ -2,7 +2,6 @@
 using Dointo.AiRecruiter.Application;
 using Dointo.AiRecruiter.Application.Services;
 using Dointo.AiRecruiter.DbInfrastructure;
-using Dointo.AiRecruiter.DbInfrastructure.Repositories;
 using Dointo.AiRecruiter.RestApi.Middleware;
 using Dointo.AiRecruiter.RestApi.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

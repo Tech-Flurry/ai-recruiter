@@ -31,7 +31,7 @@ public class InterviewsController(IInterviewsService service) : ControllerBase
 	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(CandidateInterviewResultDto))]
 	public async Task<IActionResult> CandidateResults(string interviewId) => Ok(await _service.GetInterviewResultForCandidateAsync(interviewId));
 
-	[HttpGet("{interviewId}")]
+	[HttpGet("interview-results/{interviewId}")]
 	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(InterviewResultDto))]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]

@@ -31,7 +31,8 @@ internal class InterviewsRepository(AiRecruiterDbContext dbContext) : Repository
 				Email = candidate.Email,
 				Experience = (int)Math.Round(( candidate.Experiences.Select(x => x.EndDate ?? DateTime.Now).Max( ) - candidate.Experiences.Min(x => x.StartDate) ).TotalDays / 365),
 				JobFitAnalysis = string.Empty,
-				Phone = candidate.Phone
+				Phone = candidate.Phone,
+				Location = candidate.Location
 			},
 			Job = new InterviewJob
 			{

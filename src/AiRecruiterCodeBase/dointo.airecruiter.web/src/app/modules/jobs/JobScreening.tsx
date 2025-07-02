@@ -217,7 +217,7 @@ const JobScreen: React.FC = () => {
 						</tr>
 					</thead>
 					<tbody>
-						{filteredCandidates.map(({ id, name, email, phoneNumber, score, status, lastInterviewed }) => (
+						{filteredCandidates.map(({ id, name, email, phoneNumber, score, status, lastInterviewed, interviewId }) => (
 							<tr key={id}>
 								<td>
 									<Form.Check
@@ -232,7 +232,7 @@ const JobScreen: React.FC = () => {
 											{getInitials(name)}
 										</div>
 										<div>
-											<Link to={`/jobs/interview/${id}`} className="fw-bold text-gray-800 text-hover-primary fs-6">
+											<Link to={`/jobs/interview/${interviewId}`} className="fw-bold text-gray-800 text-hover-primary fs-6">
 												{name}
 											</Link>
 

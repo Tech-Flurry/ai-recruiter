@@ -67,7 +67,7 @@ const InterviewResult: React.FC = () => {
 			try {
 				console.log('Fetching interview result for ID:', jobId)
 				const res = await axios.get(
-					`${import.meta.env.VITE_APP_API_BASE_URL}/InterviewResults/${jobId}`
+					`${import.meta.env.VITE_APP_API_BASE_URL}/Interviews/interview-results/${jobId}`
 				)
 				setData(res.data.data)
 			} catch (err: never) {

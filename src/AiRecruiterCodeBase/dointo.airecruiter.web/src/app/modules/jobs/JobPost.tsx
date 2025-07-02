@@ -28,6 +28,7 @@ interface JobPostResponse {
 	message?: string;
 	errors?: { propertyName: string; errorMessage: string }[];
 }
+
 function JobPost() {
 	const navigate = useNavigate();
 	const location = useLocation();
@@ -48,28 +49,60 @@ function JobPost() {
 	const [descriptionTouched, setDescriptionTouched] = useState(false);
 	const [budget, setBudget] = useState("");
 	const [budgetTouched, setBudgetTouched] = useState(false);
-	const [serverErrors, setServerErrors] = useState<{ [key: string]: string }>(
-		{}
-	);
-	const [isEditable, setIsEditable] = useState(true); // NEW
+	const [serverErrors, setServerErrors] = useState<{ [key: string]: string }>({});
+	const [isEditable, setIsEditable] = useState(true);
+	const [isGenerating, setIsGenerating] = useState(false);
 
+	// Helper to normalize API skill formats to string[]
+	const normalizeSkills = (skills: any[]): string[] =>
+		skills
+			.map((s) => {
+				if (typeof s === "string") return s;
+				if (typeof s === "object") return s.name || s.value || "";
+				return "";
+			})
+			.filter(Boolean);
+
+	// Initialize Tagify only once, destroy previous instance if any
 	useEffect(() => {
-		if (tagifyRef.current) {
-			tagifyInstanceRef.current = new Tagify(tagifyRef.current, {
-				whitelist: [
-					"JavaScript",
-					"Python",
-					"React",
-					"Node.js",
-					"Java",
-					"C++",
-					"Ruby",
-				],
-				dropdown: { enabled: 0 },
-			});
-		}
+		const fetchSkills = async () => {
+			try {
+				const response = await axios.get(
+					`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/skills`,
+					{ withCredentials: true }
+				);
+				console.log("Skills API response:", response.data);
+
+				const skills = normalizeSkills(response.data.data);
+
+				if (tagifyRef.current) {
+					if (tagifyInstanceRef.current) {
+						tagifyInstanceRef.current.destroy();
+					}
+
+					tagifyInstanceRef.current = new Tagify(tagifyRef.current, {
+						whitelist: skills,
+						dropdown: {
+							enabled: 0,
+							maxItems: 100,
+							closeOnSelect: false,
+							highlightFirst: true,
+						},
+					});
+
+					tagifyInstanceRef.current.on("focus", () => {
+						tagifyInstanceRef.current.dropdown.show.call(tagifyInstanceRef.current);
+					});
+				}
+			} catch (error) {
+				console.error("❌ Failed to fetch skills:", error);
+			}
+		};
+
+		fetchSkills();
 	}, []);
 
+	// Load job data for edit mode and fill form including skills
 	useEffect(() => {
 		if (isEditMode && jobId) {
 			const fetchJob = async () => {
@@ -81,18 +114,12 @@ function JobPost() {
 
 					const job = res.data?.data as JobPost;
 
-					console.log("🟢 Full job response:", job);
-
-					// Set form fields
 					setJobTitle(job.jobTitle || "");
 					setExperience(job.yearsOfExperience?.toString() || "");
 					setJobDescription(job.jobDescription || "");
 					setBudget(job.budgetAmount?.toString() || "");
-
-					// Set editable status
 					setIsEditable(job.status !== "Closed" && !job.hasInterviews);
 
-					// Set currency and additional questions
 					const currencyInput = formRef.current?.elements.namedItem(
 						"currency"
 					) as HTMLSelectElement;
@@ -100,15 +127,10 @@ function JobPost() {
 						"additionalQuestions"
 					) as HTMLTextAreaElement;
 					if (currencyInput) currencyInput.value = job.budgetCurrency || "USD";
-					if (additionalInput)
-						additionalInput.value = job.additionalQuestions || "";
+					if (additionalInput) additionalInput.value = job.additionalQuestions || "";
 
-					// Set skills
 					setTimeout(() => {
-						if (
-							tagifyInstanceRef.current &&
-							Array.isArray(job.requiredSkills)
-						) {
+						if (tagifyInstanceRef.current && Array.isArray(job.requiredSkills)) {
 							tagifyInstanceRef.current.removeAllTags();
 							tagifyInstanceRef.current.addTags(
 								job.requiredSkills.map((skill: string) => ({ value: skill }))
@@ -125,34 +147,43 @@ function JobPost() {
 		}
 	}, [isEditMode, jobId]);
 
-
-
-
-	const handleJobDescriptionChange = async (value: string) => {
+	// *** Changed here: only update description state, no auto skill extraction ***
+	const handleJobDescriptionChange = (value: string) => {
 		setJobDescription(value);
-		const wordCount = value.trim().split(/\s+/).length;
+	};
 
-		if (wordCount >= 30) {
-			try {
-				const response = await axios.post(
-					`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/extract-skills`,
-					{ jobDescription: value },
-					{
-						headers: { "Content-Type": "application/json" },
-						withCredentials: true,
-					}
-				);
+	// Button-triggered skill generation with full control and toastr feedback
+	const handleGenerateSkillsClick = async () => {
+		if (jobDescription.trim().split(/\s+/).length < 30) {
+			toastr.warning("Job description must be at least 30 words to generate skills.");
+			return;
+		}
 
-				const skills = response.data as string[];
-				if (Array.isArray(skills)) {
-					tagifyInstanceRef.current?.removeAllTags();
-					tagifyInstanceRef.current?.addTags(
-						skills.map((skill) => ({ value: skill }))
-					);
+		setIsGenerating(true);
+		try {
+			const response = await axios.post(
+				`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/extract-skills`,
+				{ jobDescription },
+				{
+					headers: { "Content-Type": "application/json" },
+					withCredentials: true,
 				}
-			} catch (err) {
-				console.error("❌ Failed to extract skills", err);
+			);
+			const skillsRaw = response.data?.data;
+			console.log("Extracted skills:", skillsRaw);
+			if (Array.isArray(skillsRaw) && skillsRaw.length > 0) {
+				const skills = normalizeSkills(skillsRaw);
+				tagifyInstanceRef.current?.removeAllTags();
+				tagifyInstanceRef.current?.addTags(skills.map((skill) => ({ value: skill })));
+				toastr.success("Skills generated successfully!");
+			} else {
+				toastr.warning("No skills found from extraction.");
 			}
+		} catch (err) {
+			console.error("❌ Failed to extract skills", err);
+			toastr.error("Failed to generate skills.");
+		} finally {
+			setIsGenerating(false);
 		}
 	};
 
@@ -163,13 +194,10 @@ function JobPost() {
 		setExperienceTouched(true);
 		setDescriptionTouched(true);
 		setBudgetTouched(true);
-
-		// Clear previous server errors
 		setServerErrors({});
 
-		const requiredSkills = (tagifyInstanceRef.current?.value ?? []).map(
-			(tag: any) => tag.value
-		);
+		const requiredSkills =
+			tagifyInstanceRef.current?.value.map((tag: { value: string }) => tag.value) ?? [];
 
 		if (
 			jobTitle.trim().length < 3 ||
@@ -202,6 +230,7 @@ function JobPost() {
 			btnSaveRef.current?.setAttribute("data-kt-indicator", "on");
 			btnSaveRef.current?.classList.add("disabled");
 			btnSaveRef.current?.setAttribute("disabled", "disabled");
+
 			const response = await axios.post(
 				`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts`,
 				payload,
@@ -227,8 +256,7 @@ function JobPost() {
 			}
 		} catch (error: any) {
 			toastr.error(
-				`Failed to ${isEditMode ? "update" : "create"} job post: ${error.response?.data?.message ?? error.message
-				}`
+				`Failed to ${isEditMode ? "update" : "create"} job post: ${error.response?.data?.message ?? error.message}`
 			);
 		} finally {
 			btnSaveRef.current?.removeAttribute("data-kt-indicator");
@@ -250,57 +278,10 @@ function JobPost() {
 		formRef.current?.reset();
 	};
 
-	const getJobDescriptionWordCount = () => {
-		return jobDescription.trim()
-			? jobDescription.trim().split(/\s+/).length
-			: 0;
-	};
-	function getJobTitleClassName() {
-		if (jobTitleTouched) {
-			if (jobTitle.trim().length >= 3) {
-				return "form-control is-valid";
-			} else {
-				return "form-control is-invalid";
-			}
-		} else {
-			return "form-control";
-		}
-	}
+	const getJobDescriptionWordCount = () => jobDescription.trim().split(/\s+/).length || 0;
 
-	function getExperienceClassName() {
-		if (experienceTouched) {
-			if (experience && parseInt(experience) >= 0) {
-				return "form-control is-valid";
-			} else {
-				return "form-control is-invalid";
-			}
-		} else {
-			return "form-control";
-		}
-	}
-
-	function getDescriptionClassName() {
-		if (descriptionTouched) {
-			if (getJobDescriptionWordCount() >= 30) {
-				return "form-control is-valid";
-			} else {
-				return "form-control is-invalid";
-			}
-		} else {
-			return "form-control";
-		}
-	}
-	function getBudgetClassName() {
-		if (budgetTouched) {
-			if (budget && parseFloat(budget) > 0) {
-				return "form-control is-valid";
-			} else {
-				return "form-control is-invalid";
-			}
-		} else {
-			return "form-control";
-		}
-	}
+	const getFieldClassName = (touched: boolean, isValid: boolean) =>
+		touched ? (isValid ? "form-control is-valid" : "form-control is-invalid") : "form-control";
 
 	return (
 		<Container className="d-flex justify-content-center my-5">
@@ -320,18 +301,11 @@ function JobPost() {
 											value={jobTitle}
 											onChange={(e) => setJobTitle(e.target.value)}
 											onBlur={() => setJobTitleTouched(true)}
-											placeholder="Example: Senior Software Engineer"
-											className={getJobTitleClassName()}
+											placeholder="Example: Backend Developer"
+											className={getFieldClassName(jobTitleTouched, jobTitle.trim().length >= 3)}
 										/>
 										{jobTitleTouched && jobTitle.trim().length < 3 && (
-											<div className="invalid-feedback">
-												Job Title must be at least 3 characters.
-											</div>
-										)}
-										{serverErrors.Title && (
-											<div className="invalid-feedback">
-												{serverErrors.Title}
-											</div>
+											<div className="invalid-feedback">Job Title must be at least 3 characters.</div>
 										)}
 									</Form.Group>
 								</Col>
@@ -347,26 +321,17 @@ function JobPost() {
 											value={experience}
 											onChange={(e) => setExperience(e.target.value)}
 											onBlur={() => setExperienceTouched(true)}
-											placeholder="Enter experience in years"
-											className={getExperienceClassName()}
+											placeholder="e.g. 2"
+											className={getFieldClassName(experienceTouched, !!experience && parseInt(experience) >= 0)}
 										/>
-										{experienceTouched &&
-											(!experience || parseInt(experience) < 0) && (
-												<div className="invalid-feedback">
-													Experience must be a non-negative number.
-												</div>
-											)}
-										{serverErrors["Experience"] && (
-											<div className="invalid-feedback">
-												{serverErrors["Experience"]}
-											</div>
+										{experienceTouched && (!experience || parseInt(experience) < 0) && (
+											<div className="invalid-feedback">Experience must be a non-negative number.</div>
 										)}
 									</Form.Group>
 								</Col>
-
 							</Row>
 
-							<Form.Group className="mb-3">
+							<Form.Group className="mb-1">
 								<Form.Label>
 									Job Description <span className="text-danger">*</span>
 								</Form.Label>
@@ -374,38 +339,48 @@ function JobPost() {
 									as="textarea"
 									name="jobDescription"
 									value={jobDescription}
-									onChange={(e) => setJobDescription(e.target.value)}
+									onChange={(e) => handleJobDescriptionChange(e.target.value)}
 									onBlur={() => setDescriptionTouched(true)}
 									rows={4}
-									placeholder="Describe key responsibilities and requirements"
-									className={getDescriptionClassName()}
+									placeholder="Include roles, responsibilities, and requirements"
+									className={getFieldClassName(descriptionTouched, getJobDescriptionWordCount() >= 30)}
 								/>
 								{descriptionTouched && getJobDescriptionWordCount() < 30 && (
 									<div className="invalid-feedback">
-										Job Description must have at least 30 words. (Current:{" "}
-										{getJobDescriptionWordCount()} words)
-									</div>
-								)}
-								{serverErrors.JobDescription && (
-									<div className="invalid-feedback">
-										{serverErrors.JobDescription}
+										Job Description must be at least 30 words. (Current: {getJobDescriptionWordCount()})
 									</div>
 								)}
 							</Form.Group>
 
+							{/* Required Skills with AI Button */}
 							<Form.Group className="mb-3">
-								<Form.Label>
-									Required Skills <span className="text-danger">*</span>
-								</Form.Label>
+								<div className="d-flex align-items-center mb-1 gap-2">
+									<Form.Label className="mb-0">
+										Required Skills <span className="text-danger">*</span>
+									</Form.Label>
+									<Button
+										variant="info"
+										size="sm"
+										onClick={handleGenerateSkillsClick}
+										disabled={isGenerating}
+										title="Generate Skills with AI"
+										style={{ minWidth: "28px", height: "24px", padding: "0 4px" }}
+									>
+										{isGenerating ? (
+											<span className="spinner-border spinner-border-sm text-primary"></span>
+										) : (
+											<i className="bi bi-stars"></i>
+										)}
+									</Button>
+								</div>
 								<Form.Control
 									ref={tagifyRef}
 									name="requiredSkills"
-									placeholder="Type skills and press Enter (e.g., React, Node.js)"
+									placeholder="Type skills and press Enter"
+									type="text"
 								/>
-								{serverErrors.RequiredSkills && (
-									<div className="invalid-feedback">
-										{serverErrors.RequiredSkills}
-									</div>
+								{serverErrors.requiredSkills && (
+									<div className="invalid-feedback d-block">{serverErrors.requiredSkills}</div>
 								)}
 							</Form.Group>
 
@@ -422,25 +397,19 @@ function JobPost() {
 												value={budget}
 												onChange={(e) => setBudget(e.target.value)}
 												onBlur={() => setBudgetTouched(true)}
-												placeholder="Enter budget amount"
-												className={getBudgetClassName()}
+												placeholder="e.g. 500"
+												className={getFieldClassName(budgetTouched, !!budget && parseFloat(budget) > 0)}
 											/>
+											{budgetTouched && (!budget || parseFloat(budget) <= 0) && (
+												<div className="invalid-feedback">Budget must be greater than 0.</div>
+											)}
+
 											<Form.Select name="currency" required className="ms-2">
 												<option value="USD">USD</option>
 												<option value="EUR">EUR</option>
-												<option value="GBP">GBP</option>
+												<option value="PKR">PKR</option>
 											</Form.Select>
 										</div>
-										{budgetTouched && (!budget || parseFloat(budget) <= 0) && (
-											<div className="invalid-feedback">
-												Budget must be greater than 0.
-											</div>
-										)}
-										{serverErrors.Budget && (
-											<div className="invalid-feedback">
-												{serverErrors.Budget}
-											</div>
-										)}
 									</Form.Group>
 								</Col>
 
@@ -450,17 +419,13 @@ function JobPost() {
 										<Form.Control
 											as="textarea"
 											name="additionalQuestions"
-											placeholder="Enter any screening questions"
 											rows={2}
+											placeholder="Screening or clarification questions"
 										/>
-										{serverErrors.AdditionalQuestions && (
-											<div className="invalid-feedback">
-												{serverErrors.AdditionalQuestions}
-											</div>
-										)}
 									</Form.Group>
 								</Col>
 							</Row>
+
 							<div className="d-flex justify-content-end mt-4 gap-3">
 								<Button
 									ref={btnSaveRef}
@@ -476,7 +441,7 @@ function JobPost() {
 									<span className="indicator-label">Save</span>
 									<span className="indicator-progress">
 										Saving...
-										<span className="spinner-border spinner-border-sm ms-2 align-middle"></span>
+										<span className="spinner-border spinner-border-sm ms-2"></span>
 									</span>
 								</Button>
 

@@ -42,6 +42,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dointo.AiRecruiter.RestApi.
 EndProject
 Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "dointo.airecruiter.web", "dointo.airecruiter.web\dointo.airecruiter.web.esproj", "{5EDF1010-87A3-43E9-90BB-4CC17852B110}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dointo.AiRecruiter.InterviewClient", "Dointo.AiRecruiter.InterviewClient\Dointo.AiRecruiter.InterviewClient.csproj", "{74E920F1-87C2-4D4A-81E3-10B08C9FA0F3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -102,6 +104,11 @@ Global
 		{5EDF1010-87A3-43E9-90BB-4CC17852B110}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5EDF1010-87A3-43E9-90BB-4CC17852B110}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5EDF1010-87A3-43E9-90BB-4CC17852B110}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{74E920F1-87C2-4D4A-81E3-10B08C9FA0F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{74E920F1-87C2-4D4A-81E3-10B08C9FA0F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{74E920F1-87C2-4D4A-81E3-10B08C9FA0F3}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{74E920F1-87C2-4D4A-81E3-10B08C9FA0F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{74E920F1-87C2-4D4A-81E3-10B08C9FA0F3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -120,6 +127,7 @@ Global
 		{F63092A5-A745-494B-B743-21E7E57404FC} = {75B6B6D1-B246-4702-84A3-7D6AFCEEBA98}
 		{118971BF-0BC2-467E-B95C-AC5CE74B04EC} = {75B6B6D1-B246-4702-84A3-7D6AFCEEBA98}
 		{5EDF1010-87A3-43E9-90BB-4CC17852B110} = {8B58A429-64E5-4154-8F18-37A455E76250}
+		{74E920F1-87C2-4D4A-81E3-10B08C9FA0F3} = {8B58A429-64E5-4154-8F18-37A455E76250}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1F53CF6D-5D6E-4A82-9A4A-38D1E7B63D11}

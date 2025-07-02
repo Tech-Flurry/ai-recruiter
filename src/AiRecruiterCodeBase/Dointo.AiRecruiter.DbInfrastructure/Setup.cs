@@ -24,5 +24,6 @@ public static class Setup
 		});
 		services.AddScoped<IReadOnlyRepository, ReadOnlyRepository>( );
 		services.AddScoped<IJobPostRepository, JobPostRepository>( );
+		services.AddScoped<IUsersRepository, UsersRepository>( );
 	}
 }

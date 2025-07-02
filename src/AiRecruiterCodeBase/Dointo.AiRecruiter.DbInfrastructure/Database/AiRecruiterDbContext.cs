@@ -13,8 +13,10 @@ public class AiRecruiterDbContext(DbContextOptions<AiRecruiterDbContext> options
 	private readonly IMongoDatabase _mongoDatabase = mongoDatabase;
 	// Define DbSets as MongoDB collections
 	public DbSet<Job> Jobs { get; set; } = null!;
+	public DbSet<Skill> Skills { get; set; } = null!;
 	public DbSet<Candidate> Candidates { get; set; } = null!;
 	public DbSet<Interview> Interviews { get; set; } = null!;
+	public DbSet<User> Users { get; set; } = null!;
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
@@ -24,10 +26,28 @@ public class AiRecruiterDbContext(DbContextOptions<AiRecruiterDbContext> options
 			entity.SetupBaseEntity( );
 			entity.Property(e => e.Title).IsRequired( );
 			entity.Property(e => e.JobDescription).IsRequired( );
-			entity.Property(e => e.Status).HasConversion(x => x.ToString( ), x => Enum.Parse<JobStatus>(x));
+			entity.Property(e => e.Status).HasConversion(x => x.ToString( ), y => Enum.Parse<JobStatus>(y));
+			entity.OwnsMany(e => e.AdditionalQuestions, a =>
+			{
+				a.WithOwner( );
+				a.HasKey(q => q.Id);
+				a.Property(q => q.Id).HasConversion<ObjectId>( ).HasValueGenerator<BsonIdValueGenerator>( ).ValueGeneratedOnAdd( );
+				a.Ignore(q => q.LastUpdated);
+			});
 		});
 		modelBuilder.Entity<Candidate>(entity => entity.SetupBaseEntity( ));
 		modelBuilder.Entity<Interview>(entity => entity.SetupBaseEntity( ));
+		modelBuilder.Entity<Skill>(entity =>
+		{
+			entity.Property(e => e.Name).IsRequired( );
+			entity.SetupBaseEntity( );
+		});
+		modelBuilder.Entity<User>(entity =>
+		{
+			entity.Property(e => e.Username).IsRequired( );
+			entity.Property(e => e.PasswordHash).IsRequired( );
+			entity.SetupBaseEntity( );
+		});
 	}
 
 	public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

@@ -10,9 +10,9 @@ type Message = {
 
 const rikuAvatar = 'avatars/300-1.jpg'
 const candidateAvatar = 'avatars/blank.png'
-interface InterviewChatProps { jobId: string, candidateId: string }
+interface InterviewChatProps { jobId: string, candidateId: string, onInterviewId?: (id: string) => void, onTerminate?: (interviewId: string) => void }
 
-const InterviewChat: FC<InterviewChatProps> = ({ jobId, candidateId }) => {
+const InterviewChat: FC<InterviewChatProps> = ({ jobId, candidateId, onInterviewId, onTerminate }) => {
 	const [messages, setMessages] = useState<Message[]>([])
 	const [message, setMessage] = useState('')
 	const [interviewId, setInterviewId] = useState<string>('')
@@ -41,6 +41,7 @@ const InterviewChat: FC<InterviewChatProps> = ({ jobId, candidateId }) => {
 					// Grab interview info
 					const data = result.data
 					setInterviewId(data.interviewId)
+					if (onInterviewId) onInterviewId(data.interviewId)
 					// Show the interview starter from server
 					setMessages([
 						{
@@ -71,7 +72,7 @@ const InterviewChat: FC<InterviewChatProps> = ({ jobId, candidateId }) => {
 		}
 
 		generateInterview()
-	}, [])
+	}, [candidateId, jobId, onInterviewId])
 
 	const sendMessage = async () => {
 		if (!message.trim() || !interviewId || isTerminated) return
@@ -119,7 +120,10 @@ const InterviewChat: FC<InterviewChatProps> = ({ jobId, candidateId }) => {
 							text: 'Interview has ended. Thank you!',
 							time: 'Just now',
 						},
-					])
+						])
+					if (onTerminate && interviewId) {
+						onTerminate(interviewId)
+					}
 				} else {
 					// Show the next question
 					setMessages([

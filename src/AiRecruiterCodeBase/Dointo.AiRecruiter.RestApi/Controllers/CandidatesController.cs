@@ -30,7 +30,7 @@ public class CandidatesController(ICandidateService service) : ControllerBase
 
 	// ✅ PATCH: api/Candidates/update-status
 	[HttpPatch("update-status")]
-	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SuccessState))]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
 	public IActionResult UpdateCandidateStatus([FromBody] UpdateCandidateStatusDto dto)
@@ -45,8 +45,7 @@ public class CandidatesController(ICandidateService service) : ControllerBase
 
 		if (result is BusinessErrorState error)
 			return NotFound(new { success = false, message = error.Message });
-
-		if (result is SuccessState success)
+		if (result is SuccessState)
 			return Ok(new { success = true, message = "Candidate status updated successfully." });
 
 		return StatusCode(500, new { success = false, message = "Unexpected error occurred." });

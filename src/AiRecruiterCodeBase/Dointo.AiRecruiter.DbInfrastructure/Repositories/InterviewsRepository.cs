@@ -37,7 +37,9 @@ internal class InterviewsRepository(AiRecruiterDbContext dbContext) : Repository
 			{
 				JobId = job.Id,
 				JobTitle = job.Title,
-				RequiredSkills = job.RequiredSkills
+				RequiredSkills = job.RequiredSkills,
+				JobDescription = job.JobDescription,
+				RequiredExperience = job.Experience
 			},
 			StartTime = DateTime.UtcNow
 		};

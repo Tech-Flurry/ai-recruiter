@@ -105,11 +105,10 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 			}
 			else
 			{
-				var job = await _readOnlyRepository.FindByIdAsync<Job>(interview.Job.JobId);
-				var (analysis, score) = await _interviewAgent.ScoreInterviewAsync(interview, job);
+				var (analysis, score) = await _interviewAgent.ScoreInterviewAsync(interview);
 				interview.Interviewee.JobFitAnalysis = analysis;
 				interview.AiScore = score;
-				interview.ScoredSkills = await _interviewAgent.ScoreSkillsAsync(interview, job.RequiredSkills);
+				interview.ScoredSkills = await _interviewAgent.ScoreSkillsAsync(interview);
 				interview.EndTime = DateTime.UtcNow;
 			}
 			return new SuccessState<NextQuestionDto>(

@@ -27,9 +27,10 @@ Instructions:
 	{
 		var aiProvider = _aiProviderFactory.GetProvider(AiProviders.OpenAi);
 		var context = "You are a technical recruitment expert and you need to generate the next question for a candidate in an interview.";
-		var prompt = @$"You are hiring for the job: {interview.Job.JobTitle}. The name of the candidate in front of you is ""{interview.Interviewee.Name}"". The candidate has answered the following questions:
+		var prompt = @$"You are hiring for the job: {interview.Job.JobTitle}. Required Experience for the job is {interview.Job.RequiredExperience} years. The name of the candidate in front of you is ""{interview.Interviewee.Name}"". The candidate has answered the following questions:
 {JsonSerializer.Serialize(interview.Questions.Select(x => x.Question))}
 Required skills for the job are: {string.Join(", ", interview.Job.RequiredSkills)}.
+Job Description: {interview.Job.JobDescription}.
 Instructions:
 - You need to generate the next question for the candidate
 - The question should be related to the job and the skills required for it
@@ -49,14 +50,14 @@ Instructions:
 		return JsonSerializer.Deserialize<QuestionCompletionDto>(completion)?.Question ?? string.Empty;
 	}
 
-	public async Task<(string analysis, double score)> ScoreInterviewAsync(Interview interview, Job job)
+	public async Task<(string analysis, double score)> ScoreInterviewAsync(Interview interview)
 	{
 		var aiProvider = _aiProviderFactory.GetProvider(AiProviders.OpenAi);
 		var context = "You are a technical recruitment expert and you need to score the overall interview of a candidate for a job.";
-		var prompt = @$"You are hiring for the job: {job.Title}. The candidate has answered the following questions: {JsonSerializer.Serialize(interview.Questions)}.
-Job Description: {job.JobDescription}.
-Required skills for the job are: {string.Join(", ", job.RequiredSkills)}.
-Experience required: {job.Experience} years.
+		var prompt = @$"You are hiring for the job: {interview.Job.JobTitle}. The candidate has answered the following questions: {JsonSerializer.Serialize(interview.Questions)}.
+Job Description: {interview.Job.JobDescription}.
+Required skills for the job are: {string.Join(", ", interview.Job.RequiredSkills)}.
+Experience required: {interview.Job.RequiredExperience} years.
 Instructions:
 - You need to score the overall interview out of 10
 - The score should be based on the total score obtained by the candidate in all the questions asked
@@ -82,7 +83,8 @@ Instructions:
 		const int TOTAL_SCORE = 5;
 		var aiProvider = _aiProviderFactory.GetProvider(AiProviders.OpenAi);
 		var context = "You are a technical recruitment expert and you need to score the answer of a candidate for a question asked in an interview.";
-		var prompt = @$"You are hiring for the job: {interview.Job.JobTitle}. The name of the candidate in front of you is ""{interview.Interviewee.Name}"". The question asked to the candidate is ""{question.Text}"" and they gave the answer ""{question.Answer}"".
+		var prompt = @$"You are hiring for the job: {interview.Job.JobTitle}. Required Experience for the job is {interview.Job.RequiredExperience} years. The question asked to the candidate is ""{question.Text}"" and they gave the answer ""{question.Answer}"".
+Job Description: {interview.Job.JobDescription}.
 Previous Questions: {JsonSerializer.Serialize(interview.Questions)}
 Required skills for the job are: {string.Join(", ", interview.Job.RequiredSkills)}.
 Instructions:
@@ -107,12 +109,12 @@ Instructions:
 		}, scoreCompletion.Terminate);
 	}
 
-	public Task<List<SkillRating>> ScoreSkillsAsync(Interview interview, List<string> requiredSkills)
+	public Task<List<SkillRating>> ScoreSkillsAsync(Interview interview)
 	{
 		var aiProvider = _aiProviderFactory.GetProvider(AiProviders.OpenAi);
 		var context = "You are a technical recruitment expert and you need to score the skills of a candidate based on their interview.";
-		var prompt = @$"You are hiring for the job: {interview.Job.JobTitle}. The candidate has answered the following questions: {JsonSerializer.Serialize(interview.Questions)}.
-Required skills for the job are: {string.Join(", ", requiredSkills)}.
+		var prompt = @$"You are hiring for the job: {interview.Job.JobTitle}. The candidate has answered the following questions: {JsonSerializer.Serialize(interview.Questions)}. Required Experience for the job is {interview.Job.RequiredExperience} years.
+Required skills for the job are: {string.Join(", ", interview.Job.RequiredSkills)}.
 Instructions:
 - You need to score the skills of the candidate based on their answers in the interview
 - The score should be out of 5 for each skill

@@ -1,6 +1,7 @@
 ﻿using Dointo.AiRecruiter.Application.Repositories;
 using Dointo.AiRecruiter.Application.Utils;
 using Dointo.AiRecruiter.Core.States;
+using Dointo.AiRecruiter.Domain.Aggregates;
 using Dointo.AiRecruiter.Domain.Entities;
 using Dointo.AiRecruiter.Domain.ValueObjects;
 using Dointo.AiRecruiter.Dtos;
@@ -35,7 +36,7 @@ internal class DashboardService(IReadOnlyRepository readOnlyRepository) : IDashb
 			var allInterviews = _readOnlyRepository.Query<Interview>( ).ToList( );
 
 			var totalScreened = allInterviews.Count;
-			var passedInterviews = allInterviews.Count(i => i is { AiScore: >= 7.0 });
+			var passedInterviews = allInterviews.Count(i => i.IsPassed( ));
 
 			var passRate = totalScreened == 0
 				? 0
@@ -102,14 +103,14 @@ internal class DashboardService(IReadOnlyRepository readOnlyRepository) : IDashb
 
 					var avgDuration = group
 						.Where(x => x.EndTime.HasValue && x.EndTime > x.StartTime)
-						.Average(x => ( x.EndTime!.Value - x.StartTime ).TotalMinutes);
+						.Average(x => x.GetLength( ).TotalMinutes);
 
 					return new JobPostInsightDto
 					{
 						JobTitle = group.Key,
 						TotalInterviews = group.Count( ),
 						ScreeningTimeDays = "day".ToQuantity((int)Math.Round(( last - first ).TotalDays), ShowQuantityAs.Numeric),
-						AverageInterviewDuration = TimeSpan.FromMinutes(avgDuration).Humanize(),
+						AverageInterviewDuration = TimeSpan.FromMinutes(avgDuration).Humanize( ),
 					};
 				})
 				.OrderByDescending(x => x.TotalInterviews)

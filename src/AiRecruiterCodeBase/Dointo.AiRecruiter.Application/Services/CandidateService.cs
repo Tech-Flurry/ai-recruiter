@@ -33,7 +33,7 @@ internal class CandidateService(
 			.Where(i => i.Job.JobId == jobId)
 			.ToList( );
 
-		if (!interviews.Any( ))
+		if (interviews.Count == 0)
 		{
 			return Task.FromResult<IProcessingState>(
 				new BusinessErrorState(_messageBuilder.AddString("No candidates found for this job.").Build( ))
@@ -84,7 +84,7 @@ internal class CandidateService(
 		_messageBuilder.Clear( );
 
 		var job = _readOnlyRepository.Query<Job>( )
-			.FirstOrDefault(j => j.Id == jobId); 
+			.FirstOrDefault(j => j.Id == jobId);
 
 		if (job is null)
 		{

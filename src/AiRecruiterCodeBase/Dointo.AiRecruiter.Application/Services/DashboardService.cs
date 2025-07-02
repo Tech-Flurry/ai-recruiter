@@ -98,11 +98,11 @@ internal class DashboardService(IReadOnlyRepository readOnlyRepository) : IDashb
 				.Select(group =>
 				{
 					var first = group.Min(x => x.StartTime);
-					var last = group.Max(x => x.EndTime);
+					var last = group.Max(x => x.EndTime ?? DateTime.UtcNow);
 
 					var avgDuration = group
-						.Where(x => x.EndTime > x.StartTime)
-						.Average(x => ( x.EndTime - x.StartTime ).TotalMinutes);
+						.Where(x => x.EndTime.HasValue && x.EndTime > x.StartTime)
+						.Average(x => ( x.EndTime!.Value - x.StartTime ).TotalMinutes);
 
 					return new JobPostInsightDto
 					{

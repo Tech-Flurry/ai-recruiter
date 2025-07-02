@@ -1,6 +1,5 @@
 ﻿using Dointo.AiRecruiter.Domain.Entities;
 using Dointo.AiRecruiter.Domain.ValueObjects;
-using Humanizer;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -17,6 +16,7 @@ public class AiRecruiterDbContext(DbContextOptions<AiRecruiterDbContext> options
 	public DbSet<Skill> Skills { get; set; } = null!;
 	public DbSet<Candidate> Candidates { get; set; } = null!;
 	public DbSet<Interview> Interviews { get; set; } = null!;
+	public DbSet<User> Users { get; set; } = null!;
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
@@ -26,7 +26,7 @@ public class AiRecruiterDbContext(DbContextOptions<AiRecruiterDbContext> options
 			entity.SetupBaseEntity( );
 			entity.Property(e => e.Title).IsRequired( );
 			entity.Property(e => e.JobDescription).IsRequired( );
-			entity.Property(e => e.Status).HasConversion(x => x.Humanize( ), y => Enum.Parse<JobStatus>(y));
+			entity.Property(e => e.Status).HasConversion(x => x.ToString( ), y => Enum.Parse<JobStatus>(y));
 			entity.OwnsMany(e => e.AdditionalQuestions, a =>
 			{
 				a.WithOwner( );
@@ -40,6 +40,12 @@ public class AiRecruiterDbContext(DbContextOptions<AiRecruiterDbContext> options
 		modelBuilder.Entity<Skill>(entity =>
 		{
 			entity.Property(e => e.Name).IsRequired( );
+			entity.SetupBaseEntity( );
+		});
+		modelBuilder.Entity<User>(entity =>
+		{
+			entity.Property(e => e.Username).IsRequired( );
+			entity.Property(e => e.PasswordHash).IsRequired( );
 			entity.SetupBaseEntity( );
 		});
 	}

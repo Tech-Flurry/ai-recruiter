@@ -69,12 +69,12 @@ public class InterviewResultService(
 												Certificate = c.Certificate,
 												YearOfCompletion = c.YearOfCompletion
 											}).ToList( );
-			dto.SkillRatings = candidate.Skills
+			dto.SkillRatings = [.. candidate.Skills
 				.Select(kvp => new SkillRatingDto
 				{
 					Skill = kvp.Skill,
 					Rating = kvp.Rating
-				}).ToList( );
+				})];
 			return new SuccessState<InterviewResultDto>(
 				_messageBuilder
 					.AddFormat(Messages.RECORD_RETRIEVED_FORMAT)

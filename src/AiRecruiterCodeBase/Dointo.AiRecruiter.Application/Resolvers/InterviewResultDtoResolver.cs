@@ -20,7 +20,7 @@ internal class InterviewResultDtoResolver : ResolverBase<Interview, InterviewRes
 					.ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Interviewee.Email))
 					.ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.Interviewee.Phone))
 					.ForMember(dest => dest.JobTitle, opt => opt.MapFrom(src => src.Job.JobTitle))
-					.ForMember(dest => dest.Location, opt => opt.MapFrom(src => src.Job.Location))
+					.ForMember(dest => dest.Location, opt => opt.MapFrom(src => src.Interviewee.Location))
 					.ForMember(dest => dest.TotalScore, opt => opt.MapFrom(src => src.Questions.Sum(x => x.TotalScore)))
 					.ForMember(dest => dest.SkillWiseScore, opt => opt.MapFrom(src => src.ScoredSkills.ToDictionary(s => s.Skill, s => s.Rating)));
 				cfg.CreateMap<Credential, CredentialDto>( );

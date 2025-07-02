@@ -17,9 +17,13 @@ public static class Setup
 		services.AddScoped<IResolver<Job, EditJobDto>, EditJobDtoResolver>( );
 		services.AddScoped<IResolver<Job, JobListDto>, JobListDtoResolver>( );
 		services.AddScoped<IResolver<Skill, SkillDto>, SkillDtoResolver>( );
+		services.AddScoped<IResolver<Interview, CandidateListDto>, CandidateListDtoResolver>( );
+
+
 
 		//services
 		services.AddTransient<IJobPostsService, JobPostsService>( );
-		services.AddSingleton<IAuthenticationService, AuthenticationService>( );
+		services.AddTransient<IAuthenticationService, AuthenticationService>( );
+		services.AddTransient<ICandidateService, CandidateService>( );
 	}
 }

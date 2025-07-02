@@ -7,20 +7,23 @@ using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 
 namespace Dointo.AiRecruiter.DbInfrastructure;
+
 public static class Setup
 {
 	public static void AddDbInfrastructure(this IServiceCollection services, string connectionStringName, string aiRecruiterDbName)
 	{
-		services.AddSingleton(sp =>
+		services.AddScoped(sp =>
 		{
 			var configuration = sp.GetRequiredService<IConfiguration>( );
 			var mongoClient = new MongoClient(configuration[connectionStringName]!);
-			var options = new DbContextOptionsBuilder<AiRecruiterDbContext>( ).UseMongoDB(configuration[connectionStringName]!, configuration[aiRecruiterDbName]!).Options;
+			var options = new DbContextOptionsBuilder<AiRecruiterDbContext>( )
+				.UseMongoDB(configuration[connectionStringName]!, configuration[aiRecruiterDbName]!)
+				.Options;
+
 			return new AiRecruiterDbContext(options, mongoClient.GetDatabase(configuration[aiRecruiterDbName]));
 		});
-		// Registering the repositories
 		services.AddScoped<IReadOnlyRepository, ReadOnlyRepository>( );
 		services.AddScoped<IJobPostRepository, JobPostRepository>( );
-		services.AddSingleton<IUsersRepository, UsersRepository>( );
+		services.AddScoped<IUsersRepository, UsersRepository>( );
 	}
 }

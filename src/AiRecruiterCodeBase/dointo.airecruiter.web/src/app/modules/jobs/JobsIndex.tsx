@@ -2,7 +2,8 @@
 import { PageLink, PageTitle } from '../../../_metronic/layout/core'
 import JobsList from "./JobsList"
 import JobPost from "./JobPost"
-import ConductJob from "./ConductJob" // ✅ New import for the "Launch App" page
+import ConductJob from "./ConductJob"
+import JobScreening from "./JobScreening"
 
 const jobsBreadCrumbs: Array<PageLink> = [
 	{
@@ -23,7 +24,7 @@ function JobsIndex() {
 	return (
 		<Routes>
 			<Route element={<Outlet />}>
-				{/* ✅ Jobs List Page */}
+				{/* Jobs List Page */}
 				<Route
 					path='list'
 					element={
@@ -34,7 +35,7 @@ function JobsIndex() {
 					}
 				/>
 
-				{/* ✅ Job Create Page */}
+				{/* Job Create Page */}
 				<Route
 					path='create'
 					element={
@@ -57,6 +58,18 @@ function JobsIndex() {
 				/>
 
 				{/* ✅ Default Redirect */}
+				{/* Job Screening (Candidates per job) Page */}
+				<Route
+					path=':jobId/interviews'
+					element={
+						<>
+							<PageTitle breadcrumbs={jobsBreadCrumbs}>Candidate Screening</PageTitle>
+							<JobScreening />
+						</>
+					}
+				/>
+
+				{/* Default redirect */}
 				<Route index element={<Navigate to='/jobs/list' />} />
 			</Route>
 		</Routes>

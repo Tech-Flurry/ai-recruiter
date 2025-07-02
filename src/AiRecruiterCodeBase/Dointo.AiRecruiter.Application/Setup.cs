@@ -22,9 +22,12 @@ public static class Setup
 		services.AddTransient<IResolver<Interview, InterviewGeneratedDto>, InterviewGeneratedDtoResolver>( );
 		services.AddTransient<IResolver<Question, QuestionDto>, QuestionDtoResolver>( );
 		services.AddTransient<IResolver<Interview, CandidateInterviewResultDto>, CandidateInterviewResultDtoResolver>( );
+		services.AddTransient<IResolver<Interview, CandidateListDto>, CandidateListDtoResolver>( );
 
 		//services
 		services.AddTransient<IJobPostsService, JobPostsService>( );
 		services.AddTransient<IInterviewsService, InterviewsService>( );
+		services.AddTransient<IAuthenticationService, AuthenticationService>( );
+		services.AddTransient<ICandidateService, CandidateService>( );
 	}
 }

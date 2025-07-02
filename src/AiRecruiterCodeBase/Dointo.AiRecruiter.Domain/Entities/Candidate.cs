@@ -1,6 +1,7 @@
 ﻿using Dointo.AiRecruiter.Domain.ValueObjects;
 
 namespace Dointo.AiRecruiter.Domain.Entities;
+
 public class Candidate : BaseEntity
 {
 	public Name Name { get; set; } = null!;

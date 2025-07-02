@@ -1,6 +1,7 @@
 ﻿import React from "react";
 import { useParams, useLocation } from "react-router-dom";
 import CandidateInfo from "../interviews/CandidateInfo";
+import InterviewRoom from "../interviews/InterviewRoom";
 
 const ConductJob: React.FC = () => {
 	const { jobId } = useParams();
@@ -10,7 +11,8 @@ const ConductJob: React.FC = () => {
 	const deepLink = `airecruiter://jobs/conduct/${jobId}`;
 
 	return (
-		<CandidateInfo />
+		//<CandidateInfo />
+		<InterviewRoom />
 	);
 };
 

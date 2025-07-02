@@ -4,6 +4,7 @@ import JobsList from "./JobsList"
 import JobPost from "./JobPost"
 import ConductJob from "./ConductJob"
 import JobScreening from "./JobScreening"
+import InterviewResult from './InterviewResult'
 
 const jobsBreadCrumbs: Array<PageLink> = [
 	{
@@ -24,7 +25,6 @@ function JobsIndex() {
 	return (
 		<Routes>
 			<Route element={<Outlet />}>
-				{/* Jobs List Page */}
 				<Route
 					path='list'
 					element={
@@ -35,7 +35,6 @@ function JobsIndex() {
 					}
 				/>
 
-				{/* Job Create Page */}
 				<Route
 					path='create'
 					element={
@@ -70,6 +69,16 @@ function JobsIndex() {
 				/>
 
 				{/* Default redirect */}
+				<Route
+					path='interview/:jobId'
+					element={
+						<>
+							<PageTitle breadcrumbs={jobsBreadCrumbs}>Interview Result</PageTitle>
+							<InterviewResult />
+						</>
+					}
+				/>
+
 				<Route index element={<Navigate to='/jobs/list' />} />
 			</Route>
 		</Routes>

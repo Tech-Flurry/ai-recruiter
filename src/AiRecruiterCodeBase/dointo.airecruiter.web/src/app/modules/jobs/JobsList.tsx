@@ -1,4 +1,5 @@
-﻿import React, { useState, useEffect } from "react";
+﻿/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { KTCard, KTCardBody } from "../../../_metronic/helpers";

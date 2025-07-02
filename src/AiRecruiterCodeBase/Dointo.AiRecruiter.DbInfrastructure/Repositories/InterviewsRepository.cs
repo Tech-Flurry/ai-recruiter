@@ -31,7 +31,8 @@ internal class InterviewsRepository(AiRecruiterDbContext dbContext) : Repository
 				Email = candidate.Email,
 				Experience = (int)Math.Round(( candidate.Experiences.Select(x => x.EndDate ?? DateTime.Now).Max( ) - candidate.Experiences.Min(x => x.StartDate) ).TotalDays / 365),
 				JobFitAnalysis = string.Empty,
-				Phone = candidate.Phone
+				Phone = candidate.Phone,
+				Location = candidate.Location
 			},
 			Job = new InterviewJob
 			{
@@ -45,5 +46,12 @@ internal class InterviewsRepository(AiRecruiterDbContext dbContext) : Repository
 		};
 		var entry = await _entitySet.AddAsync(interview);
 		return entry.Entity;
+	}
+	public async Task<Interview?> GetInterviewResultByInterviewIdAsync(string interviewId)
+	{
+		return await _entitySet
+			.Include(i => i.Interviewee)
+			.Include(i => i.Job)
+			.FirstOrDefaultAsync(i => i.Id == interviewId);
 	}
 }

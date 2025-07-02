@@ -4,6 +4,7 @@ import { KTCard, KTCardBody } from "../../../_metronic/helpers";
 import { Table, Dropdown, Form, InputGroup, FormControl } from "react-bootstrap";
 import toastr from "toastr";
 import "toastr/build/toastr.min.css";
+import { Link } from 'react-router-dom';
 import axios from "axios";
 
 type Candidate = {
@@ -216,7 +217,7 @@ const JobScreen: React.FC = () => {
 						</tr>
 					</thead>
 					<tbody>
-						{filteredCandidates.map(({ id, name, email, phoneNumber, score, status, lastInterviewed }) => (
+						{filteredCandidates.map(({ id, name, email, phoneNumber, score, status, lastInterviewed, interviewId }) => (
 							<tr key={id}>
 								<td>
 									<Form.Check
@@ -231,7 +232,10 @@ const JobScreen: React.FC = () => {
 											{getInitials(name)}
 										</div>
 										<div>
-											<span className="fw-bold text-gray-800 text-hover-primary fs-6">{name}</span>
+											<Link to={`/jobs/interview/${interviewId}`} className="fw-bold text-gray-800 text-hover-primary fs-6">
+												{name}
+											</Link>
+
 											<br />
 											<span className="text-muted fs-7">{email}</span>
 										</div>

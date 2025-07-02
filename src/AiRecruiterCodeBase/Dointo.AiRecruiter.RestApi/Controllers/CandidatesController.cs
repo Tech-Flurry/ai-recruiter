@@ -30,26 +30,10 @@ public class CandidatesController(ICandidateService service) : ControllerBase
 
 	// ✅ PATCH: api/Candidates/update-status
 	[HttpPatch("update-status")]
-	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SuccessState))]
+	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
-	public IActionResult UpdateCandidateStatus([FromBody] UpdateCandidateStatusDto dto)
-	{
-		if (string.IsNullOrWhiteSpace(dto.InterviewId))
-			return BadRequest(new { success = false, message = "Interview ID is required." });
-
-		if (string.IsNullOrWhiteSpace(dto.Status))
-			return BadRequest(new { success = false, message = "Status is required." });
-
-		var result = _service.UpdateInterviewStatus(dto.InterviewId, dto.Status);
-
-		if (result is BusinessErrorState error)
-			return NotFound(new { success = false, message = error.Message });
-		if (result is SuccessState)
-			return Ok(new { success = true, message = "Candidate status updated successfully." });
-
-		return StatusCode(500, new { success = false, message = "Unexpected error occurred." });
-	}
+	public IActionResult UpdateCandidateStatus([FromBody] UpdateCandidateStatusDto dto) => Ok(_service.UpdateInterviewStatus(dto.InterviewId, dto.Status));
 	// ✅ NEW: GET job title by job ID
 	[HttpGet("job-title/{jobId}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]

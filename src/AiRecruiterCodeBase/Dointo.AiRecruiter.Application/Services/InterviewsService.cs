@@ -97,7 +97,7 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 			var candidate = await _readOnlyRepository.FindByIdAsync<Candidate>(interview.Interviewee.CandidateId);
 			var (scoredQuestion, terminate) = await _interviewAgent.ScoreQuestionAsync(interview, question);
 			interview.Questions.Add(scoredQuestion);
-			var nextQuestionDto = new NextQuestionDto { Terminate = terminate };
+			var nextQuestionDto = new NextQuestionDto { Terminate = terminate || interview.Questions.Count == 25 };
 			if (!terminate)
 			{
 				var nextQuestion = await _interviewAgent.GenerateNextQuestionAsync(interview, candidate);

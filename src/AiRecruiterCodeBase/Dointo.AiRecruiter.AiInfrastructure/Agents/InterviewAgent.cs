@@ -45,7 +45,8 @@ Instructions:
 - Use simple English words and avoid jargons or fluff
 - You should maintain a friendly tone
 - You should sound like a real human instead of a bot
-- Change the pattern of your sentence each time to make it realistic";
+- Change the pattern of your sentence each time to make it realistic
+- Do not call candidate's name every time";
 		var completion = await aiProvider.GetCompletionAsync(OpenAiModels.GPT_4_1, context, prompt, JsonUtils.GetJsonSchemaOf(typeof(QuestionCompletionDto)), "question");
 		return JsonSerializer.Deserialize<QuestionCompletionDto>(completion)?.Question ?? string.Empty;
 	}

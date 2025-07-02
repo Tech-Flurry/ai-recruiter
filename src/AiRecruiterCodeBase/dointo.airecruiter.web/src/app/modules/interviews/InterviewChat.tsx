@@ -1,6 +1,7 @@
 import React, { FC, useState, useRef, useEffect } from 'react'
 import clsx from 'clsx'
 import { toAbsoluteUrl } from '../../../_metronic/helpers'
+import axios from "axios";
 
 type Message = {
 	user: 'riku' | 'candidate'
@@ -11,59 +12,147 @@ type Message = {
 const rikuAvatar = 'avatars/300-1.jpg'
 const candidateAvatar = 'avatars/blank.png'
 
-const questions = [
-	'Welcome! Please introduce yourself.',
-	'Why are you interested in this position?',
-	'Can you describe your relevant experience?',
-	'What are your strengths and weaknesses?',
-	'Where do you see yourself in 5 years?',
-	'Thank you for your answers. We will get back to you soon!',
-]
+const jobId = '68639b3c8e7171b948242b8b'
+const candidateId = '68617d2c942bf7e519443808'
 
 const InterviewChat: FC = () => {
-	const [messages, setMessages] = useState<Message[]>([
-		{
-			user: 'riku',
-			text: questions[0],
-			time: 'Just now',
-		} as Message,
-	])
-	const [message, setMessage] = useState<string>('')
-	const [questionIndex, setQuestionIndex] = useState<number>(1)
+	const [messages, setMessages] = useState<Message[]>([])
+	const [message, setMessage] = useState('')
+	const [interviewId, setInterviewId] = useState<string>('')
+	const [isTerminated, setIsTerminated] = useState(false)
 	const messagesEndRef = useRef<HTMLDivElement>(null)
 
 	useEffect(() => {
 		messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
 	}, [messages])
 
-	const sendMessage = () => {
-		if (!message.trim()) return
+	// On component load, generate interview
+	useEffect(() => {
+		const generateInterview = async () => {
+			// Show loading message
+			const loadingMsg: Message = { user: 'riku', text: '...', time: 'Loading' }
+			setMessages([loadingMsg])
 
-		// Add candidate's answer
+			try {
+				const res = await fetch(`${import.meta.env.VITE_APP_API_BASE_URL}/Interviews/generate-interview/${candidateId}/${jobId}`)
+				const result = await res.json()
+
+				// Remove the '...' placeholder
+				setMessages([])
+
+				if (result?.success) {
+					// Grab interview info
+					const data = result.data
+					setInterviewId(data.interviewId)
+					// Show the interview starter from server
+					setMessages([
+						{
+							user: 'riku',
+							text: data.interviewStarter,
+							time: 'Just now',
+						},
+					])
+				} else {
+					// Handle errors or business messages
+					setMessages([
+						{
+							user: 'riku',
+							text: result.message || 'Error starting interview.',
+							time: 'Just now',
+						},
+					])
+				}
+			} catch (err) {
+				setMessages([
+					{
+						user: 'riku',
+						text: 'Internal server error',
+						time: 'Just now',
+					},
+				])
+			}
+		}
+
+		generateInterview()
+	}, [])
+
+	const sendMessage = async () => {
+		if (!message.trim() || !interviewId || isTerminated) return
+
+		// Candidate's reply
 		const newMessages: Message[] = [
 			...messages,
-			{
-				user: 'candidate',
-				text: message,
-				time: 'Just now',
-			},
+			{ user: 'candidate', text: message, time: 'Just now' },
+			{ user: 'riku', text: '...', time: 'Processing' }, // Show loading
 		]
 		setMessages(newMessages)
 		setMessage('')
 
-		// If there are more questions, Riku asks the next one
-		if (questionIndex < questions.length) {
-			setTimeout(() => {
+		// Figuring out the last question asked by Riku
+		const lastRikuMsg = [...messages].reverse().find((m) => m.user === 'riku')
+
+		// Call next-question
+		try {
+			const body = {
+				text: lastRikuMsg?.text || '', // question text from Riku
+				answer: message,               // candidate’s answer
+			}
+
+			const res = await fetch(`${import.meta.env.VITE_APP_API_BASE_URL}/Interviews/next-question/${interviewId}`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(body),
+			})
+			const result = await res.json()
+
+			// Remove the '...' placeholder
+			const withoutLoading = [...newMessages]
+			withoutLoading.pop() // remove the last item which is the '...' 
+			setMessages(withoutLoading)
+
+			if (result?.success) {
+				const data = result.data
+				if (data.terminate) {
+					// End of interview
+					setIsTerminated(true)
+					setMessages([
+						...withoutLoading,
+						{
+							user: 'riku',
+							text: 'Interview has ended. Thank you!',
+							time: 'Just now',
+						},
+					])
+				} else {
+					// Show the next question
+					setMessages([
+						...withoutLoading,
+						{
+							user: 'riku',
+							text: data.question,
+							time: 'Just now',
+						},
+					])
+				}
+			} else {
+				// Show error message from server
 				setMessages([
-					...newMessages,
+					...withoutLoading,
 					{
 						user: 'riku',
-						text: questions[questionIndex],
+						text: result.message || 'Error retrieving next question.',
 						time: 'Just now',
-					} as Message,
+					},
 				])
-				setQuestionIndex(questionIndex + 1)
-			}, 800)
+			}
+		} catch (err) {
+			// Show fallback error
+			const withoutLoading = [...newMessages]
+			withoutLoading.pop()
+			setMessages([
+				...withoutLoading,
+				{ user: 'riku', text: 'Internal server error', time: 'Just now' },
+			])
 		}
 	}
 
@@ -150,8 +239,8 @@ const InterviewChat: FC = () => {
 					value={message}
 					onChange={(e) => setMessage(e.target.value)}
 					onKeyDown={onEnterPress}
-					disabled={questionIndex >= questions.length}
-				></textarea>
+					disabled={!interviewId || isTerminated}
+				/>
 				<div className="d-flex flex-stack">
 					<div />
 					<button
@@ -159,7 +248,7 @@ const InterviewChat: FC = () => {
 						type="button"
 						data-kt-element="send"
 						onClick={sendMessage}
-						disabled={!message.trim() || questionIndex >= questions.length}
+						disabled={!message.trim() || !interviewId || isTerminated}
 					>
 						Send
 					</button>

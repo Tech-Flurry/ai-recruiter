@@ -4,6 +4,7 @@ using Dointo.AiRecruiter.Application.Utils;
 using Dointo.AiRecruiter.Core.Abstractions;
 using Dointo.AiRecruiter.Core.Extensions;
 using Dointo.AiRecruiter.Core.States;
+using Dointo.AiRecruiter.Domain.Aggregates;
 using Dointo.AiRecruiter.Domain.Entities;
 using Dointo.AiRecruiter.Domain.Validators;
 using Dointo.AiRecruiter.Domain.ValueObjects;
@@ -16,10 +17,11 @@ public interface IInterviewsService
 {
 	Task<IProcessingState> CreateCandidateAsync(CreateCandidateDto candidate, string username);
 	Task<IProcessingState> GenerateInterviewAsync(string candidateId, string jobId);
+	Task<IProcessingState> GetInterviewResultAsync(string interviewId);
 	Task<IProcessingState> NextQuestionAsync(QuestionDto questionDto, string interviewId);
 }
 
-internal class InterviewsService(ICandidateRepository candidatesRepository, IResolver<Candidate, CreateCandidateDto> createCandidateResolver, ICandidatesAgent candidatesAgent, IInterviewsRepository interviewrepository, IReadOnlyRepository readOnlyRepository, IResolver<Interview, InterviewGeneratedDto> interviewDtoResolver, IInterviewAgent interviewAgent, IResolver<Question, QuestionDto> questionDtoResolver) : IInterviewsService
+internal class InterviewsService(ICandidateRepository candidatesRepository, IResolver<Candidate, CreateCandidateDto> createCandidateResolver, ICandidatesAgent candidatesAgent, IInterviewsRepository interviewrepository, IReadOnlyRepository readOnlyRepository, IResolver<Interview, InterviewGeneratedDto> interviewDtoResolver, IInterviewAgent interviewAgent, IResolver<Question, QuestionDto> questionDtoResolver, IResolver<Interview, CandidateInterviewResultDto> resultResolver) : IInterviewsService
 {
 	private const string CANDIDATE_STRING = nameof(Candidate);
 	private const string INTERVIEW_STRING = nameof(Interview);
@@ -31,6 +33,7 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 	private readonly IResolver<Interview, InterviewGeneratedDto> _interviewDtoResolver = interviewDtoResolver;
 	private readonly IInterviewAgent _interviewAgent = interviewAgent;
 	private readonly IResolver<Question, QuestionDto> _questionDtoResolver = questionDtoResolver;
+	private readonly IResolver<Interview, CandidateInterviewResultDto> _resultResolver = resultResolver;
 	private readonly MessageBuilder _messageBuilder = new( );
 
 	public async Task<IProcessingState> CreateCandidateAsync(CreateCandidateDto candidateDto, string username)
@@ -119,5 +122,18 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 		{
 			return new ExceptionState(_messageBuilder.AddFormat(Messages.ERROR_OCCURRED_FORMAT).AddString(INTERVIEW_STRING).Build( ), ex.Message);
 		}
+	}
+
+	public async Task<IProcessingState> GetInterviewResultAsync(string interviewId)
+	{
+		var interview = await _readOnlyRepository.FindByIdAsync<Interview>(interviewId);
+		if (interview is null)
+			return new BusinessErrorState(_messageBuilder.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT).AddString(INTERVIEW_STRING).Build( ));
+		var result = _resultResolver.Resolve(interview);
+		result.InterviewLength = interview.GetLength( ).Minutes;
+		result.IsPassed = interview.IsPassed( );
+		return new SuccessState<CandidateInterviewResultDto>(
+			_messageBuilder.AddFormat(Messages.RECORD_RETRIEVED_FORMAT).AddString(INTERVIEW_STRING).Build( ),
+			result);
 	}
 }

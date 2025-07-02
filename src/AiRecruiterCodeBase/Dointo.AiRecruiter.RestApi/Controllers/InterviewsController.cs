@@ -26,4 +26,8 @@ public class InterviewsController(IInterviewsService service) : ControllerBase
 		var result = await _service.NextQuestionAsync(questionDto, interviewId);
 		return Ok(result);
 	}
+
+	[HttpGet("candidate-results/{interviewId}")]
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(CandidateInterviewResultDto))]
+	public async Task<IActionResult> CandidateResults(string interviewId) => Ok(await _service.GetInterviewResultAsync(interviewId));
 }

@@ -40,8 +40,10 @@ Instructions:
 - The question should not be too easy or too difficult, it should be appropriate for the candidate's experience level
 - The question should not be repetitive or already asked in the interview
 - The question should not be too long or too short, it should be concise and to the point
+- We usually needs 5-7 against each required skill and almost 20-25 question in an interview, so if you think there are enough questions against all skills then simple send the `Terminate` flag as `true`
 - The question can be related to the candidate's past experiences, skills, or knowledge Experiences -> {JsonSerializer.Serialize(candidate.Experiences)}, Skills -> {JsonSerializer.Serialize(candidate.Skills)}
 - You can ask role based questions instead of simple techincal definitions
+- If the candidate is using abusive language or looks like wasting our time then simply terminate the interview by sending `Terminate` flag as `true`
 - Beyond these given technical skills, you should also ask questions about soft skills like team work, team building, agile project management etc. 
 - Use simple English words and avoid jargons or fluff
 - You should maintain a friendly tone
@@ -99,9 +101,7 @@ Instructions:
 - The candidate's current experience is {interview.Interviewee.Experience}, so adjust the difficulty level according to that
 - You can also use relative marking based on previous questions provided in json
 - We only require score obtained against a question. Don't give us unncessary details
-- We don't use negative marking so if you're unsatisfied with any answer, simply score 0
-- We usually needs 5-7 against each required skill and almost 20-25 question in an interview, so if you think there are enough questions against all skills then simple send the `Terminate` flag as `true`
-- If the candidate is using abusive language or looks like wasting our time then simply terminate the interview by sending `Terminate` flag as `true`";
+- We don't use negative marking so if you're unsatisfied with any answer, simply score 0";
 		var completion = await aiProvider.GetCompletionAsync(OpenAiModels.GPT_4_1, context, prompt, JsonUtils.GetJsonSchemaOf(typeof(ScoredQuestionCompletionDto)), "score");
 		var scoreCompletion = JsonSerializer.Deserialize<ScoredQuestionCompletionDto>(completion) ?? new ScoredQuestionCompletionDto(0, true);
 		return (new ScoredQuestion

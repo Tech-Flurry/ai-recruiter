@@ -38,6 +38,7 @@ interface InterviewResultData {
 	jobId: string
 	fullName: string
 	totalScore: number
+	aiScore: number
 	skillWiseScore: SkillScore
 	questions: InterviewQuestion[]
 	violations: string[]
@@ -227,7 +228,7 @@ const InterviewResult: React.FC = () => {
 					<div className="card card-custom mb-4">
 						<div className="card-header"><h3 className="card-title">Total Score</h3></div>
 						<div className="card-body">
-							<h4 className="text-primary fw-bold">{data.totalScore} / 100</h4>
+							<h4 className="text-primary fw-bold">{data.aiScore} / 10</h4>
 							<p className="text-muted mb-0">This is the candidate's overall evaluation score based on all interview responses.</p>
 						</div>
 					</div>

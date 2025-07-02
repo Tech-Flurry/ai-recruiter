@@ -12,7 +12,7 @@ const AsideToolbar = () => {
       <div className='aside-user d-flex align-items-sm-center justify-content-center py-5'>
         {/*begin::Symbol*/}
         <div className='symbol symbol-50px'>
-          <img src={toAbsoluteUrl('media/avatars/300-1.jpg')} alt='' />
+          <img src={toAbsoluteUrl('media/avatars/300-9.jpg')} alt='' />
         </div>
         {/*end::Symbol*/}
 
@@ -24,12 +24,12 @@ const AsideToolbar = () => {
             <div className='flex-grow-1 me-2'>
               {/*begin::Username*/}
               <a href='#' className='text-dark text-hover-primary fs-6 fw-bold'>
-                {currentUser?.first_name} {currentUser?.last_name}
+                admin
               </a>
               {/*end::Username*/}
 
               {/*begin::Description*/}
-              <span className='text-gray-600 fw-bold d-block fs-8 mb-1'>Python dev</span>
+              <span className='text-gray-600 fw-bold d-block fs-8 mb-1'>System Admin</span>
               {/*end::Description*/}
 
               {/*begin::Label*/}
@@ -63,17 +63,6 @@ const AsideToolbar = () => {
         {/*end::Wrapper*/}
       </div>
       {/*end::User*/}
-
-      {/*begin::Aside search*/}
-      <div className='aside-search py-5'>
-        {/* <?php Theme::getView('partials/search/_inline', array(
-        'class' => 'w-100',
-        'menu-placement' => 'bottom-start',
-        'responsive' => 'false'
-    ))?> */}
-        <Search />
-      </div>
-      {/*end::Aside search*/}
     </>
   )
 }

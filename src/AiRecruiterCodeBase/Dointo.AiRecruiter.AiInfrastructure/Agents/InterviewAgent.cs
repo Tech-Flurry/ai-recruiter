@@ -122,7 +122,7 @@ Instructions:
 - You need to score the skills of the candidate based on their answers in the interview
 - The score should be out of 5 for each skill
 - The score can not be greater than 5
-- The score can be upto 2 decimal digits like 4.56, 3.25 etc., but can also be in a single digit
+- The score should be in integer format like 1, 2, 3, 4, 5
 - The score will only depend on how well the candidate answered the questions related to the skills
 - The candidate's current experience is {interview.Interviewee.Experience}, so adjust the difficulty level according to that
 - The score should reflect the candidate's proficiency in the required skills

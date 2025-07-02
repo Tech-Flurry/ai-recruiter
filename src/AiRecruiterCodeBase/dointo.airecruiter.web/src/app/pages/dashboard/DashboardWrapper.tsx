@@ -11,6 +11,7 @@ import {
 	StatisticsWidget5,
 } from '../../../_metronic/partials/widgets'
 
+// Interfaces
 interface DashboardMetrics {
 	activeJobPosts: number
 	totalCandidatesScreened: number
@@ -24,15 +25,26 @@ interface JobPostInsight {
 	averageInterviewDuration: string
 }
 
+interface CandidatePipelineMetrics {
+	weeklyApplications: number
+	newCandidates: number
+	interviewsScheduled: number
+	screenedCandidates: number
+}
+
 const DashboardPage = () => {
 	const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
 	const [insights, setInsights] = useState<JobPostInsight[]>([])
+	const [pipelineMetrics, setPipelineMetrics] = useState<CandidatePipelineMetrics | null>(null)
 
 	useEffect(() => {
 		const fetchDashboardData = async () => {
 			try {
 				const metricsRes = await axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/Dashboard`)
 				setMetrics(metricsRes.data)
+
+				const pipelineRes = await axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/Dashboard/pipeline-metrics`)
+				setPipelineMetrics(pipelineRes.data)
 
 				const insightsRes = await axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/Dashboard/insights`)
 				setInsights(insightsRes.data)
@@ -44,7 +56,7 @@ const DashboardPage = () => {
 		fetchDashboardData()
 	}, [])
 
-	if (!metrics) return <div className='text-center p-10'>Loading dashboard...</div>
+	if (!metrics || !pipelineMetrics) return <div className='text-center p-10'>Loading dashboard...</div>
 
 	return (
 		<>
@@ -107,15 +119,15 @@ const DashboardPage = () => {
 				<div className='col-md-6'>
 					<MixedWidget2
 						className='card-xl-stretch mb-xl-8'
-						title='Pass Rate Across All Job Posts'
+						title='Candidate Pipeline Overview'
 						chartColor='primary'
 						chartHeight='200'
 						strokeColor='#5d78ff'
 						tiles={[
-							{ title: 'Weekly Applications', value: '45', icon: 'graph', color: 'warning' },
-							{ title: 'New Candidates', value: '30', icon: 'user', color: 'primary' },
-							{ title: 'Interviews Scheduled', value: '18', icon: 'calendar', color: 'danger' },
-							{ title: 'Offers Sent', value: '10', icon: 'check', color: 'success' },
+							{ title: 'Weekly Applications', value: pipelineMetrics.weeklyApplications.toString(), icon: 'graph', color: 'warning' },
+							{ title: 'New Candidates', value: pipelineMetrics.newCandidates.toString(), icon: 'user', color: 'primary' },
+							{ title: 'Interviews Scheduled', value: pipelineMetrics.interviewsScheduled.toString(), icon: 'calendar', color: 'danger' },
+							{ title: 'Screened Candidates', value: pipelineMetrics.screenedCandidates.toString(), icon: 'check', color: 'success' },
 						]}
 					/>
 				</div>

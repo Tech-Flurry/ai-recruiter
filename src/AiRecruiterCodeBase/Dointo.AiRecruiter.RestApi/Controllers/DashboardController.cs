@@ -50,4 +50,24 @@ public class DashboardController(IDashboardService service) : ControllerBase
 			_ => StatusCode(500, new { Message = "Unhandled state." })
 		};
 	}
+
+	// ✅ GET: api/Dashboard/pipeline-metrics
+	[HttpGet("pipeline-metrics")]
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(CandidatePipelineMetricsDto))]
+	[ProducesResponseType(StatusCodes.Status400BadRequest)]
+	[ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+	public async Task<IActionResult> GetCandidatePipelineMetrics( )
+	{
+		var result = await _service.GetCandidatePipelineMetricsAsync( );
+
+		return result switch
+		{
+			SuccessState<CandidatePipelineMetricsDto> success => Ok(success.Data),
+			BusinessErrorState error => BadRequest(new { error.Message }),
+			ValidationErrorState validation => UnprocessableEntity(new { validation.Errors }),
+			ExceptionState ex => StatusCode(500, new { ex.Message }),
+			_ => StatusCode(500, new { Message = "Unhandled state." })
+		};
+	}
 }

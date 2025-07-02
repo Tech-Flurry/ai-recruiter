@@ -12,6 +12,7 @@ public interface IDashboardService
 {
 	Task<IProcessingState> GetDashboardMetricsAsync( );
 	Task<IProcessingState> GetJobPostInsightsAsync( );
+	Task<IProcessingState> GetCandidatePipelineMetricsAsync( );
 }
 
 internal class DashboardService(IReadOnlyRepository readOnlyRepository) : IDashboardService
@@ -133,4 +134,65 @@ internal class DashboardService(IReadOnlyRepository readOnlyRepository) : IDashb
 			));
 		}
 	}
+
+	public Task<IProcessingState> GetCandidatePipelineMetricsAsync( )
+	{
+		_messageBuilder.Clear( );
+
+		try
+		{
+			var now = DateTime.UtcNow;
+
+			var interviews = _readOnlyRepository
+				.Query<Interview>( )
+				.Where(i => !i.IsDeleted)
+				.ToList( );
+
+			var weeklyApplications = interviews
+				.Count(i => i.CreatedAt >= now.AddDays(-7));
+
+			var newCandidates = interviews
+				.Where(i => i.Interviewee is not null)
+				.GroupBy(i => i.Interviewee.Email) // Assuming Email is unique
+				.Select(g => g.OrderBy(x => x.CreatedAt).First( ))
+				.Count(i => i.CreatedAt >= now.AddDays(-14));
+
+			var interviewsScheduled = interviews
+				.Count(i => i.StartTime >= now.AddDays(-7));
+
+			var screenedCandidates = interviews
+				.Count(i => i.AiScore >= 7.0);
+
+			var metrics = new CandidatePipelineMetricsDto
+			{
+				WeeklyApplications = weeklyApplications,
+				NewCandidates = newCandidates,
+				InterviewsScheduled = interviewsScheduled,
+				ScreenedCandidates = screenedCandidates
+			};
+
+			return Task.FromResult<IProcessingState>(
+				new SuccessState<CandidatePipelineMetricsDto>(
+					_messageBuilder
+						.AddFormat(Messages.RECORD_RETRIEVED_FORMAT)
+						.AddString("Candidate Pipeline Metrics")
+						.Build( ),
+					metrics
+				)
+			);
+		}
+		catch (Exception ex)
+		{
+			return Task.FromResult<IProcessingState>(
+				new ExceptionState(
+					_messageBuilder
+						.AddFormat(Messages.ERROR_OCCURRED_FORMAT)
+						.AddString("Candidate Pipeline Metrics")
+						.Build( ),
+					ex.Message
+				)
+			);
+		}
+	}
+
 }

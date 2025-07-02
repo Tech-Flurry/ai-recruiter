@@ -50,7 +50,7 @@ const JobScreen: React.FC = () => {
 	useEffect(() => {
 		const fetchCandidates = async () => {
 			try {
-				const response = await axios.get(`https://localhost:7072/api/candidates/by-job/${jobId}`);
+				const response = await axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/candidates/by-job/${jobId}`);
 				if (response.data.success) {
 					const apiCandidates = response.data.data.map((cand: any, index: number) => ({
 						id: index + 1,
@@ -80,7 +80,7 @@ const JobScreen: React.FC = () => {
 
 		const fetchJobTitle = async () => {
 			try {
-				const res = await axios.get(`https://localhost:7072/api/candidates/job-title/${jobId}`);
+				const res = await axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/candidates/job-title/${jobId}`);
 				if (res.data?.success && res.data.jobTitle) {
 					setJobTitle(res.data.jobTitle);
 				} else {
@@ -116,7 +116,7 @@ const JobScreen: React.FC = () => {
 
 		try {
 			const response = await axios.patch(
-				`https://localhost:7072/api/candidates/update-status`,
+				`${import.meta.env.VITE_APP_API_BASE_URL}/candidates/update-status`,
 				{
 					interviewId: candidate.interviewId,
 					status: newStatus

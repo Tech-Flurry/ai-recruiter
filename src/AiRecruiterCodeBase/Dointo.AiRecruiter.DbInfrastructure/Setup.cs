@@ -24,7 +24,8 @@ public static class Setup
 		});
 		services.AddScoped<IReadOnlyRepository, ReadOnlyRepository>( );
 		services.AddScoped<IJobPostRepository, JobPostRepository>( );
-		services.AddScoped<IInterviewRepository, InterviewRepository>( );
+		services.AddScoped<ICandidateRepository, CandidateRepository>( );
+		services.AddScoped<IInterviewsRepository, InterviewsRepository>( );
 		services.AddScoped<IUsersRepository, UsersRepository>( );
 	}
 }

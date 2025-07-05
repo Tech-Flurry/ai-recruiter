@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Dointo.AiRecruiter.RestApi.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 public class AuthenticationController(IAuthenticationService authenticationService) : ControllerBase
 {
 	private readonly IAuthenticationService _authenticationService = authenticationService;

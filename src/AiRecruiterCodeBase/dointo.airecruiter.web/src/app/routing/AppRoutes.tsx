@@ -9,7 +9,10 @@ import {FC} from 'react'
 import {Routes, Route, BrowserRouter, Navigate} from 'react-router-dom'
 import {PrivateRoutes} from './PrivateRoutes'
 import {ErrorsPage} from '../modules/errors/ErrorsPage'
-import {Logout, AuthPage, useAuth} from '../modules/auth'
+import {Logout, useAuth} from '../modules/auth'
+import LoginIndex from '../../app/modules/authentication/loginIndex'
+
+
 import {App} from '../App'
 
 /**
@@ -34,8 +37,8 @@ const AppRoutes: FC = () => {
             </>
           ) : (
             <>
-              <Route path='auth/*' element={<AuthPage />} />
-              <Route path='*' element={<Navigate to='/auth' />} />
+                <Route path='auth/*' element={<LoginIndex />} />
+                <Route path='*' element={<Navigate to='/auth/login' />} />
             </>
           )}
         </Route>

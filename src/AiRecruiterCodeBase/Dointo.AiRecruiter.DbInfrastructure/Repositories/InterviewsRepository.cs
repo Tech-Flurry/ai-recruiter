@@ -6,11 +6,13 @@ using Dointo.AiRecruiter.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dointo.AiRecruiter.DbInfrastructure.Repositories;
+
 internal class InterviewsRepository(AiRecruiterDbContext dbContext) : RepositoryBase<Interview>(dbContext), IInterviewsRepository
 {
 	public async Task<Interview> AddQuestionAsync(Question question, string interviewId, double score, double outOf)
 	{
-		var interview = await _entitySet.FirstOrDefaultAsync(x => x.Id == interviewId) ?? throw new RecordNotFoundException<Interview>(interviewId);
+		var interview = await _entitySet.FirstOrDefaultAsync(x => x.Id == interviewId)
+			?? throw new RecordNotFoundException<Interview>(interviewId);
 
 		interview.Questions.Add(new ScoredQuestion
 		{
@@ -20,6 +22,7 @@ internal class InterviewsRepository(AiRecruiterDbContext dbContext) : Repository
 		});
 		return interview;
 	}
+
 	public async Task<Interview> CreateInterviewAsync(Job job, Candidate candidate)
 	{
 		var interview = new Interview
@@ -47,6 +50,7 @@ internal class InterviewsRepository(AiRecruiterDbContext dbContext) : Repository
 		var entry = await _entitySet.AddAsync(interview);
 		return entry.Entity;
 	}
+
 	public async Task<Interview?> GetInterviewResultByInterviewIdAsync(string interviewId)
 	{
 		return await _entitySet
@@ -54,4 +58,15 @@ internal class InterviewsRepository(AiRecruiterDbContext dbContext) : Repository
 			.Include(i => i.Job)
 			.FirstOrDefaultAsync(i => i.Id == interviewId);
 	}
+
+	public async Task<List<Interview>> GetByCandidateIdAsync(string candidateId)
+	{
+		return await _entitySet
+			.Where(x => x.Interviewee.CandidateId == candidateId)
+			.Include(x => x.Job)
+			.ToListAsync( );
+	}
+
+
+
 }

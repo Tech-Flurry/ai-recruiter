@@ -40,4 +40,12 @@ public class InterviewsController(IInterviewsService service) : ControllerBase
 		var state = await _service.GetInterviewResultAsync(interviewId);
 		return Ok(state);
 	}
+	[HttpGet("history/{candidateId}")]
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<InterviewHistoryDto>))]
+	public async Task<IActionResult> GetCandidateHistory(string candidateId)
+	{
+		var history = await _service.GetCandidateInterviewHistoryAsync(candidateId);
+		return Ok(history);
+	}
+
 }

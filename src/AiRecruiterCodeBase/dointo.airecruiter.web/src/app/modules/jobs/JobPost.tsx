@@ -53,7 +53,6 @@ function JobPost() {
 	const [isEditable, setIsEditable] = useState(true);
 	const [isGenerating, setIsGenerating] = useState(false);
 
-	// Helper to normalize API skill formats to string[]
 	const normalizeSkills = (skills: any[]): string[] =>
 		skills
 			.map((s) => {

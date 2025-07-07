@@ -24,6 +24,7 @@ public static class Setup
 		services.AddTransient<IResolver<Interview, CandidateInterviewResultDto>, CandidateInterviewResultDtoResolver>( );
 		services.AddTransient<IResolver<Interview, CandidateListDto>, CandidateListDtoResolver>( );
 		services.AddTransient<IResolver<Interview, InterviewResultDto>, InterviewResultDtoResolver>( );
+		services.AddTransient<IResolver<Interview, InterviewHistoryDto>, InterviewHistoryDtoResolver>( );
 
 		//services
 		services.AddTransient<IJobPostsService, JobPostsService>( );

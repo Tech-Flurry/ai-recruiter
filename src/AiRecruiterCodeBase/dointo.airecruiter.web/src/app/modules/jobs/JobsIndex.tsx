@@ -1,10 +1,13 @@
 ﻿import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { PageLink, PageTitle } from '../../../_metronic/layout/core'
-import JobsList from "./JobsList"
-import JobPost from "./JobPost"
-import ConductJob from "./ConductJob"
-import JobScreening from "./JobScreening"
+
+// Pages
+import JobsList from './JobsList'
+import JobPost from './JobPost'
+import ConductJob from './ConductJob'
+import JobScreening from './JobScreening'
 import InterviewResult from './InterviewResult'
+import CandidateInterviewHistory from './CandidateInterviewHistory'
 
 const jobsBreadCrumbs: Array<PageLink> = [
 	{
@@ -25,8 +28,9 @@ function JobsIndex() {
 	return (
 		<Routes>
 			<Route element={<Outlet />}>
+				{/* 🔹 Job List Page */}
 				<Route
-					path='list'
+					path="list"
 					element={
 						<>
 							<PageTitle breadcrumbs={jobsBreadCrumbs}>Job List</PageTitle>
@@ -35,8 +39,9 @@ function JobsIndex() {
 					}
 				/>
 
+				{/* 🔹 Create Job Page */}
 				<Route
-					path='create'
+					path="create"
 					element={
 						<>
 							<PageTitle breadcrumbs={jobsBreadCrumbs}>Create Job Post</PageTitle>
@@ -45,9 +50,9 @@ function JobsIndex() {
 					}
 				/>
 
-				{/* ✅ Conduct Job Interview Page (Shared Link) */}
+				{/* 🔹 Launch Interview for Job */}
 				<Route
-					path='conduct/:jobId'
+					path="conduct/:jobId"
 					element={
 						<>
 							<PageTitle breadcrumbs={jobsBreadCrumbs}>Interview Launch</PageTitle>
@@ -56,10 +61,9 @@ function JobsIndex() {
 					}
 				/>
 
-				{/* ✅ Default Redirect */}
-				{/* Job Screening (Candidates per job) Page */}
+				{/* 🔹 Screened Candidates for a Job */}
 				<Route
-					path=':jobId/interviews'
+					path=":jobId/interviews"
 					element={
 						<>
 							<PageTitle breadcrumbs={jobsBreadCrumbs}>Candidate Screening</PageTitle>
@@ -68,9 +72,9 @@ function JobsIndex() {
 					}
 				/>
 
-				{/* Default redirect */}
+				{/* 🔹 AI Interview Result for a Job */}
 				<Route
-					path='interview/:jobId'
+					path="interview/:jobId"
 					element={
 						<>
 							<PageTitle breadcrumbs={jobsBreadCrumbs}>Interview Result</PageTitle>
@@ -79,7 +83,19 @@ function JobsIndex() {
 					}
 				/>
 
-				<Route index element={<Navigate to='/jobs/list' />} />
+				{/* 🔹 Candidate Interview Status Page */}
+				<Route
+					path="interview-history"
+					element={
+						<>
+							<PageTitle breadcrumbs={jobsBreadCrumbs}>Candidate Interview History</PageTitle>
+							<CandidateInterviewHistory />
+						</>
+					}
+				/>
+
+				{/* 🔹 Default Redirect */}
+				<Route index element={<Navigate to="/jobs/list" />} />
 			</Route>
 		</Routes>
 	)

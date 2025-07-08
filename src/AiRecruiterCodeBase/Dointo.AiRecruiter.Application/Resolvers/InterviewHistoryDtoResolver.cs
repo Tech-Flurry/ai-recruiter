@@ -20,9 +20,6 @@ internal class InterviewHistoryDtoResolver : ResolverBase<Interview, InterviewHi
 					.ForMember(dest => dest.InterviewId, opt => opt.MapFrom(src => src.Id))
 					.ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.IsPassed() ? "Passed" : "Failed"))
 					.ForMember(dest => dest.JobStatus, opt => opt.Ignore( ))
-
-
-
 					.ForMember(dest => dest.InterviewedAt, opt => opt.MapFrom(src => src.EndTime ?? src.StartTime));
 			});
 

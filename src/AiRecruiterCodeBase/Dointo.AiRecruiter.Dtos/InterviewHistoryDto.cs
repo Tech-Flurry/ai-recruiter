@@ -2,6 +2,7 @@
 
 public class InterviewHistoryDto
 {
+	public string InterviewId { get; set; } = null!;
 	public string JobTitle { get; set; } = null!;
 	public double Score { get; set; }
 	public string Status { get; set; } = null!;

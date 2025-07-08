@@ -1,6 +1,5 @@
 ﻿using Dointo.AiRecruiter.Application.AiAbstractions;
 using Dointo.AiRecruiter.Application.Repositories;
-using Dointo.AiRecruiter.Application.Resolvers;
 using Dointo.AiRecruiter.Application.Utils;
 using Dointo.AiRecruiter.Core.Abstractions;
 using Dointo.AiRecruiter.Core.Extensions;
@@ -10,6 +9,7 @@ using Dointo.AiRecruiter.Domain.Entities;
 using Dointo.AiRecruiter.Domain.Validators;
 using Dointo.AiRecruiter.Domain.ValueObjects;
 using Dointo.AiRecruiter.Dtos;
+using Humanizer;
 using System.Text.Json;
 
 namespace Dointo.AiRecruiter.Application.Services;
@@ -21,7 +21,8 @@ public interface IInterviewsService
 	Task<IProcessingState> GetInterviewResultForCandidateAsync(string interviewId);
 	Task<IProcessingState> NextQuestionAsync(QuestionDto questionDto, string interviewId);
 	Task<IProcessingState> GetInterviewResultAsync(string interviewId);
-	Task<List<InterviewHistoryDto>> GetCandidateInterviewHistoryAsync(string candidateId);
+	Task<List<InterviewHistoryDto>> GetInterviewHistoryByOwnerAsync(string ownerId);
+
 
 }
 
@@ -143,15 +144,18 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 			_messageBuilder.AddFormat(Messages.RECORD_RETRIEVED_FORMAT).AddString(INTERVIEW_STRING).Build( ),
 			result);
 	}
-	public async Task<List<InterviewHistoryDto>> GetCandidateInterviewHistoryAsync(string candidateId)
+	public async Task<List<InterviewHistoryDto>> GetInterviewHistoryByOwnerAsync(string ownerId)
 	{
-		var interviews = await _interviewsRepository.GetByCandidateIdAsync(candidateId);
-		return interviews.Select(_interviewHistoryResolver.Resolve).ToList( );
+		var interviews = await _interviewsRepository.GetByOwnerOrSystemAsync(ownerId);
+		var interviewDtos = interviews.Select(_interviewHistoryResolver.Resolve).ToList( );
+		foreach (var item in interviewDtos)
+		{
+			var jobId = interviews.First(x => x.Id == item.InterviewId).Job.JobId;
+			var job = await _readOnlyRepository.FindByIdAsync<Job>(jobId);
+			item.JobStatus = job.Status.Humanize( );
+		}
+		return interviewDtos;
 	}
-
-
-
-
 
 	public async Task<IProcessingState> GetInterviewResultAsync(string interviewId)
 	{

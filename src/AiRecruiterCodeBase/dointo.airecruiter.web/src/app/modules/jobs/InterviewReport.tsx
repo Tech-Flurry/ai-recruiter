@@ -52,7 +52,7 @@ const InterviewReport: React.FC = () => {
 						</span>
 						<span className="me-4">
 							<strong>Status:</strong>{' '}
-							<span className={`badge ${report.status == 'Open' ? 'badge-primary' : 'badge-danger'}`}>{report.status ?? 'Closed'}</span>
+							<span className={`badge ${report.status == 'Open' ? 'badge badge-light-primary fw-bold' : 'badge badge-light-danger fw-bold'}`}>{report.status ?? 'Closed'}</span>
 						</span>
 						<span>
 							<strong>Total Score:</strong>{' '}

@@ -19,8 +19,6 @@ const CandidateInterviewHistory: React.FC = () => {
     const [filteredHistory, setFilteredHistory] = useState<InterviewHistoryItem[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string>('')
-
-    // Filters
     const [searchTitle, setSearchTitle] = useState('')
     const [resultFilter, setResultFilter] = useState<'All' | 'Passed' | 'Failed'>('All')
     const [startDate, setStartDate] = useState('')
@@ -64,15 +62,14 @@ const CandidateInterviewHistory: React.FC = () => {
             Passed: 'badge badge-light-success fw-bold',
             Failed: 'badge badge-light-danger fw-bold',
             Open: 'badge badge-light-primary fw-bold',
-            Closed: 'badge badge-light-secondary fw-bold',
+            Closed: 'badge badge-light-danger fw-bold',
         }
         return <span className={classMap[status] || 'badge badge-light fw-bold'}>{status}</span>
     }
 
     const getScoreClass = (score: number) => {
-        if (score >= 80) return 'text-success fw-bold'
-        if (score < 50) return 'text-danger fw-bold'
-        return 'text-muted'
+		if (score >= 7) return 'text-success fw-bold'
+        return 'text-danger fw-bold'
     }
 
     const clearFilters = () => {

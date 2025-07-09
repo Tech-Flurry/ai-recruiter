@@ -111,6 +111,46 @@ Instructions:
 			TotalScore = TOTAL_SCORE
 		}, scoreCompletion.Terminate);
 	}
+	public async Task<double> ScoreAnswerWithNegativeMarkingAsync(Question question)
+	{
+		var aiProvider = _aiProviderFactory.GetProvider(AiProviders.OpenAi);
+
+		var context = @"
+You are an expert in detecting AI-generated content. Your task is to evaluate the following answer and assign a score from 0 (very human-like) to 4.0 (very AI-like) based on 8 indicators.
+
+Each of the following categories should be scored 0.5 if detected in the provided answer, otherwise 0.0. The final score is the sum of these individual scores, which should be between 0 and 4.0, rounded to two decimal places.
+1. Lack of creativity or originality
+2. Short, overly basic sentences
+3. Inconsistent writing style or unnatural phrasing
+4. Odd or misused metaphors
+5. Perfect grammar without human-like quirks
+6. Repetitive phrases or keyword stuffing
+7. Surface-level insight with no depth
+8. Factual errors about everyday experiences
+
+Instructions:
+- Sum the individual scores to get a final `score` between 0 and 4.0 (rounded to 2 decimal places).
+Do not return any explanation or reasoning.";
+
+
+		var prompt = @$"
+Question: ""{question.Text}""
+Answer: ""{question.Answer}""
+";
+
+		var completion = await aiProvider.GetCompletionAsync(
+			OpenAiModels.GPT_4_1,
+			context,
+			prompt,
+			JsonUtils.GetJsonSchemaOf(typeof(AiScoredQuestionCompletionDto)),
+			"score"
+		);
+
+		var scoreCompletion = JsonSerializer.Deserialize<AiScoredQuestionCompletionDto>(completion)
+			?? new AiScoredQuestionCompletionDto(0);
+		return scoreCompletion.Score;
+	}
+
 
 	public Task<List<SkillRating>> ScoreSkillsAsync(Interview interview)
 	{
@@ -137,8 +177,8 @@ Instructions:
 			return skillsCompletion.Skills;
 		});
 	}
-
 	private sealed record ScoredQuestionCompletionDto(double Score, bool Terminate);
+	private sealed record AiScoredQuestionCompletionDto(double Score);
 	private sealed record QuestionCompletionDto(string Question);
 	private sealed record ScoredInterviewCompletionDto(string Analysis, double Score);
 	private sealed record ScoredSkillsCompletionDto( )

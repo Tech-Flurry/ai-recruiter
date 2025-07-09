@@ -101,10 +101,24 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 		{
 			var interview = await _readOnlyRepository.FindByIdAsync<Interview>(interviewId);
 			var candidate = await _readOnlyRepository.FindByIdAsync<Candidate>(interview.Interviewee.CandidateId);
-			var (scoredQuestion, terminate) = await _interviewAgent.ScoreQuestionAsync(interview, question);
-			interview.Questions.Add(scoredQuestion);
+			var (relevanceScored, terminate) = await _interviewAgent.ScoreQuestionAsync(interview, question);
+			var aiDetectionScored = Math.Clamp(await _interviewAgent.ScoreAnswerWithNegativeMarkingAsync(question), 0, 4);
+
+			aiDetectionScored = Math.Min(5, aiDetectionScored);
+			double combinedScore = relevanceScored.ScoreObtained * ( 1 - aiDetectionScored / 4.0 );
+			combinedScore = Math.Clamp(combinedScore, 0, 5);
+
+			var finalScoredQuestion = new ScoredQuestion
+			{
+				Question = question,
+				ScoreObtained = combinedScore,
+				TotalScore = 5
+			};
+
+			interview.Questions.Add(finalScoredQuestion);
+
 			var nextQuestionDto = new NextQuestionDto { Terminate = terminate || interview.Questions.Count == 25 };
-			if (!terminate)
+			if (!nextQuestionDto.Terminate)
 			{
 				var nextQuestion = await _interviewAgent.GenerateNextQuestionAsync(interview, candidate);
 				nextQuestionDto.Question = nextQuestion;
@@ -117,15 +131,19 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 				interview.ScoredSkills = await _interviewAgent.ScoreSkillsAsync(interview);
 				interview.EndTime = DateTime.UtcNow;
 			}
+
 			return new SuccessState<NextQuestionDto>(
 				_messageBuilder.AddFormat(Messages.RECORD_SAVED_FORMAT).AddString(INTERVIEW_STRING).Build( ),
 				nextQuestionDto);
 		}
 		catch (Exception ex)
 		{
-			return new ExceptionState(_messageBuilder.AddFormat(Messages.ERROR_OCCURRED_FORMAT).AddString(INTERVIEW_STRING).Build( ), ex.Message);
+			return new ExceptionState(
+				_messageBuilder.AddFormat(Messages.ERROR_OCCURRED_FORMAT).AddString(INTERVIEW_STRING).Build( ),
+				ex.Message);
 		}
 	}
+
 
 	public async Task<IProcessingState> GetInterviewResultForCandidateAsync(string interviewId)
 	{

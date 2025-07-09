@@ -9,6 +9,7 @@ using Dointo.AiRecruiter.Domain.Entities;
 using Dointo.AiRecruiter.Domain.Validators;
 using Dointo.AiRecruiter.Domain.ValueObjects;
 using Dointo.AiRecruiter.Dtos;
+using Humanizer;
 using System.Text.Json;
 
 namespace Dointo.AiRecruiter.Application.Services;
@@ -20,10 +21,12 @@ public interface IInterviewsService
 	Task<IProcessingState> GetInterviewResultForCandidateAsync(string interviewId);
 	Task<IProcessingState> NextQuestionAsync(QuestionDto questionDto, string interviewId);
 	Task<IProcessingState> GetInterviewResultAsync(string interviewId);
+	Task<List<InterviewHistoryDto>> GetInterviewHistoryByOwnerAsync(string ownerId);
+	Task<InterviewReportDto?> GetReportAsync(string interviewId);
 }
 
 internal class InterviewsService(ICandidateRepository candidatesRepository, IResolver<Candidate, CreateCandidateDto> createCandidateResolver, ICandidatesAgent candidatesAgent, IInterviewsRepository interviewRepository, IResolver<Interview, InterviewGeneratedDto> interviewDtoResolver, IInterviewAgent interviewAgent, IResolver<Question, QuestionDto> questionDtoResolver, IResolver<Interview, CandidateInterviewResultDto> resultResolver,
-	IResolver<Interview, InterviewResultDto> interviewResultsResolver, IReadOnlyRepository readOnlyRepository) : IInterviewsService
+	IResolver<Interview, InterviewResultDto> interviewResultsResolver,IResolver<Interview,InterviewReportDto> interviewReportDtoResolver,IReadOnlyRepository readOnlyRepository, IResolver<Interview, InterviewHistoryDto> interviewHistoryResolver) : IInterviewsService
 {
 	private const string CANDIDATE_STRING = nameof(Candidate);
 	private const string INTERVIEW_STRING = nameof(Interview);
@@ -37,6 +40,8 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 	private readonly IResolver<Question, QuestionDto> _questionDtoResolver = questionDtoResolver;
 	private readonly IResolver<Interview, CandidateInterviewResultDto> _resultResolver = resultResolver;
 	private readonly IResolver<Interview, InterviewResultDto> _interviewResultsResolver = interviewResultsResolver;
+	private readonly IResolver<Interview, InterviewHistoryDto> _interviewHistoryResolver = interviewHistoryResolver;
+	private readonly IResolver<Interview, InterviewReportDto> _reportResolver = interviewReportDtoResolver;
 	private readonly MessageBuilder _messageBuilder = new( );
 
 	public async Task<IProcessingState> CreateCandidateAsync(CreateCandidateDto candidateDto, string username)
@@ -213,5 +218,41 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 					.Build( ),
 				ex.Message);
 		}
+	}
+
+	public async Task<List<InterviewHistoryDto>> GetInterviewHistoryByOwnerAsync(string ownerId)
+	{
+		var interviews = await _interviewsRepository.GetByOwnerAsync(ownerId);
+		var interviewDtos = interviews.Select(_interviewHistoryResolver.Resolve).ToList( );
+		
+		// Create a dictionary for O(n) lookup performance instead of O(n²)
+		var interviewLookup = interviews.ToDictionary(x => x.Id, x => x);
+		
+		foreach (var item in interviewDtos)
+		{
+			if (interviewLookup.TryGetValue(item.InterviewId, out var interview))
+			{
+				var jobId = interview.Job.JobId;
+				var job = await _readOnlyRepository.FindByIdAsync<Job>(jobId);
+				item.JobStatus = job?.Status.Humanize( ) ?? "Unknown";
+			}
+		}
+		return interviewDtos;
+	}
+
+	public async Task<InterviewReportDto?> GetReportAsync(string interviewId)
+	{
+		var interview = await _interviewsRepository.GetInterviewResultByInterviewIdAsync(interviewId);
+		if (interview == null)
+			return null;
+
+		var dto = _reportResolver.Resolve(interview);
+		var job = await _readOnlyRepository.FindByIdAsync<Job>(interview.Job.JobId);
+		if (job != null)
+		{
+			dto.Status = job.Status.Humanize( );
+		}
+
+		return dto;
 	}
 }

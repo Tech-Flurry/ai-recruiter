@@ -20,7 +20,19 @@ export function AsideMenuMain() {
 					<span className='menu-section text-muted text-uppercase fs-8 ls-1'>Hire</span>
 				</div>
 			</div>
-			<AsideMenuItem to="/jobs/list" icon='element-10' title={intl.formatMessage({ id: 'MENU.JOBS' })} />
+
+			<AsideMenuItem
+				to='/jobs/list'
+				icon='element-10'
+				title={intl.formatMessage({ id: 'MENU.JOBS' })}
+			/>
+
+			{/* ✅ Added Candidate Interview History page to sidebar */}
+			<AsideMenuItem
+				to='/jobs/interview-history'
+				icon='chart'
+				title='Interview History'
+			/>
 			<AsideMenuItemWithSub to='/crafted/pages' title='Pages' icon='gift'>
 				<AsideMenuItemWithSub to='/crafted/pages/profile' title='Profile' hasBullet={true}>
 					<AsideMenuItem to='/crafted/pages/profile/overview' title='Overview' hasBullet={true} />

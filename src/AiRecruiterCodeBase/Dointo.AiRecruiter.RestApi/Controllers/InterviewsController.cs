@@ -40,4 +40,25 @@ public class InterviewsController(IInterviewsService service) : ControllerBase
 		var state = await _service.GetInterviewResultAsync(interviewId);
 		return Ok(state);
 	}
+	
+	[HttpGet("history")]
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<InterviewHistoryDto>))]
+	public async Task<IActionResult> GetInterviewHistoryByOwner( )
+	{
+		var ownerId = User.Identity?.Name ?? "system";
+		var result = await _service.GetInterviewHistoryByOwnerAsync(ownerId);
+		return Ok(result);
+	}
+	
+	[HttpGet("interview-report/{interviewId}")]
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(InterviewReportDto))]
+	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	public async Task<IActionResult> GetInterviewReport(string interviewId)
+	{
+		var report = await _service.GetReportAsync(interviewId);
+		if (report == null)
+			return NotFound(new { message = "Interview report not found." });
+
+		return Ok(report);
+	}
 }

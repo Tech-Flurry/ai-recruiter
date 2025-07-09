@@ -52,6 +52,19 @@ internal class InterviewsRepository(AiRecruiterDbContext dbContext) : Repository
 		return await _entitySet
 			.Include(i => i.Interviewee)
 			.Include(i => i.Job)
+			.Include(i => i.Questions)
+			.Include(i => i.ScoredSkills)
 			.FirstOrDefaultAsync(i => i.Id == interviewId);
+	}
+
+	public async Task<List<Interview>> GetByOwnerAsync(string ownerId)
+	{
+		if (string.IsNullOrWhiteSpace(ownerId))
+			return new List<Interview>();
+
+		return await QueryableEntity
+			.Where(i => i.CreatedBy == ownerId || i.CreatedBy == "System")
+			.OrderByDescending(i => i.EndTime)
+			.ToListAsync( );
 	}
 }

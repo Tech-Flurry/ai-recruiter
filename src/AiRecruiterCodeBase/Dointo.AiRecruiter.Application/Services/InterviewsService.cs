@@ -43,7 +43,6 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 	private readonly IResolver<Interview, InterviewHistoryDto> _interviewHistoryResolver = interviewHistoryResolver;
 	private readonly IResolver<Interview, InterviewReportDto> _reportResolver = interviewReportDtoResolver;
 	private readonly MessageBuilder _messageBuilder = new( );
-
 	public async Task<IProcessingState> CreateCandidateAsync(CreateCandidateDto candidateDto, string username)
 	{
 		_messageBuilder.Clear( );
@@ -143,6 +142,33 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 		return new SuccessState<CandidateInterviewResultDto>(
 			_messageBuilder.AddFormat(Messages.RECORD_RETRIEVED_FORMAT).AddString(INTERVIEW_STRING).Build( ),
 			result);
+	}
+	public async Task<List<InterviewHistoryDto>> GetInterviewHistoryByOwnerAsync(string ownerId)
+	{
+		var interviews = await _interviewsRepository.GetByOwnerOrSystemAsync(ownerId);
+		var interviewDtos = interviews.Select(_interviewHistoryResolver.Resolve).ToList( );
+		foreach (var item in interviewDtos)
+		{
+			var jobId = interviews.First(x => x.Id == item.InterviewId).Job.JobId;
+			var job = await _readOnlyRepository.FindByIdAsync<Job>(jobId);
+			item.JobStatus = job.Status.Humanize( );
+		}
+		return interviewDtos;
+	}
+	public async Task<InterviewReportDto?> GetReportAsync(string interviewId)
+	{
+		var interview = await _interviewsRepository.GetInterviewResultByInterviewIdAsync(interviewId);
+		if (interview == null)
+			return null;
+
+		var dto = _reportResolver.Resolve(interview);
+		var job = await _readOnlyRepository.FindByIdAsync<Job>(interview.Job.JobId);
+		if (job != null)
+		{
+			dto.Status = job.Status.Humanize( );
+		}
+
+		return dto;
 	}
 
 	public async Task<IProcessingState> GetInterviewResultAsync(string interviewId)

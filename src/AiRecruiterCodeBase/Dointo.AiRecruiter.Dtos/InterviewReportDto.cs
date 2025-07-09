@@ -1,4 +1,5 @@
 namespace Dointo.AiRecruiter.Dtos;
+
 public class InterviewReportDto
 {
 	public string JobTitle { get; set; } = null!;

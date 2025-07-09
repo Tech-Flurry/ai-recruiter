@@ -81,8 +81,6 @@ function JobsIndex() {
 						</>
 					}
 				/>
-
-				{/* 🔹 Candidate Interview History Page */}
 				<Route
 					path="interview-history"
 					element={

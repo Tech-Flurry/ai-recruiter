@@ -3,6 +3,7 @@ using Dointo.AiRecruiter.Dtos;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dointo.AiRecruiter.RestApi.Controllers;
+
 [ApiController]
 [Route("api/[controller]")]
 public class InterviewsController(IInterviewsService service) : ControllerBase
@@ -12,12 +13,14 @@ public class InterviewsController(IInterviewsService service) : ControllerBase
 	[HttpPost("create-candidate")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
-	public async Task<IActionResult> CreateCandidate([FromBody] CreateCandidateDto dto) => Ok(await _service.CreateCandidateAsync(dto, User.Identity?.Name ?? "system"));
+	public async Task<IActionResult> CreateCandidate([FromBody] CreateCandidateDto dto) =>
+		Ok(await _service.CreateCandidateAsync(dto, User.Identity?.Name ?? "system"));
 
 	[HttpGet("generate-interview/{candidateId}/{jobId}")]
 	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(InterviewGeneratedDto))]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
-	public async Task<IActionResult> GenerateInterview(string candidateId, string jobId) => Ok(await _service.GenerateInterviewAsync(candidateId, jobId));
+	public async Task<IActionResult> GenerateInterview(string candidateId, string jobId) =>
+		Ok(await _service.GenerateInterviewAsync(candidateId, jobId));
 
 	[HttpPost("next-question/{interviewId}")]
 	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(NextQuestionDto))]
@@ -29,7 +32,8 @@ public class InterviewsController(IInterviewsService service) : ControllerBase
 
 	[HttpGet("candidate-results/{interviewId}")]
 	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(CandidateInterviewResultDto))]
-	public async Task<IActionResult> CandidateResults(string interviewId) => Ok(await _service.GetInterviewResultForCandidateAsync(interviewId));
+	public async Task<IActionResult> CandidateResults(string interviewId) =>
+		Ok(await _service.GetInterviewResultForCandidateAsync(interviewId));
 
 	[HttpGet("interview-results/{interviewId}")]
 	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(InterviewResultDto))]
@@ -40,7 +44,7 @@ public class InterviewsController(IInterviewsService service) : ControllerBase
 		var state = await _service.GetInterviewResultAsync(interviewId);
 		return Ok(state);
 	}
-	
+
 	[HttpGet("history")]
 	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<InterviewHistoryDto>))]
 	public async Task<IActionResult> GetInterviewHistoryByOwner( )
@@ -49,10 +53,11 @@ public class InterviewsController(IInterviewsService service) : ControllerBase
 		var result = await _service.GetInterviewHistoryByOwnerAsync(ownerId);
 		return Ok(result);
 	}
-	
+  
 	[HttpGet("interview-report/{interviewId}")]
 	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(InterviewReportDto))]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	[HttpGet("interview-report/{interviewId}")]
 	public async Task<IActionResult> GetInterviewReport(string interviewId)
 	{
 		var report = await _service.GetReportAsync(interviewId);

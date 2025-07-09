@@ -22,12 +22,13 @@ public interface IInterviewsService
 	Task<IProcessingState> NextQuestionAsync(QuestionDto questionDto, string interviewId);
 	Task<IProcessingState> GetInterviewResultAsync(string interviewId);
 	Task<List<InterviewHistoryDto>> GetInterviewHistoryByOwnerAsync(string ownerId);
+	Task<InterviewReportDto?> GetReportAsync(string interviewId);
 
 
 }
 
 internal class InterviewsService(ICandidateRepository candidatesRepository, IResolver<Candidate, CreateCandidateDto> createCandidateResolver, ICandidatesAgent candidatesAgent, IInterviewsRepository interviewRepository, IResolver<Interview, InterviewGeneratedDto> interviewDtoResolver, IInterviewAgent interviewAgent, IResolver<Question, QuestionDto> questionDtoResolver, IResolver<Interview, CandidateInterviewResultDto> resultResolver,
-	IResolver<Interview, InterviewResultDto> interviewResultsResolver, IReadOnlyRepository readOnlyRepository, IResolver<Interview, InterviewHistoryDto> interviewHistoryResolver) : IInterviewsService
+	IResolver<Interview, InterviewResultDto> interviewResultsResolver,IResolver<Interview,InterviewReportDto> interviewReportDtoResolver,IReadOnlyRepository readOnlyRepository, IResolver<Interview, InterviewHistoryDto> interviewHistoryResolver) : IInterviewsService
 {
 	private const string CANDIDATE_STRING = nameof(Candidate);
 	private const string INTERVIEW_STRING = nameof(Interview);
@@ -42,8 +43,8 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 	private readonly IResolver<Interview, CandidateInterviewResultDto> _resultResolver = resultResolver;
 	private readonly IResolver<Interview, InterviewResultDto> _interviewResultsResolver = interviewResultsResolver;
 	private readonly IResolver<Interview, InterviewHistoryDto> _interviewHistoryResolver = interviewHistoryResolver;
+	private readonly IResolver<Interview, InterviewReportDto> _reportResolver = interviewReportDtoResolver;
 	private readonly MessageBuilder _messageBuilder = new( );
-
 	public async Task<IProcessingState> CreateCandidateAsync(CreateCandidateDto candidateDto, string username)
 	{
 		_messageBuilder.Clear( );
@@ -156,6 +157,21 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 		}
 		return interviewDtos;
 	}
+	public async Task<InterviewReportDto?> GetReportAsync(string interviewId)
+	{
+		var interview = await _interviewsRepository.GetInterviewResultByInterviewIdAsync(interviewId);
+		if (interview == null)
+			return null;
+
+		var dto = _reportResolver.Resolve(interview);
+		var job = await _readOnlyRepository.FindByIdAsync<Job>(interview.Job.JobId);
+		if (job != null)
+		{
+			dto.Status = job.Status.Humanize( );
+		}
+
+		return dto;
+	}
 
 	public async Task<IProcessingState> GetInterviewResultAsync(string interviewId)
 	{
@@ -231,4 +247,6 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 				ex.Message);
 		}
 	}
+
+ 
 }

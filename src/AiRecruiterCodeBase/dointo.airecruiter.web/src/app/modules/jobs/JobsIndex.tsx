@@ -1,13 +1,12 @@
 ﻿import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { PageLink, PageTitle } from '../../../_metronic/layout/core'
-
-// Pages
 import JobsList from './JobsList'
 import JobPost from './JobPost'
 import ConductJob from './ConductJob'
 import JobScreening from './JobScreening'
 import InterviewResult from './InterviewResult'
 import CandidateInterviewHistory from './CandidateInterviewHistory'
+import InterviewReport from './InterviewReport'
 
 const jobsBreadCrumbs: Array<PageLink> = [
 	{
@@ -93,6 +92,17 @@ function JobsIndex() {
 						</>
 					}
 				/>
+				{/* 🔹 Candidate Interview Report Page */}
+				<Route
+					path="interview-report/:interviewId"
+					element={
+						<>
+							<PageTitle breadcrumbs={jobsBreadCrumbs}>Interview Report</PageTitle>
+							<InterviewReport />
+						</>
+					}
+				/>
+
 
 				{/* 🔹 Default Redirect */}
 				<Route index element={<Navigate to="/jobs/list" />} />

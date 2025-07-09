@@ -52,5 +52,16 @@ public class InterviewsController(IInterviewsService service) : ControllerBase
 		var result = await _service.GetInterviewHistoryByOwnerAsync(ownerId);
 		return Ok(result);
 	}
+	[HttpGet("interview-report/{interviewId}")]
+	public async Task<IActionResult> GetInterviewReport(string interviewId)
+	{
+		var report = await _service.GetReportAsync(interviewId);
+		if (report == null)
+			return NotFound(new { message = "Interview report not found." });
+
+		return Ok(report);
+	}
+
+
 
 }

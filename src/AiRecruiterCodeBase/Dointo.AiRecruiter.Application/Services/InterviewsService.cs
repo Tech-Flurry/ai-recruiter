@@ -20,8 +20,9 @@ public interface IInterviewsService
 	Task<IProcessingState> GetInterviewResultForCandidateAsync(string interviewId);
 	Task<IProcessingState> NextQuestionAsync(QuestionDto questionDto, string interviewId);
 	Task<IProcessingState> GetInterviewResultAsync(string interviewId);
-	Task<IProcessingState> GetCandidateDashboardAsync(string candidateId);
-	Task<IProcessingState> GenerateCandidatePerformanceOverviewAsync(string candidateId);
+
+	Task<IProcessingState> GetCandidateDashboardAsync(string ownerId);
+	Task<IProcessingState> GenerateCandidatePerformanceOverviewAsync(string owerId);
 
 
 }
@@ -96,14 +97,13 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 			return new ExceptionState(_messageBuilder.AddFormat(Messages.ERROR_OCCURRED_FORMAT).AddString(INTERVIEW_STRING).Build( ), ex.Message);
 		}
 	}
-	
-	public async Task<IProcessingState> GenerateCandidatePerformanceOverviewAsync(string candidateId)
+	public async Task<IProcessingState> GenerateCandidatePerformanceOverviewAsync(string ownerId)
 	{
 		_messageBuilder.Clear( );
 
 		try
 		{
-			var interviews = await _interviewsRepository.GetInterviewsByCandidateIdAsync(candidateId);
+			var interviews = await _interviewsRepository.GetByOwnerAsync(ownerId);
 
 			if (interviews is { Count: 0 })
 			{
@@ -134,14 +134,13 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 				ex.Message);
 		}
 	}
-
-	public async Task<IProcessingState> GetCandidateDashboardAsync(string candidateId)
+	public async Task<IProcessingState> GetCandidateDashboardAsync(string ownerId)
 	{
 		_messageBuilder.Clear( );
 
 		try
 		{
-			var interviews = await _interviewsRepository.GetInterviewsByCandidateIdAsync(candidateId);
+			var interviews = await _interviewsRepository.GetByOwnerAsync(ownerId);
 
 			if (interviews is { Count: 0 })
 			{
@@ -157,7 +156,7 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 
 			var totalInterviews = past.Count;
 			var averageScore = past.Count != 0 ? Math.Round(past.Average(i => i.AiScore), 2) : 0;
-			var passRate = past.Count != 0 ? Math.Round((double)(past.Count(i => i.IsPassed()) / past.Count), 1) : 0;
+			var passRate = past.Count != 0 ? Math.Round((double)( past.Count(i => i.IsPassed( )) / (double)past.Count ), 1) : 0;
 			var upcomingCount = upcoming.Count;
 
 			var topSkills = past
@@ -183,7 +182,9 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 			{
 				recentActivities.Add($"Upcoming Interview: {next.Job.JobTitle} – {next.StartTime:MMMM dd}");
 			}
-			var candidateName = interviews.First( ).Interviewee.Name;
+
+			var candidateName = interviews.First( ).Interviewee?.Name ?? "Candidate";
+
 			var dto = new CandidateDashboardDto
 			{
 				name = candidateName,

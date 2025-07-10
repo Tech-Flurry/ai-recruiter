@@ -41,22 +41,32 @@ public class InterviewsController(IInterviewsService service) : ControllerBase
 		var state = await _service.GetInterviewResultAsync(interviewId);
 		return Ok(state);
 	}
-	[HttpGet("candidate-dashboard/{candidateId}")]
+
+
+	[HttpGet("candidate-dashboard")]
 	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(CandidateDashboardDto))]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-	public async Task<IActionResult> GetCandidateDashboard(string candidateId)
+	public async Task<IActionResult> GetCandidateDashboard( )
 	{
-		var state = await _service.GetCandidateDashboardAsync(candidateId);
+		var ownerId = "system";
+
+		var state = await _service.GetCandidateDashboardAsync(ownerId);
+
+		if (state is BusinessErrorState)
+			return NotFound(state);
+
 		return Ok(state);
 	}
-	[HttpGet("candidate-performance-overview/{candidateId}")]
+
+	[HttpGet("candidate-performance-overview")]
 	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-	public async Task<IActionResult> GetCandidatePerformanceOverview(string candidateId)
+	public async Task<IActionResult> GetCandidatePerformanceOverview( )
 	{
-		var state = await _service.GenerateCandidatePerformanceOverviewAsync(candidateId);
+		var ownerId = User.Identity?.Name ?? "system";
+		var state = await _service.GenerateCandidatePerformanceOverviewAsync(ownerId);
 
 		return state switch
 		{

@@ -54,14 +54,17 @@ internal class InterviewsRepository(AiRecruiterDbContext dbContext) : Repository
 			.Include(i => i.Job)
 			.FirstOrDefaultAsync(i => i.Id == interviewId);
 	}
-	public async Task<List<Interview>> GetInterviewsByCandidateIdAsync(string candidateId)
+	public async Task<List<Interview>> GetByOwnerAsync(string ownerId)
 	{
 		return await _entitySet
 			.Include(i => i.Interviewee)
 			.Include(i => i.Job)
-			.Where(i => i.Interviewee.CandidateId == candidateId)
+		.Where(i => i.CreatedBy == ownerId || i.CreatedBy == "System")
 			.ToListAsync( );
 	}
+
+
+
 
 
 }

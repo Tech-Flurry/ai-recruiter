@@ -57,7 +57,7 @@ const CandidateInterviewHistory: React.FC = () => {
         setFilteredHistory(filtered)
     }, [searchTitle, resultFilter, startDate, endDate, history])
 
-    const getStatusBadge = (status: string, type: 'result' | 'job') => {
+    const getStatusBadge = (status: string, _type: 'result' | 'job') => {
         const classMap: Record<string, string> = {
             Passed: 'badge badge-light-success fw-bold',
             Failed: 'badge badge-light-danger fw-bold',
@@ -120,16 +120,12 @@ const CandidateInterviewHistory: React.FC = () => {
                         <Form.Control type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
                     </div>
                     <div>
-                        <a
-                            href="#"
-                            onClick={(e) => {
-                                e.preventDefault()
-                                clearFilters()
-                            }}
-                            className="btn btn-light-primary font-weight-bold mr-2"
-                        >
-                            Clear Filters
-                        </a>
+						<button
+							onClick={() => clearFilters()}
+							className="btn btn-light-primary font-weight-bold mr-2"
+						>
+							Clear Filters
+						</button>
                     </div>
                 </div>
 

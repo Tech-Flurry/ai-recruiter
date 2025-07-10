@@ -20,6 +20,8 @@ public interface IInterviewsService
 	Task<IProcessingState> GetInterviewResultForCandidateAsync(string interviewId);
 	Task<IProcessingState> NextQuestionAsync(QuestionDto questionDto, string interviewId);
 	Task<IProcessingState> GetInterviewResultAsync(string interviewId);
+	Task<IProcessingState> GetCandidateDashboardAsync(string candidateId);
+
 }
 
 internal class InterviewsService(ICandidateRepository candidatesRepository, IResolver<Candidate, CreateCandidateDto> createCandidateResolver, ICandidatesAgent candidatesAgent, IInterviewsRepository interviewRepository, IResolver<Interview, InterviewGeneratedDto> interviewDtoResolver, IInterviewAgent interviewAgent, IResolver<Question, QuestionDto> questionDtoResolver, IResolver<Interview, CandidateInterviewResultDto> resultResolver,
@@ -90,6 +92,83 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 		catch (Exception ex)
 		{
 			return new ExceptionState(_messageBuilder.AddFormat(Messages.ERROR_OCCURRED_FORMAT).AddString(INTERVIEW_STRING).Build( ), ex.Message);
+		}
+	}
+	public async Task<IProcessingState> GetCandidateDashboardAsync(string candidateId)
+	{
+		_messageBuilder.Clear( );
+
+		try
+		{
+			var interviews = await _interviewsRepository.GetInterviewsByCandidateIdAsync(candidateId);
+
+			if (interviews is { Count: 0 })
+			{
+				return new BusinessErrorState(
+					_messageBuilder
+						.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT)
+						.AddString("Candidate Interviews")
+						.Build( ));
+			}
+
+			var past = interviews.Where(i => i.StartTime <= DateTime.UtcNow).ToList( );
+			var upcoming = interviews.Where(i => i.StartTime > DateTime.UtcNow).ToList( );
+
+			var totalInterviews = past.Count;
+			var averageScore = past.Count != 0 ? Math.Round(past.Average(i => i.AiScore), 2) : 0;
+			var passRate = past.Count != 0 ? Math.Round((double)(past.Count(i => i.IsPassed()) / past.Count), 1) : 0;
+			var upcomingCount = upcoming.Count;
+
+			var topSkills = past
+				.SelectMany(i => i.ScoredSkills)
+				.GroupBy(s => s.Skill)
+				.Select(g => new SkillProgressDto
+				{
+					Skill = g.Key,
+					Level = (int)Math.Round(g.Average(x => x.Rating))
+				})
+				.OrderByDescending(s => s.Level)
+				.Take(3)
+				.ToList( );
+
+			var recentActivities = past
+				.OrderByDescending(i => i.EndTime ?? i.StartTime)
+				.Take(3)
+				.Select(i => $"Completed Interview: {i.Job.JobTitle} – {i.AiScore} score")
+				.ToList( );
+
+			var next = upcoming.FirstOrDefault( );
+			if (next != null)
+			{
+				recentActivities.Add($"Upcoming Interview: {next.Job.JobTitle} – {next.StartTime:MMMM dd}");
+			}
+			var candidateName = interviews.First( ).Interviewee.Name;
+			var dto = new CandidateDashboardDto
+			{
+				name = candidateName,
+				TotalInterviews = totalInterviews,
+				AverageScore = averageScore,
+				PassRate = passRate,
+				UpcomingInterviews = upcomingCount,
+				TopSkills = topSkills,
+				RecentActivities = recentActivities
+			};
+
+			return new SuccessState<CandidateDashboardDto>(
+				_messageBuilder
+					.AddFormat(Messages.RECORD_RETRIEVED_FORMAT)
+					.AddString("Candidate Dashboard")
+					.Build( ),
+				dto);
+		}
+		catch (Exception ex)
+		{
+			return new ExceptionState(
+				_messageBuilder
+					.AddFormat(Messages.ERROR_OCCURRED_FORMAT)
+					.AddString("Candidate Dashboard")
+					.Build( ),
+				ex.Message);
 		}
 	}
 

@@ -40,4 +40,14 @@ public class InterviewsController(IInterviewsService service) : ControllerBase
 		var state = await _service.GetInterviewResultAsync(interviewId);
 		return Ok(state);
 	}
+	[HttpGet("candidate-dashboard/{candidateId}")]
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(CandidateDashboardDto))]
+	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+	public async Task<IActionResult> GetCandidateDashboard(string candidateId)
+	{
+		var state = await _service.GetCandidateDashboardAsync(candidateId);
+		return Ok(state);
+	}
+
 }

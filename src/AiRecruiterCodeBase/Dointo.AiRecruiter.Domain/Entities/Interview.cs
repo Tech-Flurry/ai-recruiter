@@ -1,8 +1,6 @@
 ﻿namespace Dointo.AiRecruiter.Domain.Entities;
 public class Interview : BaseEntity
 {
-	public readonly object InterviewJob;
-
 	public InterviewJob Job { get; set; } = null!;
 	public Interviewee Interviewee { get; set; } = null!;
 	public DateTime StartTime { get; set; }

@@ -66,7 +66,7 @@ internal class InterviewsRepository(AiRecruiterDbContext dbContext)
 			.FirstOrDefaultAsync(i => i.Id == interviewId);
 	}
 
-	public async Task<List<Interview>> GetByOwnerOrSystemAsync(string ownerId)
+	public async Task<List<Interview>> GetByOwnerAsync(string ownerId)
 	{
 		if (string.IsNullOrWhiteSpace(ownerId))
 			return [ ];

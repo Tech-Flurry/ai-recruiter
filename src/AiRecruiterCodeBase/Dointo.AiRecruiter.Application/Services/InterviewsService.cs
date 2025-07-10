@@ -147,7 +147,7 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 	}
 	public async Task<List<InterviewHistoryDto>> GetInterviewHistoryByOwnerAsync(string ownerId)
 	{
-		var interviews = await _interviewsRepository.GetByOwnerOrSystemAsync(ownerId);
+		var interviews = await _interviewsRepository.GetByOwnerAsync(ownerId);
 		var interviewDtos = interviews.Select(_interviewHistoryResolver.Resolve).ToList( );
 		foreach (var item in interviewDtos)
 		{

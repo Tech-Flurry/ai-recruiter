@@ -45,7 +45,7 @@ internal class AuthenticationService(ITokenService tokenService, IUsersRepositor
 	{
 		const int SALT_SIZE = 16;
 		const int KEY_SIZE = 32;
-		const int ITERATIONS = 10000;
+		const int ITERATIONS = 100000;
 
 		using var rfc2898 = new Rfc2898DeriveBytes(
 			password,

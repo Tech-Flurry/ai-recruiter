@@ -82,6 +82,50 @@ Instructions:
 		var scoreCompletion = JsonSerializer.Deserialize<ScoredInterviewCompletionDto>(completion) ?? new ScoredInterviewCompletionDto(string.Empty, 0);
 		return (scoreCompletion.Analysis, scoreCompletion.Score);
 	}
+	public async Task<string> GenerateCandidatePerformanceOverviewAsync(List<Interview> interviews)
+	{
+		if (interviews is { Count: 0 })
+		{
+			return "No interview data available to generate performance overview.";
+		}
+
+		var aiProvider = _aiProviderFactory.GetProvider(AiProviders.OpenAi);
+
+		var context = "You are a virtual interview coach. You need to provide constructive, encouraging feedback to the candidate based on their past interview performance";
+
+		var prompt = @$"
+You've recently completed several interviews — here’s a personalized performance summary to guide your growth and highlight your strengths.Below is a summary of their interview data:
+
+
+{JsonSerializer.Serialize(interviews.Select(i => new
+		{
+			Job = i.Job?.JobTitle,
+			InterviewDate = i.StartTime.ToShortDateString( ),
+			Ai_Score = i.AiScore,
+			SkillScores = i.ScoredSkills,
+			ScoredQuestions = i.Questions,
+			Feedback = i.Interviewee.JobFitAnalysis
+		}))}
+
+Instructions:
+- Write a brief, encouraging performance summary for the candidate (3–4 sentences)
+- Address the candidate directly using “you”
+- Highlight strengths that appear consistently (e.g., ""Your communication skills are strong"")
+- Mention one or two improvement areas in a supportive tone
+- If applicable, acknowledge improvement or consistency over time
+- Use a motivating and positive tone (like a coach or mentor would)
+- Avoid formal or recruiter-style language
+";
+
+		var completion = await aiProvider.GetCompletionAsync(
+			OpenAiModels.GPT_4_1,
+			context,
+			prompt
+		);
+
+		return completion?.Trim( ) ?? "Unable to generate performance summary at this time.";
+	}
+
 
 	public async Task<(ScoredQuestion question, bool terminate)> ScoreQuestionAsync(Interview interview, Question question)
 	{

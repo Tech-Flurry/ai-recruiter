@@ -21,6 +21,8 @@ public interface IInterviewsService
 	Task<IProcessingState> NextQuestionAsync(QuestionDto questionDto, string interviewId);
 	Task<IProcessingState> GetInterviewResultAsync(string interviewId);
 	Task<IProcessingState> GetCandidateDashboardAsync(string candidateId);
+	Task<IProcessingState> GenerateCandidatePerformanceOverviewAsync(string candidateId);
+
 
 }
 
@@ -94,6 +96,45 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 			return new ExceptionState(_messageBuilder.AddFormat(Messages.ERROR_OCCURRED_FORMAT).AddString(INTERVIEW_STRING).Build( ), ex.Message);
 		}
 	}
+	
+	public async Task<IProcessingState> GenerateCandidatePerformanceOverviewAsync(string candidateId)
+	{
+		_messageBuilder.Clear( );
+
+		try
+		{
+			var interviews = await _interviewsRepository.GetInterviewsByCandidateIdAsync(candidateId);
+
+			if (interviews is { Count: 0 })
+			{
+				return new BusinessErrorState(
+					_messageBuilder
+						.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT)
+						.AddString("Candidate Interviews")
+						.Build( ));
+			}
+			var pastInterviews = interviews
+				.Where(i => i.StartTime <= DateTime.UtcNow)
+				.ToList( );
+			var summary = await _interviewAgent.GenerateCandidatePerformanceOverviewAsync(pastInterviews);
+			return new SuccessState<string>(
+				_messageBuilder
+					.AddFormat(Messages.RECORD_RETRIEVED_FORMAT)
+					.AddString("Performance Overview")
+					.Build( ),
+				summary);
+		}
+		catch (Exception ex)
+		{
+			return new ExceptionState(
+				_messageBuilder
+					.AddFormat(Messages.ERROR_OCCURRED_FORMAT)
+					.AddString("Performance Overview")
+					.Build( ),
+				ex.Message);
+		}
+	}
+
 	public async Task<IProcessingState> GetCandidateDashboardAsync(string candidateId)
 	{
 		_messageBuilder.Clear( );

@@ -1,4 +1,5 @@
 ﻿using Dointo.AiRecruiter.Application.Services;
+using Dointo.AiRecruiter.Core.States;
 using Dointo.AiRecruiter.Dtos;
 using Microsoft.AspNetCore.Mvc;
 
@@ -49,5 +50,22 @@ public class InterviewsController(IInterviewsService service) : ControllerBase
 		var state = await _service.GetCandidateDashboardAsync(candidateId);
 		return Ok(state);
 	}
+	[HttpGet("candidate-performance-overview/{candidateId}")]
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
+	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+	public async Task<IActionResult> GetCandidatePerformanceOverview(string candidateId)
+	{
+		var state = await _service.GenerateCandidatePerformanceOverviewAsync(candidateId);
+
+		return state switch
+		{
+			SuccessState<string> success => Ok(success.Data),
+			BusinessErrorState => NotFound( ),
+			ExceptionState ex => StatusCode(StatusCodes.Status500InternalServerError, ex.Message),
+			_ => BadRequest("Unexpected error occurred")
+		};
+	}
+
 
 }

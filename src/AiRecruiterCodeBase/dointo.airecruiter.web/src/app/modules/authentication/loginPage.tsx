@@ -1,15 +1,16 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { jwtDecode } from 'jwt-decode'
+import { useAuth } from '../../modules/auth' // ✅ adjust path as per your project structure
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate()
+  const { setCurrentUser } = useAuth() // ✅ update the user context
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-
-
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -26,17 +27,22 @@ const LoginPage: React.FC = () => {
         {
           username: username.trim(),
           password: password.trim(),
-        },
-        {
-          withCredentials: true, // optional if you use cookies
         }
       )
 
       const token = response.data?.token
 
       if (token) {
-        console.log('Received Token:', token)
+        // Save token in localStorage
         localStorage.setItem('authToken', token)
+
+        // Decode JWT token
+        const decoded = jwtDecode<any>(token) // Replace 'any' with your custom type if available
+
+        // Update global state (assumes you have setCurrentUser from context or props)
+        setCurrentUser(decoded)
+
+        // Redirect to dashboard
         navigate('/dashboard')
       } else {
         setError('Login failed. Token not received.')
@@ -50,11 +56,10 @@ const LoginPage: React.FC = () => {
       }
     }
   }
-  
 
   return (
     <div className='d-flex flex-column flex-lg-row flex-column-fluid h-100'>
-      {/* Left Panel: Login Form */}
+      {/* Left Panel */}
       <div className='d-flex flex-column flex-lg-row-fluid w-lg-50 p-10 order-2 order-lg-1' style={{ backgroundColor: '#F9FAFB' }}>
         <div className='d-flex flex-center flex-column flex-lg-row-fluid'>
           <div className='w-lg-500px p-10'>
@@ -107,7 +112,7 @@ const LoginPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Right Panel: Promo */}
+      {/* Right Panel */}
       <div
         className='d-flex flex-lg-row-fluid w-lg-50 order-1 order-lg-2'
         style={{ backgroundColor: '#EAF4FF' }}

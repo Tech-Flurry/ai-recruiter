@@ -1,6 +1,7 @@
 ﻿using Dointo.AiRecruiter.Application.Services;
 using Dointo.AiRecruiter.Dtos;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Dointo.AiRecruiter.RestApi.Controllers;
 
@@ -10,6 +11,7 @@ public class AuthenticationController(IAuthenticationService authenticationServi
 {
 	private readonly IAuthenticationService _authenticationService = authenticationService;
 
+	[AllowAnonymous]
 	[HttpPost("login")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -33,6 +35,7 @@ public class AuthenticationController(IAuthenticationService authenticationServi
 		}
 	}
 
+	[AllowAnonymous]
 	[HttpPost("register")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]

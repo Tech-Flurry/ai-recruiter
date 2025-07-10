@@ -28,13 +28,31 @@ const JobPost: React.FC = () => {
 	const navigate = useNavigate();
 
 	useEffect(() => {
-		axios
-			.get<{ data: JobPost[] }>(
-				`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts`
-			)
-			.then((res) => setJobPosts(res.data.data))
-			.catch((err) => console.error("Failed to fetch job posts:", err));
-	}, []);
+		const fetchJobs = async () => {
+		  const token = localStorage.getItem('authToken'); // retrieve token
+		  if (!token) {
+			console.error("Token not found.");
+			return;
+		  }
+	  
+		  try {
+			const res = await axios.get<{ data: JobPost[] }>(
+			  `${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts`,
+			  {
+				headers: {
+				  Authorization: `Bearer ${token}`, // attach token in header
+				},
+			  }
+			);
+			setJobPosts(res.data.data);
+		  } catch (err) {
+			console.error("Failed to fetch job posts:", err);
+		  }
+		};
+	  
+		fetchJobs();
+	  }, []);
+	  
 
 	const toggleJobSelection = (id: string) => {
 		setSelectedJobs((prev) =>

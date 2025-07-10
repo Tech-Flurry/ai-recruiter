@@ -56,7 +56,7 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 		}
 		catch
 		{
-			// If AI generation fails, we can still save the candidate without a summary.
+
 		}
 		var validationResult = new CandidateValidator( ).Validate(candidate);
 		if (!validationResult.IsValid)
@@ -147,14 +147,21 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 	}
 	public async Task<List<InterviewHistoryDto>> GetInterviewHistoryByOwnerAsync(string ownerId)
 	{
+
 		var interviews = await _interviewsRepository.GetByOwnerAsync(ownerId);
 		var interviewDtos = interviews.Select(_interviewHistoryResolver.Resolve).ToList( );
+		var interviewDict = interviews.ToDictionary(x => x.Id);
+
 		foreach (var item in interviewDtos)
 		{
-			var jobId = interviews.First(x => x.Id == item.InterviewId).Job.JobId;
-			var job = await _readOnlyRepository.FindByIdAsync<Job>(jobId);
-			item.JobStatus = job.Status.Humanize( );
+			if (interviewDict.TryGetValue(item.InterviewId, out var interview))
+			{
+				var jobId = interview.Job.JobId;
+				var job = await _readOnlyRepository.FindByIdAsync<Job>(jobId);
+				item.JobStatus = job.Status.Humanize( );
+			}
 		}
+
 		return interviewDtos;
 	}
 	public async Task<InterviewReportDto?> GetReportAsync(string interviewId)

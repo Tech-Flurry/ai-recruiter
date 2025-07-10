@@ -57,7 +57,7 @@ const CandidateInterviewHistory: React.FC = () => {
         setFilteredHistory(filtered)
     }, [searchTitle, resultFilter, startDate, endDate, history])
 
-    const getStatusBadge = (status: string, _type: 'result' | 'job') => {
+    const getStatusBadge = (status: string,) => {
         const classMap: Record<string, string> = {
             Passed: 'badge badge-light-success fw-bold',
             Failed: 'badge badge-light-danger fw-bold',

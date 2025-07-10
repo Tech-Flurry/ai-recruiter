@@ -1,11 +1,12 @@
 
 
-import {FC} from 'react'
+import {FC,} from 'react'
 import {useLayout} from '../../core'
 import {KTIcon} from '../../../helpers'
 import {AsideMenu} from './AsideMenu'
 import {AsideToolbar} from './AsideToolbar'
 
+const role = localStorage.getItem('role') || 'recruiter'
 const AsideDefault: FC = () => {
   const {classes} = useLayout()
 
@@ -34,21 +35,25 @@ const AsideDefault: FC = () => {
 
       {/* begin::Footer */}
       <div className='aside-footer flex-column-auto py-5' id='kt_aside_footer'>
-        <a
+        <button
           className='btn btn-custom btn-custom-secondary btn-primary w-100'
-          target='_blank'
-          href={import.meta.env.VITE_APP_PREVIEW_DOCS_URL}
-          data-bs-toggle='tooltip'
-          data-bs-trigger='hover'
-          data-bs-dismiss-='click'
-          title='Check out the complete documentation with over 100 components'
+          onClick={() => {
+            const currentRole = localStorage.getItem('role')
+            const newRole = currentRole === 'recruiter' ? 'candidate' : 'recruiter'
+            localStorage.setItem('role', newRole)
+            window.location.reload() // Refresh to apply route/UI changes
+          }}
+          title='Switch role between Recruiter and Candidate'
         >
-          <span className='btn-label'>Switch to Candidate</span>
-          <span className=' btn-icon fs-2'>
+          <span className='btn-label'>
+            Switch to {localStorage.getItem('role') === 'recruiter' ? 'Candidate' : 'Recruiter'}
+          </span>
+          <span className='btn-icon fs-2'>
             <KTIcon iconName='document' />
           </span>
-        </a>
+        </button>
       </div>
+
       {/* end::Footer */}
     </div>
   )

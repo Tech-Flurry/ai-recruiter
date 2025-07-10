@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { jwtDecode } from 'jwt-decode'
 import { useAuth } from '../../modules/auth' // ✅ adjust path as per your project structure
+import { setAuth } from '../../modules/auth/core/AuthHelpers'
+import { UserModel } from '../auth/core/_models'
+
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate()
@@ -33,16 +36,14 @@ const LoginPage: React.FC = () => {
       const token = response.data?.token
 
       if (token) {
-        // Save token in localStorage
-        localStorage.setItem('authToken', token)
-
-        // Decode JWT token
-        const decoded = jwtDecode<any>(token) // Replace 'any' with your custom type if available
-
-        // Update global state (assumes you have setCurrentUser from context or props)
+        // 1. Save auth info in localStorage using your helper
+        setAuth({ api_token: token })
+      
+        // 2. Decode and set the user
+        const decoded = jwtDecode<UserModel>(token)
         setCurrentUser(decoded)
-
-        // Redirect to dashboard
+      
+        // 3. Redirect
         navigate('/dashboard')
       } else {
         setError('Login failed. Token not received.')

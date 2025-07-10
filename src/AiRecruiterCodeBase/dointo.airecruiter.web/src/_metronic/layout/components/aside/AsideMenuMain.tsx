@@ -1,4 +1,5 @@
 
+import { useEffect, useState } from 'react'
 import { useIntl } from 'react-intl'
 import { KTIcon } from '../../../helpers'
 import { AsideMenuItemWithSub } from './AsideMenuItemWithSub'
@@ -6,6 +7,31 @@ import { AsideMenuItem } from './AsideMenuItem'
 
 export function AsideMenuMain() {
 	const intl = useIntl()
+	const [role, setRole] = useState('recruiter') // default to recruiter
+
+	useEffect(() => {
+		const savedRole = localStorage.getItem('role')
+		if (savedRole) {
+			setRole(savedRole)
+		}
+	}, [])
+	return (
+		<>
+			{role === 'recruiter' ? (
+				<>
+					<AsideMenuItem to='/dashboard' icon='element-11' title='Recruiter Dashboard' />
+					<AsideMenuItem to='/jobs/list' icon='element-10' title='Jobs' />
+					<AsideMenuItem to='/apps/user-management/users' icon='shield-tick' title='User Management' />
+				</>
+			) : (
+				<>
+					<AsideMenuItem to='/dashboard' icon='element-11' title='Candidate Dashboard' />
+					<AsideMenuItem to='/my-applications' icon='briefcase' title='My Applications' />
+					<AsideMenuItem to='/profile' icon='profile-circle' title='My Profile' />
+				</>
+			)}
+		</>
+	  )
 
 	return (
 		<>

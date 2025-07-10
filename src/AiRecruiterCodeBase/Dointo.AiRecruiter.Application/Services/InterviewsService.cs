@@ -56,7 +56,7 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 		}
 		catch
 		{
-
+			// If AI generation fails, we can still save the candidate without a summary.
 		}
 		var validationResult = new CandidateValidator( ).Validate(candidate);
 		if (!validationResult.IsValid)

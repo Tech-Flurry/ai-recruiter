@@ -1,20 +1,35 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import axios from 'axios'
 import { Table } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
-import { KTCard, KTCardBody } from '../../../_metronic/helpers' // Adjust path if needed
+import { KTCard, KTCardBody } from '../../../_metronic/helpers'
+
+interface CandidateJobDto {
+	id: string
+	title: string
+	posted: string
+	status: string
+}
 
 const CandidateJobView = () => {
+	const [jobs, setJobs] = useState<CandidateJobDto[]>([])
+	const [error, setError] = useState<string | null>(null)
 	const navigate = useNavigate()
 
-	const jobs = [
-		{ id: '1', title: 'Frontend Developer', posted: '3 days ago', status: 'Not Started' },
-		{ id: '2', title: 'Backend Developer', posted: '5 days ago', status: 'In Progress' },
-		{ id: '3', title: 'UI/UX Designer', posted: '1 week ago', status: 'Completed' },
-		{ id: '4', title: 'DevOps Engineer', posted: '2 weeks ago', status: 'Not Started' },
-		{ id: '5', title: 'Data Scientist', posted: '4 days ago', status: 'In Progress' },
-	]
+	useEffect(() => {
+		const fetchJobs = async () => {
+			try {
+				const res = await axios.get<CandidateJobDto[]>('https://localhost:7072/api/JobPosts/candidate-jobs')
+				setJobs(res.data)
+			} catch (err) {
+				console.error('Error fetching jobs:', err)
+				setError('Failed to load jobs.')
+			}
+		}
 
-	// Filter to show only "Not Started" and "Completed"
+		fetchJobs()
+	}, [])
+
 	const visibleJobs = jobs.filter((job) => job.status === 'Not Started' || job.status === 'Completed')
 
 	const getBadge = (status: string) => {
@@ -32,20 +47,12 @@ const CandidateJobView = () => {
 		switch (status) {
 			case 'Not Started':
 				return (
-					<button
-						type="button"
-						className="btn btn-primary"
-						onClick={() => navigate(`/jobs/conduct/${jobId}`)}
-					>
+					<button type='button' className='btn btn-primary' onClick={() => navigate(`/jobs/conduct/${jobId}`)}>
 						Start Interview
 					</button>
 				)
 			case 'Completed':
-				return (
-					<button type="button" className="btn btn-success" disabled>
-						Completed
-					</button>
-				)
+				return <button type='button' className='btn btn-success' disabled>Completed</button>
 			default:
 				return null
 		}
@@ -55,53 +62,35 @@ const CandidateJobView = () => {
 		<div className='p-4'>
 			<KTCard>
 				<KTCardBody>
-					<div className='d-flex justify-content-between align-items-center mb-5'>
-						<div>
-							<h2 className='fw-bold text-dark mb-1 d-flex align-items-center'>
-								<svg
-									xmlns='http://www.w3.org/2000/svg'
-									width='26'
-									height='26'
-									fill='currentColor'
-									className='me-2 text-primary'
-									viewBox='0 0 16 16'
-								>
-									<path d='M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2H0z' />
-									<path
-										fillRule='evenodd'
-										d='M0 5h16v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V5zm5 2a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm6 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z'
-									/>
-								</svg>
-								Available Interviews
-							</h2>
-							<p className='text-muted fs-6'>Choose a job to begin or resume your interview process.</p>
-						</div>
-					</div>
-
-					<div className='table-responsive'>
-						<Table hover responsive className='align-middle table-row-dashed fs-6 gy-5'>
-							<thead className='text-start text-muted fw-bold fs-7 text-uppercase gs-0'>
-								<tr>
-									<th>#</th>
-									<th>Job Title</th>
-									<th>Posted</th>
-									<th>Status</th>
-									<th>Action</th>
-								</tr>
-							</thead>
-							<tbody>
-								{visibleJobs.map((job, index) => (
-									<tr key={job.id}>
-										<td>{index + 1}</td>
-										<td className='fw-semibold text-primary'>{job.title}</td>
-										<td>{job.posted}</td>
-										<td>{getBadge(job.status)}</td>
-										<td>{getActionButton(job.status, job.id)}</td>
+					<h2 className='fw-bold mb-4'>Available Interviews</h2>
+					{error ? (
+						<div className='alert alert-danger'>{error}</div>
+					) : (
+						<div className='table-responsive'>
+							<Table hover responsive className='align-middle table-row-dashed fs-6 gy-5'>
+								<thead className='text-start text-muted fw-bold fs-7 text-uppercase gs-0'>
+									<tr>
+										<th>#</th>
+										<th>Job Title</th>
+										<th>Posted</th>
+										<th>Status</th>
+										<th>Action</th>
 									</tr>
-								))}
-							</tbody>
-						</Table>
-					</div>
+								</thead>
+								<tbody>
+									{visibleJobs.map((job, index) => (
+										<tr key={job.id}>
+											<td>{index + 1}</td>
+											<td className='fw-semibold text-primary'>{job.title}</td>
+											<td>{job.posted}</td>
+											<td>{getBadge(job.status)}</td>
+											<td>{getActionButton(job.status, job.id)}</td>
+										</tr>
+									))}
+								</tbody>
+							</Table>
+						</div>
+					)}
 				</KTCardBody>
 			</KTCard>
 		</div>

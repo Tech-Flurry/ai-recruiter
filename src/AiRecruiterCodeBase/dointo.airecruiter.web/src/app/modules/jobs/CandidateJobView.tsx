@@ -62,7 +62,28 @@ const CandidateJobView = () => {
 		<div className='p-4'>
 			<KTCard>
 				<KTCardBody>
-					<h2 className='fw-bold mb-4'>Available Interviews</h2>
+					<div className='d-flex justify-content-between align-items-center mb-5'>
+						<div>
+							<h2 className='fw-bold text-dark mb-1 d-flex align-items-center'>
+								<svg
+									xmlns='http://www.w3.org/2000/svg'
+									width='26'
+									height='26'
+									fill='currentColor'
+									className='me-2 text-primary'
+									viewBox='0 0 16 16'
+								>
+									<path d='M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2H0z' />
+									<path
+										fillRule='evenodd'
+										d='M0 5h16v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V5zm5 2a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm6 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z'
+									/>
+								</svg>
+								Available Interviews
+							</h2>
+							<p className='text-muted fs-6'>Choose a job to begin or resume your interview process.</p>
+						</div>
+						</div>
 					{error ? (
 						<div className='alert alert-danger'>{error}</div>
 					) : (

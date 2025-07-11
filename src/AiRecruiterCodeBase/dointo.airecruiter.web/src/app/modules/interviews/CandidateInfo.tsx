@@ -225,116 +225,196 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 
 	return (
 		<div>
-			<h3>Create Candidate</h3>
+			<p className="fs-6 fw-semibold text-gray-600 mb-8">
+				Enter all required candidate details to proceed with the interview.
+			</p>
+
 			{statusMessage && <div className={`alert ${statusAlertClass}`}>{statusMessage}</div>}
 			<form onSubmit={handleSubmit}>
-				<div className="form-group">
-					<label>First Name</label>
+				<div className="mb-10">
+					<label htmlFor="firstName" className="required form-label fw-semibold">
+						First Name
+					</label>
 					<input
+						type="text"
+						id="firstName"
 						name="firstName"
+						className="form-control form-control-solid"
+						placeholder="e.g. John"
 						value={candidate.firstName}
 						onChange={handleChange}
-						className="form-control"
 						required
 					/>
+					<div className="form-text text-muted">Enter your given name as it appears on official documents.</div>
 				</div>
-				<div className="form-group">
-					<label>Last Name</label>
+
+				<div className="mb-10">
+					<label htmlFor="lastName" className="required form-label fw-semibold">
+						Last Name
+					</label>
 					<input
+						type="text"
+						id="lastName"
 						name="lastName"
 						value={candidate.lastName}
 						onChange={handleChange}
-						className="form-control"
+						className="form-control form-control-solid"
+						placeholder="e.g. Smith"
 						required
 					/>
+					<div className="form-text text-muted">Enter your surname as it appears on official documents.</div>
 				</div>
-				<div className="form-group">
-					<label>Date of Birth</label>
+
+				<div className="mb-10">
+					<label htmlFor="dateOfBirth" className="required form-label fw-semibold">
+						Date of Birth
+					</label>
 					<input
-						name="dateOfBirth"
 						type="date"
+						id="dateOfBirth"
+						name="dateOfBirth"
 						value={candidate.dateOfBirth}
 						onChange={handleChange}
-						className="form-control"
+						className="form-control form-control-solid"
 						required
 					/>
+					<div className="form-text text-muted">
+						Please select a valid date of birth 
+					</div>
 				</div>
-				<div className="form-group">
-					<label>Email</label>
+
+
+				<div className="mb-10">
+					<label htmlFor="email" className="required form-label fw-semibold">
+						Email Address
+					</label>
 					<input
-						name="email"
 						type="email"
+						id="email"
+						name="email"
 						value={candidate.email}
 						onChange={handleChange}
-						className="form-control"
+						className="form-control form-control-solid"
+						placeholder="e.g. johndoe@example.com"
 						required
 					/>
+					<div className="form-text text-muted">We'll never share your email with anyone else.</div>
 				</div>
-				<div className="form-group">
-					<label>Phone</label>
+
+				<div className="mb-10">
+					<label htmlFor="phone" className="form-label fw-semibold">
+						Phone Number
+					</label>
 					<input
+						type="tel"
+						id="phone"
 						name="phone"
 						value={candidate.phone}
 						onChange={handleChange}
-						className="form-control"
+						className="form-control form-control-solid"
+						placeholder="e.g. +92 300 1234567"
+						pattern="^\+?[0-9\s\-]{7,15}$"
+						maxLength={15}
 					/>
+					<div className="form-text text-muted">
+						Include country code (e.g. +92 for Pakistan)
+					</div>
 				</div>
-				<div className="form-group">
-					<label>Job Title</label>
+
+				<div className="mb-10">
+					<label htmlFor="location" className="form-label fw-semibold">
+						Location
+					</label>
 					<input
-						name="jobTitle"
-						value={candidate.jobTitle}
-						onChange={handleChange}
-						className="form-control"
-					/>
-				</div>
-				<div className="form-group">
-					<label>Location</label>
-					<input
+						type="text"
+						id="location"
 						name="location"
 						value={candidate.location}
 						onChange={handleChange}
-						className="form-control"
+						className="form-control form-control-solid"
+						placeholder="e.g. New York, NY"
 					/>
+					<div className="form-text text-muted">
+						Enter the candidate's current city or work location
+					</div>
 				</div>
 
-				{/* Education History */}
-				<div className="form-group my-2">
-					<label>Education History</label>
-					<button type="button" className="btn btn-secondary btn-sm mb-2" onClick={() => addCredential('educationHistory')}>
-						+
-					</button>
+				<div className="mb-10">
+					<label htmlFor="jobTitle" className="form-label fw-semibold">
+						Job Title
+					</label>
+					<input
+						type="text"
+						id="jobTitle"
+						name="jobTitle"
+						value={candidate.jobTitle}
+						onChange={handleChange}
+						className="form-control form-control-solid"
+						placeholder="e.g. Frontend Developer"
+					/>
+					<div className="form-text text-muted">
+						Specify the role the candidate is applying for
+					</div>
+				</div>
+
+
+				<div className="mb-10">
+					<div className="d-flex justify-content-between align-items-center mb-3">
+						<label className="required form-label mb-0">Education History</label>
+						<button
+							type="button"
+							className="btn btn-sm btn-light-primary"
+							onClick={() => addCredential('educationHistory')}
+						>
+							+ Add
+						</button>
+					</div>
+
 					{candidate.educationHistory.map((edu, idx) => (
-						<div className="mb-2" key={idx}>
-							<div className="row align-items-center">
+						<div className="card mb-4 p-4" key={idx}>
+							<div className="row g-3 align-items-end">
 								<div className="col-md-4">
+									<label className="form-label">Degree</label>
 									<input
-										className="form-control"
-										placeholder="Degree"
+										type="text"
+										className="form-control form-control-solid"
+										placeholder="e.g. BSc Computer Science"
 										value={edu.certificate}
-										onChange={(e) => handleCredentialChange('educationHistory', idx, 'certificate', e.target.value)}
+										onChange={(e) =>
+											handleCredentialChange('educationHistory', idx, 'certificate', e.target.value)
+										}
 									/>
 								</div>
 								<div className="col-md-4">
+									<label className="form-label">Institution</label>
 									<input
-										className="form-control"
-										placeholder="Name of Institution"
+										type="text"
+										className="form-control form-control-solid"
+										placeholder="e.g. Harvard University"
 										value={edu.institution}
-										onChange={(e) => handleCredentialChange('educationHistory', idx, 'institution', e.target.value)}
+										onChange={(e) =>
+											handleCredentialChange('educationHistory', idx, 'institution', e.target.value)
+										}
 									/>
 								</div>
 								<div className="col-md-3">
+									<label className="form-label">Year of Completion</label>
 									<input
-										className="form-control"
 										type="date"
-										placeholder="Completion Date"
+										className="form-control form-control-solid"
 										value={edu.yearOfCompletion}
-										onChange={(e) => handleCredentialChange('educationHistory', idx, 'yearOfCompletion', e.target.value)}
+										onChange={(e) =>
+											handleCredentialChange('educationHistory', idx, 'yearOfCompletion', e.target.value)
+										}
 									/>
 								</div>
 								<div className="col-md-1 text-end">
-									<button type="button" className="btn btn-outline-danger btn-sm" onClick={() => removeCredential('educationHistory', idx)}>
-										🗑
+									<button
+										type="button"
+										className="btn btn-sm btn-icon btn-light-danger"
+										onClick={() => removeCredential('educationHistory', idx)}
+									>
+										<i className="bi bi-trash"></i>
 									</button>
 								</div>
 							</div>
@@ -343,42 +423,63 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 				</div>
 
 				{/* Certifications */}
-				<div className="form-group my-2">
-					<label>Certifications</label>
-					<button type="button" className="btn btn-secondary btn-sm mb-2" onClick={() => addCredential('certifications')}>
-						+
-					</button>
+				<div className="mb-10">
+					<div className="d-flex justify-content-between align-items-center mb-3">
+						<label className="form-label fw-bold mb-0">Certifications</label>
+						<button
+							type="button"
+							className="btn btn-sm btn-light-primary"
+							onClick={() => addCredential('certifications')}
+						>
+							+ Add Certification
+						</button>
+					</div>
+
 					{candidate.certifications.map((cert, idx) => (
-						<div className="mb-2" key={idx}>
-							<div className="row align-items-center">
+						<div key={idx} className="bg-white p-4 rounded mb-3 border shadow-sm">
+							<div className="row g-3 align-items-center">
 								<div className="col-md-4">
+									<label className="form-label">Certificate</label>
 									<input
-										className="form-control"
-										placeholder="Certificate"
+										type="text"
+										className="form-control form-control-solid"
+										placeholder="e.g. AWS Certified"
 										value={cert.certificate}
-										onChange={(e) => handleCredentialChange('certifications', idx, 'certificate', e.target.value)}
+										onChange={(e) =>
+											handleCredentialChange('certifications', idx, 'certificate', e.target.value)
+										}
 									/>
 								</div>
 								<div className="col-md-4">
+									<label className="form-label">Institution</label>
 									<input
-										className="form-control"
-										placeholder="Institution"
+										type="text"
+										className="form-control form-control-solid"
+										placeholder="e.g. Amazon Web Services"
 										value={cert.institution}
-										onChange={(e) => handleCredentialChange('certifications', idx, 'institution', e.target.value)}
+										onChange={(e) =>
+											handleCredentialChange('certifications', idx, 'institution', e.target.value)
+										}
 									/>
 								</div>
 								<div className="col-md-3">
+									<label className="form-label">Year of Completion</label>
 									<input
-										className="form-control"
 										type="date"
-										placeholder="Year of Completion"
+										className="form-control form-control-solid"
 										value={cert.yearOfCompletion}
-										onChange={(e) => handleCredentialChange('certifications', idx, 'yearOfCompletion', e.target.value)}
+										onChange={(e) =>
+											handleCredentialChange('certifications', idx, 'yearOfCompletion', e.target.value)
+										}
 									/>
 								</div>
-								<div className="col-md-1 text-end">
-									<button type="button" className="btn btn-outline-danger btn-sm" onClick={() => removeCredential('certifications', idx)}>
-										🗑
+								<div className="col-md-1 text-end mt-4">
+									<button
+										type="button"
+										className="btn btn-sm btn-icon btn-light-danger"
+										onClick={() => removeCredential('certifications', idx)}
+									>
+										<i className="bi bi-trash"></i>
 									</button>
 								</div>
 							</div>
@@ -386,60 +487,78 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 					))}
 				</div>
 
+
 				{/* Experiences */}
-				<div className="form-group my-2">
-					<label>Experiences</label>
-					<button type="button" className="btn btn-secondary btn-sm mb-2" onClick={addExperience}>
-						+
-					</button>
+				<div className="mb-10">
+					<div className="d-flex justify-content-between align-items-center mb-3">
+						<label className="form-label fw-bold mb-0">Experiences</label>
+						<button
+							type="button"
+							className="btn btn-sm btn-light-primary"
+							onClick={addExperience}
+						>
+							+ Add Experience
+						</button>
+					</div>
+
 					{candidate.experiences.map((exp, idx) => (
-						<div className="mb-2" key={idx}>
-							<div className="row align-items-center">
+						<div key={idx} className="bg-white p-4 rounded mb-3 border shadow-sm">
+							<div className="row g-3 align-items-center">
 								<div className="col-md-3">
+									<label className="form-label">Job Title</label>
 									<input
-										className="form-control"
-										placeholder="Job Title"
+										type="text"
+										className="form-control form-control-solid"
+										placeholder="e.g. Frontend Developer"
 										value={exp.jobTitle}
 										onChange={(e) => handleExperienceChange(idx, 'jobTitle', e.target.value)}
 									/>
 								</div>
 								<div className="col-md-3">
+									<label className="form-label">Company</label>
 									<input
-										className="form-control"
-										placeholder="Company"
+										type="text"
+										className="form-control form-control-solid"
+										placeholder="e.g. Google"
 										value={exp.company}
 										onChange={(e) => handleExperienceChange(idx, 'company', e.target.value)}
 									/>
 								</div>
 								<div className="col-md-3">
+									<label className="form-label">Details</label>
 									<input
-										className="form-control"
-										placeholder="Details"
+										type="text"
+										className="form-control form-control-solid"
+										placeholder="e.g. Worked on UI features"
 										value={exp.details}
 										onChange={(e) => handleExperienceChange(idx, 'details', e.target.value)}
 									/>
 								</div>
 								<div className="col-md-1">
+									<label className="form-label">Start</label>
 									<input
-										className="form-control"
 										type="date"
-										placeholder="Start Date"
+										className="form-control form-control-solid"
 										value={exp.startDate}
 										onChange={(e) => handleExperienceChange(idx, 'startDate', e.target.value)}
 									/>
 								</div>
 								<div className="col-md-1">
+									<label className="form-label">End</label>
 									<input
-										className="form-control"
 										type="date"
-										placeholder="End Date (optional)"
+										className="form-control form-control-solid"
 										value={exp.endDate}
 										onChange={(e) => handleExperienceChange(idx, 'endDate', e.target.value)}
 									/>
 								</div>
-								<div className="col-md-1 text-end">
-									<button type="button" className="btn btn-outline-danger btn-sm" onClick={() => removeExperience(idx)}>
-										🗑
+								<div className="col-md-1 text-end mt-4">
+									<button
+										type="button"
+										className="btn btn-sm btn-icon btn-light-danger"
+										onClick={() => removeExperience(idx)}
+									>
+										<i className="bi bi-trash"></i>
 									</button>
 								</div>
 							</div>
@@ -447,18 +566,23 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 					))}
 				</div>
 
+
 				{/* Skills */}
-				<div className="form-group my-2">
-					<label>Skills</label>
-					<button type="button" className="btn btn-secondary btn-sm mb-2" onClick={addSkill}>
-						+
-					</button>
+				<div className="mb-10">
+					<div className="d-flex justify-content-between align-items-center mb-3">
+						<label className="form-label fw-bold mb-0">Skills</label>
+						<button type="button" className="btn btn-sm btn-light-primary" onClick={addSkill}>
+							+ Add Skill
+						</button>
+					</div>
+
 					{candidate.skills.map((skill, idx) => (
-						<div className="mb-2" key={idx}>
-							<div className="row align-items-center">
+						<div key={idx} className="bg-white p-4 rounded mb-3 border shadow-sm">
+							<div className="row g-3 align-items-center">
 								<div className="col-md-8">
+									<label className="form-label">Skill</label>
 									<select
-										className="form-control"
+										className="form-select form-select-solid"
 										value={skill.skill}
 										onChange={(e) => handleSkillChange(idx, 'skill', e.target.value)}
 									>
@@ -471,8 +595,9 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 									</select>
 								</div>
 								<div className="col-md-3">
+									<label className="form-label">Proficiency</label>
 									<select
-										className="form-control"
+										className="form-select form-select-solid"
 										value={skill.rating}
 										onChange={(e) => handleSkillChange(idx, 'rating', Number(e.target.value))}
 									>
@@ -483,9 +608,13 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 										))}
 									</select>
 								</div>
-								<div className="col-md-1 text-end">
-									<button type="button" className="btn btn-outline-danger btn-sm" onClick={() => removeSkill(idx)}>
-										🗑
+								<div className="col-md-1 text-end mt-4">
+									<button
+										type="button"
+										className="btn btn-sm btn-icon btn-light-danger"
+										onClick={() => removeSkill(idx)}
+									>
+										<i className="bi bi-trash"></i>
 									</button>
 								</div>
 							</div>

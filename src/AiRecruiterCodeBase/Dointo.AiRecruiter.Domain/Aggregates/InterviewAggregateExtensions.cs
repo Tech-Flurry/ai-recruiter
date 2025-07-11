@@ -11,4 +11,10 @@ public static class InterviewAggregateExtensions
 		var percentage = totalScore is 0 ? 0 : interview.GetObtainedScore( ) / totalScore * 100;
 		return Math.Round(percentage, 2);
 	}
+
+	public static bool IsPassed(this Interview interview) => interview.AiScore >= 7;
+
+	public static TimeSpan GetLength(this Interview interview) => interview.EndTime.HasValue
+			? interview.EndTime.Value - interview.StartTime
+			: DateTime.UtcNow - interview.StartTime;
 }

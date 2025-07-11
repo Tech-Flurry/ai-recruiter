@@ -23,6 +23,8 @@ public interface IJobPostsService
 	Task<IProcessingState> CloseMultipleJobsAsync(CloseMultipleJobsDto closeJobDto);
 	Task<IProcessingState> ExtractSkillsFromDescriptionAsync(string jobDescription);
 	IProcessingState GetAllSkills( );
+	Task<IProcessingState> GetAllInterviews(string jobId);
+
 }
 
 internal class JobPostsService(IJobPostRepository repository, IResolver<Job, EditJobDto> editJobResolver, IResolver<Job, JobListDto> jobListResolver, IReadOnlyRepository readOnlyRepository, IResolver<Skill, SkillDto> skillsResolver, IJobsAgent jobsAgent) : IJobPostsService
@@ -179,6 +181,24 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 	private List<SkillDto> QuerySkills( ) => _readOnlyRepository.Query<Skill>( )
 		.Select(_skillsResolver.Resolve)
 		.ToList( );
+
+    public async Task<IProcessingState> GetAllInterviews(string jobId)
+    {
+        _messageBuilder.Clear();
+
+        var jobPost = await _repository.GetByIdAsync(jobId);
+        if (jobPost is null)
+            return new BusinessErrorState(RecordNotFoundMessage());
+
+        var interviews = _readOnlyRepository.Query<Interview>();
+        var interviewees = jobPost.GetSortedInterviewees(interviews);
+
+        // Assuming you need to return a success state with the interviewees
+        return new SuccessState<List<Interviewee>>(
+            _messageBuilder.AddFormat(Messages.RECORD_RETRIEVED_FORMAT).AddString(JOB_STRING).Build(),
+            interviewees
+        );
+    }
 
 	private string RecordNotFoundMessage( )
 	{

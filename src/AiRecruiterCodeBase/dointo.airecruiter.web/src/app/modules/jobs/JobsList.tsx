@@ -1,9 +1,9 @@
-﻿import React, { useState, useEffect } from "react";
+﻿/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { KTCard, KTCardBody } from "../../../_metronic/helpers";
 import { Modal, Form, Button, Table } from "react-bootstrap";
-import { Link } from "react-router-dom";
 import toastr from "toastr";
 import "toastr/build/toastr.min.css";
 
@@ -88,6 +88,7 @@ const JobPost: React.FC = () => {
 	const handleButtonClick = () => {
 		navigate("/jobs/create");
 	};
+
 	const handleDeleteJobConfirmed = async () => {
 		if (!jobToDelete) return;
 
@@ -117,18 +118,11 @@ const JobPost: React.FC = () => {
 
 	return (
 		<div>
-			<div
-				style={{ display: "flex", justifyContent: "flex-end", padding: "10px" }}
-			>
-				<button
-					type="button"
-					className="btn btn-secondary"
-					onClick={handleButtonClick}
-				>
+			<div className="d-flex justify-content-end p-3">
+				<button className="btn btn-secondary" onClick={handleButtonClick}>
 					Post a New Job
 				</button>
 			</div>
-
 			<KTCard>
 				<KTCardBody>
 					<div className="d-flex justify-content-between align-items-center mb-4">
@@ -174,28 +168,28 @@ const JobPost: React.FC = () => {
 										/>
 									</td>
 									<td>
-										<Link
-											to={`/jobs/create?id=${job.id}`}
-											className="text-primary text-hover-dark fw-bold"
-											style={{ textDecoration: "none" }}
-										>
+										<Link to={`/jobs/create?id=${job.id}`} className="text-primary fw-bold">
 											{job.title}
 										</Link>
 									</td>
 									<td>
 										<span
-											className={`badge ${job.status === "Open" ? "bg-success" : "bg-danger"
-												}`}
+											className={`badge ${job.status === "Open" ? "bg-success" : "bg-danger"}`}
 										>
 											{job.status}
 										</span>
 									</td>
+									<td>{job.posted}</td>
 									<td>
-										{job.posted}
+										<Link
+											to={`/jobs/${job.id}/interviews`}
+											className="text-primary"
+											style={{ textDecoration: "underline" }}
+										>
+											{job.numberOfInterviews}
+										</Link>
 									</td>
-									<td>{job.numberOfInterviews}</td>
 									<td>
-										{/* Copy URI Button */}
 										<button
 											onClick={() => {
 												const fullLink = `${window.location.origin}/jobs/conduct/${job.id}?usp=share`;
@@ -356,12 +350,8 @@ const JobPost: React.FC = () => {
 						</tbody>
 					</Table>
 
-					{/* Modal for closing job(s) */}
-					<Modal
-						show={isCloseModalOpen}
-						onHide={() => setIsCloseModalOpen(false)}
-						centered
-					>
+					{/* Close Modal */}
+					<Modal show={isCloseModalOpen} onHide={() => setIsCloseModalOpen(false)} centered>
 						<Modal.Header closeButton>
 							<Modal.Title>Close Job Posts</Modal.Title>
 						</Modal.Header>
@@ -378,39 +368,25 @@ const JobPost: React.FC = () => {
 							</Form.Group>
 						</Modal.Body>
 						<Modal.Footer>
-							<Button
-								variant="secondary"
-								onClick={() => setIsCloseModalOpen(false)}
-							>
+							<Button variant="secondary" onClick={() => setIsCloseModalOpen(false)}>
 								Cancel
 							</Button>
-							<Button
-								variant="danger"
-								onClick={handleCloseJobs}
-								disabled={!closeReason}
-							>
+							<Button variant="danger" onClick={handleCloseJobs} disabled={!closeReason}>
 								Close Jobs
 							</Button>
 						</Modal.Footer>
 					</Modal>
-					<Modal
-						show={isDeleteModalOpen}
-						onHide={() => setIsDeleteModalOpen(false)}
-						centered
-					>
+
+					{/* Delete Modal */}
+					<Modal show={isDeleteModalOpen} onHide={() => setIsDeleteModalOpen(false)} centered>
 						<Modal.Header closeButton>
 							<Modal.Title>Confirm Deletion</Modal.Title>
 						</Modal.Header>
 						<Modal.Body>
-							Are you sure you want to delete the job post{" "}
-							<strong>{jobToDelete?.title}</strong>? This action cannot be
-							undone.
+							Are you sure you want to delete the job post <strong>{jobToDelete?.title}</strong>?
 						</Modal.Body>
 						<Modal.Footer>
-							<Button
-								variant="secondary"
-								onClick={() => setIsDeleteModalOpen(false)}
-							>
+							<Button variant="secondary" onClick={() => setIsDeleteModalOpen(false)}>
 								Cancel
 							</Button>
 							<Button variant="danger" onClick={handleDeleteJobConfirmed}>

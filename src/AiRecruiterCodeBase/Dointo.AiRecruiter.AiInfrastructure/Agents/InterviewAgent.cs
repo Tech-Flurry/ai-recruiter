@@ -91,11 +91,10 @@ Instructions:
 
 		var aiProvider = _aiProviderFactory.GetProvider(AiProviders.OpenAi);
 
-		var context = "You are a virtual interview coach. You need to provide constructive, encouraging feedback to the candidate based on their past interview performance";
+		var context = "You are a virtual interview coach. You need to provide constructive, encouraging feedback to the candidate based on their past interview performance.";
 
 		var prompt = @$"
-You've recently completed several interviews — here’s a personalized performance summary to guide your growth and highlight your strengths.Below is a summary of their interview data:
-
+You've recently completed several interviews — here’s a personalized performance summary to guide your growth and highlight your strengths. Below is a summary of your interview data:
 
 {JsonSerializer.Serialize(interviews.Select(i => new
 		{
@@ -103,12 +102,11 @@ You've recently completed several interviews — here’s a personalized perform
 			InterviewDate = i.StartTime.ToShortDateString( ),
 			Ai_Score = i.AiScore,
 			SkillScores = i.ScoredSkills,
-			ScoredQuestions = i.Questions,
-			Feedback = i.Interviewee.JobFitAnalysis
+			ScoredQuestions = i.Questions
 		}))}
 
 Instructions:
-- Write a brief, encouraging performance summary for the candidate (3–4 sentences)
+- Write a brief, encouraging performance summary for the candidate (3–4 sentences) 
 - Address the candidate directly using “you”
 - Highlight strengths that appear consistently (e.g., ""Your communication skills are strong"")
 - Mention one or two improvement areas in a supportive tone

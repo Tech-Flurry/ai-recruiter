@@ -104,20 +104,7 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 
 		try
 		{
-			// ✅ Check cache
-			var cachedSummary = await _performanceSummaryRepository.GetByOwnerIdAsync(ownerId);
-			if (cachedSummary != null)
-			{
-				return new SuccessState<string>(
-					_messageBuilder
-						.AddFormat(Messages.RECORD_RETRIEVED_FORMAT)
-						.AddString("Cached Performance Overview")
-						.Build( ),
-					cachedSummary.Summary
-				);
-			}
-
-			// ✅ Get past interviews
+			// ✅ Get all interviews
 			var interviews = await _interviewsRepository.GetByOwnerAsync(ownerId);
 			if (interviews is { Count: 0 })
 			{
@@ -132,10 +119,34 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 				.Where(i => i.StartTime <= DateTime.UtcNow)
 				.ToList( );
 
-			// ✅ Call AI to generate summary
+			if (pastInterviews.Count == 0)
+			{
+				return new BusinessErrorState(
+					_messageBuilder
+						.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT)
+						.AddString("Past Interviews")
+						.Build( ));
+			}
+
+			// ✅ Check existing summary
+			var existingSummary = await _performanceSummaryRepository.GetByOwnerIdAsync(ownerId);
+
+			// ✅ If summary exists and no new interview since then, return cached
+			if (existingSummary != null && pastInterviews.All(i => i.StartTime <= existingSummary.GeneratedOn))
+			{
+				return new SuccessState<string>(
+					_messageBuilder
+						.AddFormat(Messages.RECORD_RETRIEVED_FORMAT)
+						.AddString("Cached Performance Overview")
+						.Build( ),
+					existingSummary.Summary
+				);
+			}
+
+			// ✅ Else generate fresh summary via AI
 			var summary = await _interviewAgent.GenerateCandidatePerformanceOverviewAsync(pastInterviews);
 
-			// ✅ Save for future requests
+			// ✅ Upsert new summary
 			await _performanceSummaryRepository.SaveAsync(new PerformanceSummary
 			{
 				OwnerId = ownerId,
@@ -162,6 +173,7 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 			);
 		}
 	}
+
 
 	public async Task<IProcessingState> GetCandidateDashboardAsync(string ownerId)
 	{

@@ -22,6 +22,8 @@ public interface IJobPostsService
 	Task<IProcessingState> CloseMultipleJobsAsync(CloseMultipleJobsDto closeJobDto);
 	Task<IProcessingState> ExtractSkillsFromDescriptionAsync(string jobDescription);
 	IProcessingState GetAllSkills( );
+	Task<IProcessingState> GetActiveCandidateJobsAsync( );
+
 	Task<IProcessingState> GetAllInterviews(string jobId);
 
 }
@@ -37,6 +39,35 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 	private readonly IResolver<Skill, SkillDto> _skillsResolver = skillsResolver;
 	private readonly IJobsAgent _jobsAgent = jobsAgent;
 	private readonly MessageBuilder _messageBuilder = new( );
+
+	public async Task<IProcessingState> GetActiveCandidateJobsAsync( )
+	{
+		_messageBuilder.Clear( );
+
+		var allJobs = await _repository.GetByOwnerAsync("system");
+		var interviewsSet = _readOnlyRepository.Query<Interview>( );
+
+		var candidateJobs = allJobs
+			.Where(job => !job.IsDeleted && job.Status != JobStatus.Closed)
+			.Select(job =>
+			{
+				var interviewCount = job.GetInterviewCount(interviewsSet);
+
+				return new CandidateJobViewDto
+				{
+					Id = job.Id,
+					Title = job.Title,
+					Posted = job.CreatedAt.Humanize( ),
+					Status = interviewCount > 0 ? "Completed" : "Not Started"
+				};
+			})
+			.ToList( );
+
+		return new SuccessState<List<CandidateJobViewDto>>(
+			_messageBuilder.AddFormat(Messages.RECORD_RETRIEVED_FORMAT).AddString("Jobs").Build( ),
+			candidateJobs
+		);
+	}
 
 	public async Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username)
 	{

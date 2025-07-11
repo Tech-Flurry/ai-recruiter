@@ -7,6 +7,7 @@ import JobScreening from './JobScreening'
 import InterviewResult from './InterviewResult'
 import CandidateInterviewHistory from './CandidateInterviewHistory'
 import InterviewReport from './InterviewReport'
+import CandidateJobView from './CandidateJobView'
 
 const jobsBreadCrumbs: Array<PageLink> = [
 	{
@@ -102,6 +103,16 @@ function JobsIndex() {
 						</>
 					}
 				/>
+				<Route
+					path='view-jobs'
+					element={
+						<>
+							<PageTitle breadcrumbs={jobsBreadCrumbs}>My Interviews</PageTitle>
+							<CandidateJobView/>
+						</>
+					}
+				/>S
+
 
 
 				{/* 🔹 Default Redirect */}

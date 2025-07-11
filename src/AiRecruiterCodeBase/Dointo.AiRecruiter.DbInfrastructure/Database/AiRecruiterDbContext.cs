@@ -17,6 +17,8 @@ public class AiRecruiterDbContext(DbContextOptions<AiRecruiterDbContext> options
 	public DbSet<Candidate> Candidates { get; set; } = null!;
 	public DbSet<Interview> Interviews { get; set; } = null!;
 	public DbSet<User> Users { get; set; } = null!;
+	public DbSet<PerformanceSummary> PerformanceSummaries { get; set; }=null!;
+
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{

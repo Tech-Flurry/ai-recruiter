@@ -1,86 +1,118 @@
-﻿import React from 'react'
-import { Row, Col, Card,Tab, Tabs } from 'react-bootstrap'
+﻿import React, { useEffect, useState } from 'react'
+import { Row, Col, Card, Tab, Tabs, Spinner, Alert } from 'react-bootstrap'
+import axios from 'axios'
 import { KTSVG } from '../../../_metronic/helpers'
 
-const CandidateDashboard: React.FC = () => {
-	const topSkills = [
-		{ skill: 'React', level: 85 },
-		{ skill: 'C#', level: 72 },
-		{ skill: 'SQL', level: 65 },
-	]
+interface SkillDto {
+	skill: string
+	level: number
+}
 
+interface CandidateDashboardDto {
+	name: string
+	totalInterviews: number
+	averageScore: number
+	passRate: number
+	topSkills: SkillDto[]
+	recentActivities: string[]
+}
+
+const CandidateDashboard: React.FC = () => {
+	const [data, setData] = useState<CandidateDashboardDto | null>(null)
+	const [overview, setOverview] = useState<string>('')
+	const [loading, setLoading] = useState(true)
+	const [error, setError] = useState<string | null>(null)
+
+	useEffect(() => {
+		const fetchDashboardData = async () => {
+			try {
+				const baseUrl = import.meta.env.VITE_APP_API_BASE_URL
+
+				const dashboardRes = await axios.get(`${baseUrl}/Interviews/candidate-dashboard`)
+				const overviewRes = await axios.get(`${baseUrl}/Interviews/candidate-performance-overview`)
+
+				setData(dashboardRes.data.data)
+				setOverview(overviewRes.data)
+			} catch (err: any) {
+				setError('Failed to load dashboard. Please try again.')
+			} finally {
+				setLoading(false)
+			}
+		}
+
+		fetchDashboardData()
+	}, [])
+
+	const getVariant = (level: number) => {
+		if (level >= 80) return 'success'
+		if (level >= 60) return 'primary'
+		if (level >= 40) return 'warning'
+		return 'danger'
+	}
+
+	const getLevelLabel = (level: number) => {
+		if (level >= 80) return 'Expert'
+		if (level >= 60) return 'Proficient'
+		if (level >= 40) return 'Intermediate'
+		return 'Beginner'
+	}
+
+	if (loading) {
+		return <div className='text-center mt-10'><Spinner animation='border' variant='primary' /></div>
+	}
+
+	if (error || !data) {
+		return <Alert variant='danger' className='mt-5 text-center'>{error}</Alert>
+	}
 
 	return (
 		<div className='mt-5 px-4'>
 			{/* Welcome Banner */}
 			<div className='p-5 bg-light-primary rounded mb-7'>
-				<h2 className='fw-bold text-primary'>Welcome, Usman Tahir!</h2>
+				<h2 className='fw-bold text-primary'>Welcome, {data.name}!</h2>
 				<p className='mb-0 text-muted'>Track your interview progress and performance below.</p>
 			</div>
 
-			{/* KPI Summary Cards */}
+			{/* === Summary Cards === */}
 			<Row className='mb-7 g-4'>
-				<Col md={3}>
-					<Card className='text-center shadow-sm border-0'>
-						<Card.Body>
-							<KTSVG path='/media/icons/duotune/general/gen048.svg' className='svg-icon-2tx text-primary mb-2' />
-							<div className='fs-2 fw-bold text-primary'>5</div>
-							<div className='text-muted'>Total Interviews</div>
-						</Card.Body>
-					</Card>
+				<Col md={4}>
+					<div className='card card-xl-stretch mb-xl-8 shadow-sm border-0 text-center'>
+						<div className='card-body'>
+							<KTSVG path='/media/icons/duotune/general/gen048.svg' className='svg-icon-2tx mb-2 text-primary' />
+							<div className='fs-2hx fw-bold text-dark'>{data.totalInterviews}</div>
+							<div className='text-muted fw-semibold'>Total Interviews</div>
+						</div>
+					</div>
 				</Col>
-				<Col md={3}>
-					<Card className='text-center shadow-sm border-0'>
-						<Card.Body>
-							<KTSVG path='/media/icons/duotune/general/gen049.svg' className='svg-icon-2tx text-success mb-2' />
-							<div className='fs-2 fw-bold text-success'>7.6</div>
-							<div className='text-muted'>Average Score</div>
-						</Card.Body>
-					</Card>
+				<Col md={4}>
+					<div className='card card-xl-stretch mb-xl-8 shadow-sm border-0 text-center'>
+						<div className='card-body'>
+							<KTSVG path='/media/icons/duotune/general/gen049.svg' className='svg-icon-2tx mb-2 text-success' />
+							<div className='fs-2hx fw-bold text-dark'>{data.averageScore}</div>
+							<div className='text-muted fw-semibold'>Average Score</div>
+						</div>
+					</div>
 				</Col>
-				<Col md={3}>
-					<Card className='text-center shadow-sm border-0'>
-						<Card.Body>
-							<KTSVG path='/media/icons/duotune/general/gen050.svg' className='svg-icon-2tx text-warning mb-2' />
-							<div className='fs-2 fw-bold text-warning'>60%</div>
-							<div className='text-muted'>Pass Rate</div>
-						</Card.Body>
-					</Card>
-				</Col>
-				<Col md={3}>
-					<Card className='text-center shadow-sm border-0'>
-						<Card.Body>
-							<KTSVG path='/media/icons/duotune/general/gen005.svg' className='svg-icon-2tx text-info mb-2' />
-							<div className='fs-2 fw-bold text-info'>2</div>
-							<div className='text-muted'>Upcoming Interviews</div>
-						</Card.Body>
-					</Card>
+				<Col md={4}>
+					<div className='card card-xl-stretch mb-xl-8 shadow-sm border-0 text-center'>
+						<div className='card-body'>
+							<KTSVG path='/media/icons/duotune/arrows/arr016.svg' className='svg-icon-2tx mb-2 text-primary' />
+							<div className='fs-2hx fw-bold text-dark'>{data.passRate}%</div>
+							<div className='text-muted fw-semibold'>Pass Rate</div>
+						</div>
+					</div>
 				</Col>
 			</Row>
 
-			{/* Skills Progress */}
+			{/* === Skills Progress Card === */}
 			<Card className='mb-7 shadow-sm border-0'>
 				<Card.Header className='bg-light d-flex justify-content-between align-items-center'>
 					<h5 className='mb-0 fw-bold text-dark'>Top Skills Progress</h5>
 					<span className='text-muted fs-7'>Based on AI interview analysis</span>
 				</Card.Header>
 				<Card.Body className='pt-4'>
-					{topSkills.map((item, index) => {
-						const getVariant = (level: number) => {
-							if (level >= 80) return 'success'
-							if (level >= 60) return 'primary'
-							if (level >= 40) return 'warning'
-							return 'danger'
-						}
-
-						const getLevelLabel = (level: number) => {
-							if (level >= 80) return 'Expert'
-							if (level >= 60) return 'Proficient'
-							if (level >= 40) return 'Intermediate'
-							return 'Beginner'
-						}
-
-						return (
+					{data.topSkills && data.topSkills.length > 0 ? (
+						data.topSkills.map((item, index) => (
 							<div key={index} className='mb-4'>
 								<div className='d-flex justify-content-between align-items-center mb-2'>
 									<span className='fw-semibold fs-6'>{item.skill}</span>
@@ -99,31 +131,46 @@ const CandidateDashboard: React.FC = () => {
 									></div>
 								</div>
 							</div>
-						)
-					})}
+						))
+					) : (
+						<p className='text-muted'>No skill data available.</p>
+					)}
 				</Card.Body>
 			</Card>
 
-
-			{/* Tabs Section */}
+			{/* === Performance Tabs === */}
 			<Tabs defaultActiveKey='summary' className='mb-3 fw-semibold'>
 				<Tab eventKey='summary' title='Summary'>
 					<div className='p-4 bg-light rounded border'>
 						<h5 className='mb-3'>Performance Overview</h5>
-						<p className='text-muted'>
-							You’ve been steadily improving! Your frontend scores are above average, and communication is strong.
-						</p>
+						<p className='text-muted'>{overview}</p>
 					</div>
 				</Tab>
-				<Tab eventKey='history' title='Recent Activity'>
-					<div className='p-4 bg-light rounded border'>
-						<ul className='list-unstyled mb-0'>
-							<li className='mb-2'>Completed Interview: Frontend Dev – 8.2 score</li>
-							<li className='mb-2'>Upcoming Interview: AI Engineer – July 15</li>
-							<li className='mb-2'>Skill Boost: C# improved from 3.5 → 4.2</li>
-						</ul>
+			<Tab eventKey='history' title='Recent Activity'>
+	<div className='p-4 bg-light rounded border'>
+		<h5 className='mb-4 text-dark fw-bold'>Activity Timeline</h5>
+		<div className='timeline'>
+			{data.recentActivities.length > 0 ? (
+				data.recentActivities.map((item, index) => (
+					<div key={index} className='timeline-item d-flex mb-4'>
+						<div className='timeline-label'>
+							<span className='bullet bullet-dot bg-primary me-4'></span>
+						</div>
+						<div className='flex-grow-1'>
+							<div className='d-flex justify-content-between align-items-center mb-1'>
+								<span className='fw-semibold text-gray-800'>{item}</span>
+								<span className='badge bg-light-primary text-primary'>#{index + 1}</span>
+							</div>
+						</div>
 					</div>
-				</Tab>
+				))
+			) : (
+				<div className='text-muted'>No recent activity found.</div>
+			)}
+		</div>
+	</div>
+</Tab>
+
 			</Tabs>
 		</div>
 	)

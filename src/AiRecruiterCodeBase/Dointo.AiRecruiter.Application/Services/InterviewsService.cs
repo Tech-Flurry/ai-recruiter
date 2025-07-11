@@ -28,7 +28,7 @@ public interface IInterviewsService
 }
 
 internal class InterviewsService(ICandidateRepository candidatesRepository, IResolver<Candidate, CreateCandidateDto> createCandidateResolver, ICandidatesAgent candidatesAgent, IInterviewsRepository interviewRepository, IResolver<Interview, InterviewGeneratedDto> interviewDtoResolver, IInterviewAgent interviewAgent, IResolver<Question, QuestionDto> questionDtoResolver, IResolver<Interview, CandidateInterviewResultDto> resultResolver,
-	IResolver<Interview, InterviewResultDto> interviewResultsResolver, IReadOnlyRepository readOnlyRepository) : IInterviewsService
+	IResolver<Interview, InterviewResultDto> interviewResultsResolver, IReadOnlyRepository readOnlyRepository,IPerformanceSummaryRepository _performanceSummaryRepository) : IInterviewsService
 {
 	private const string CANDIDATE_STRING = nameof(Candidate);
 	private const string INTERVIEW_STRING = nameof(Interview);
@@ -97,14 +97,28 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 			return new ExceptionState(_messageBuilder.AddFormat(Messages.ERROR_OCCURRED_FORMAT).AddString(INTERVIEW_STRING).Build( ), ex.Message);
 		}
 	}
+
 	public async Task<IProcessingState> GenerateCandidatePerformanceOverviewAsync(string ownerId)
 	{
 		_messageBuilder.Clear( );
 
 		try
 		{
-			var interviews = await _interviewsRepository.GetByOwnerAsync(ownerId);
+			// ✅ Check cache
+			var cachedSummary = await _performanceSummaryRepository.GetByOwnerIdAsync(ownerId);
+			if (cachedSummary != null)
+			{
+				return new SuccessState<string>(
+					_messageBuilder
+						.AddFormat(Messages.RECORD_RETRIEVED_FORMAT)
+						.AddString("Cached Performance Overview")
+						.Build( ),
+					cachedSummary.Summary
+				);
+			}
 
+			// ✅ Get past interviews
+			var interviews = await _interviewsRepository.GetByOwnerAsync(ownerId);
 			if (interviews is { Count: 0 })
 			{
 				return new BusinessErrorState(
@@ -113,16 +127,29 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 						.AddString("Candidate Interviews")
 						.Build( ));
 			}
+
 			var pastInterviews = interviews
 				.Where(i => i.StartTime <= DateTime.UtcNow)
 				.ToList( );
+
+			// ✅ Call AI to generate summary
 			var summary = await _interviewAgent.GenerateCandidatePerformanceOverviewAsync(pastInterviews);
+
+			// ✅ Save for future requests
+			await _performanceSummaryRepository.SaveAsync(new PerformanceSummary
+			{
+				OwnerId = ownerId,
+				Summary = summary,
+				GeneratedOn = DateTime.UtcNow
+			});
+
 			return new SuccessState<string>(
 				_messageBuilder
 					.AddFormat(Messages.RECORD_RETRIEVED_FORMAT)
-					.AddString("Performance Overview")
+					.AddString("Generated Performance Overview")
 					.Build( ),
-				summary);
+				summary
+			);
 		}
 		catch (Exception ex)
 		{
@@ -131,9 +158,11 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 					.AddFormat(Messages.ERROR_OCCURRED_FORMAT)
 					.AddString("Performance Overview")
 					.Build( ),
-				ex.Message);
+				ex.Message
+			);
 		}
 	}
+
 	public async Task<IProcessingState> GetCandidateDashboardAsync(string ownerId)
 	{
 		_messageBuilder.Clear( );

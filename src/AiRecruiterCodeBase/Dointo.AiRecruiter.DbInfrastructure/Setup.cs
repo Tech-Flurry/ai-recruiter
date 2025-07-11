@@ -27,5 +27,8 @@ public static class Setup
 		services.AddScoped<ICandidateRepository, CandidateRepository>( );
 		services.AddScoped<IInterviewsRepository, InterviewsRepository>( );
 		services.AddScoped<IUsersRepository, UsersRepository>( );
+		services.AddScoped<IPerformanceSummaryRepository, PerformanceSummaryRepository>( );
+
+
 	}
 }

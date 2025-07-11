@@ -1,48 +1,57 @@
-import {useAuth} from '../../../../app/modules/auth'
-import {KTIcon, toAbsoluteUrl} from '../../../helpers'
-import {HeaderUserMenu, Search} from '../../../partials'
-
+import { useAuth } from '../../../../app/modules/auth'
+import { KTIcon } from '../../../helpers'
+import { HeaderUserMenu, Search } from '../../../partials'
 
 const AsideToolbar = () => {
-  const {currentUser} = useAuth()
+  const { currentUser } = useAuth()
+
+  // Extract initials from name (e.g., "Muhammad Abdullah" → "MA")
+  const getInitials = (name: string | undefined) => {
+    if (!name) return 'NA'
+    const words = name.trim().split(' ')
+    if (words.length === 1) {
+      // If single word like "muhammadabdullah", just take first 2 letters
+      return words[0].substring(0, 2).toUpperCase()
+    }
+    return words.map((n) => n[0]).join('').toUpperCase()
+  }
+
 
   return (
     <>
-      {/*begin::User*/}
+      {/* begin::User */}
       <div className='aside-user d-flex align-items-sm-center justify-content-center py-5'>
-        {/*begin::Symbol*/}
-        <div className='symbol symbol-50px'>
-          <img src={toAbsoluteUrl('media/avatars/300-1.jpg')} alt='' />
+        {/* Symbol: Initials Circle */}
+        <div
+          className='symbol symbol-50px bg-light-primary text-primary fw-bold d-flex align-items-center justify-content-center'
+          style={{ borderRadius: '50%' }}
+        >
+          {getInitials(currentUser?.name)}
         </div>
-        {/*end::Symbol*/}
 
-        {/*begin::Wrapper*/}
+        {/* Wrapper: User Info */}
         <div className='aside-user-info flex-row-fluid flex-wrap ms-5'>
-          {/*begin::Section*/}
           <div className='d-flex'>
-            {/*begin::Info*/}
+            {/* User Details */}
             <div className='flex-grow-1 me-2'>
-              {/*begin::Username*/}
-              <a href='#' className='text-dark text-hover-primary fs-6 fw-bold'>
-                {currentUser?.first_name} {currentUser?.last_name}
+              {/* Username */}
+              <a
+                href='#'
+                className='text-dark text-hover-primary fs-6 fw-bold'
+              >
+                {currentUser?.name ? currentUser.name : 'Name not loaded'}
+
               </a>
-              {/*end::Username*/}
 
-              {/*begin::Description*/}
-              <span className='text-gray-600 fw-bold d-block fs-8 mb-1'>Python dev</span>
-              {/*end::Description*/}
-
-              {/*begin::Label*/}
+              {/* Online Status */}
               <div className='d-flex align-items-center text-success fs-9'>
-                <span className='bullet bullet-dot bg-success me-1'></span>online
+                <span className='bullet bullet-dot bg-success me-1'></span>
+                online
               </div>
-              {/*end::Label*/}
             </div>
-            {/*end::Info*/}
 
-            {/*begin::User menu*/}
+            {/* User Menu */}
             <div className='me-n2'>
-              {/*begin::Action*/}
               <a
                 href='#'
                 className='btn btn-icon btn-sm btn-active-color-primary mt-n2'
@@ -52,30 +61,20 @@ const AsideToolbar = () => {
               >
                 <KTIcon iconName='setting-2' className='text-muted fs-1' />
               </a>
-
               <HeaderUserMenu />
-              {/*end::Action*/}
             </div>
-            {/*end::User menu*/}
           </div>
-          {/*end::Section*/}
         </div>
-        {/*end::Wrapper*/}
       </div>
-      {/*end::User*/}
+      {/* end::User */}
 
-      {/*begin::Aside search*/}
+      {/* begin::Aside search */}
       <div className='aside-search py-5'>
-        {/* <?php Theme::getView('partials/search/_inline', array(
-        'class' => 'w-100',
-        'menu-placement' => 'bottom-start',
-        'responsive' => 'false'
-    ))?> */}
         <Search />
       </div>
-      {/*end::Aside search*/}
+      {/* end::Aside search */}
     </>
   )
 }
 
-export {AsideToolbar}
+export { AsideToolbar }

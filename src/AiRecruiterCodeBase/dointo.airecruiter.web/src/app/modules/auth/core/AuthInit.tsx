@@ -11,9 +11,15 @@ const AuthInit = ({ children }: { children: JSX.Element }) => {
   useEffect(() => {
     const auth = getAuth()
     if (auth?.api_token) {
-      const decoded = jwtDecode<UserModel>(auth.api_token)
-      setCurrentUser(decoded)
+      const decoded = jwtDecode<Record<string, any>>(auth.api_token)
+  
+      const user: UserModel = {
+        name: decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || 'Unknown',
+      }
+  
+      setCurrentUser(user)
     }
+  
     setIsInitialized(true)
   }, [])
 

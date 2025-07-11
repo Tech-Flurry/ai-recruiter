@@ -14,6 +14,7 @@ const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -36,18 +37,31 @@ const LoginPage: React.FC = () => {
       const token = response.data?.token
 
       if (token) {
-        // 1. Save auth info in localStorage using your helper
-        setAuth({ api_token: token })
-      
-        // 2. Decode and set the user
-        const decoded = jwtDecode<UserModel>(token)
-        setCurrentUser(decoded)
-      
-        // 3. Redirect
-        navigate('/dashboard')
+        try {
+          // 1. Decode JWT to extract user info
+          const decoded = jwtDecode<Record<string, any>>(token)
+          console.log('Decoded JWT:', decoded)
+
+          const user: UserModel = {
+            name: decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || 'Unknown',
+          }
+
+          // 2. Save token and user in localStorage
+          setAuth({ api_token: token, user })
+
+          // 3. Update global context
+          setCurrentUser(user)
+
+          // 4. Navigate to dashboard
+          navigate('/dashboard')
+        } catch (error) {
+          console.error('JWT decoding or auth saving failed:', error)
+          setError('Login failed due to internal error.')
+        }
       } else {
         setError('Login failed. Token not received.')
       }
+      
     } catch (err: any) {
       if (err.response?.status === 401) {
         setError('Invalid username or password.')

@@ -124,7 +124,7 @@ const JobPost: React.FC = () => {
 							onClick={() => setIsCloseModalOpen(true)}
 							disabled={selectedJobs.length === 0}
 						>
-							Bulk Close Selected
+							Close Selected Job Posts
 						</Button>
 					</div>
 					<Table hover responsive className="align-middle table-row-dashed fs-6 gy-5">

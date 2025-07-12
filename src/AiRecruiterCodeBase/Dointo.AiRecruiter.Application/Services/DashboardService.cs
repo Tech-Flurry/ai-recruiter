@@ -101,16 +101,21 @@ internal class DashboardService(IReadOnlyRepository readOnlyRepository) : IDashb
 					var first = group.Min(x => x.StartTime);
 					var last = group.Max(x => x.EndTime ?? DateTime.UtcNow);
 
-					var avgDuration = group
+					var validDurations = group
 						.Where(x => x.EndTime.HasValue && x.EndTime > x.StartTime)
-						.Average(x => x.GetLength( ).TotalMinutes);
+						.Select(x => x.GetLength( ).TotalMinutes)
+						.ToList( );
+
+					var avgDuration = validDurations.Any( )
+						? validDurations.Average( )
+						: 0;
 
 					return new JobPostInsightDto
 					{
 						JobTitle = group.Key,
 						TotalInterviews = group.Count( ),
 						ScreeningTimeDays = "day".ToQuantity((int)Math.Round(( last - first ).TotalDays), ShowQuantityAs.Numeric),
-						AverageInterviewDuration = TimeSpan.FromMinutes(avgDuration).Humanize( ),
+						AverageInterviewDuration = TimeSpan.FromMinutes(avgDuration).Humanize( )
 					};
 				})
 				.OrderByDescending(x => x.TotalInterviews)
@@ -135,6 +140,7 @@ internal class DashboardService(IReadOnlyRepository readOnlyRepository) : IDashb
 			));
 		}
 	}
+
 
 	public Task<IProcessingState> GetCandidatePipelineMetricsAsync( )
 	{

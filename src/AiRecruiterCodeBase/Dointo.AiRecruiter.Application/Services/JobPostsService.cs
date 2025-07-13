@@ -18,7 +18,7 @@ public interface IJobPostsService
 {
 	Task<IProcessingState> DeleteAsync(string id);
 	Task<IProcessingState> GetByIdAsync(string id);
-	Task<IProcessingState> GetJobsListAsync(System.Security.Claims.ClaimsPrincipal user);
+	Task<IProcessingState> GetJobsListAsync(ClaimsPrincipal user);
 	Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username);
 	Task<IProcessingState> CloseMultipleJobsAsync(CloseMultipleJobsDto closeJobDto);
 	Task<IProcessingState> ExtractSkillsFromDescriptionAsync(string jobDescription);
@@ -60,7 +60,7 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 
 	public async Task<IProcessingState> GetJobsListAsync(ClaimsPrincipal user)
 	{
-		var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+		var userId = user.GetOwnerId( );
 		var jobs = await _repository.GetByOwnerAsync(userId);
 		var interviewsSet = _readOnlyRepository.Query<Interview>( );
 		_messageBuilder.Clear( );

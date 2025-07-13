@@ -6,12 +6,13 @@ using Dointo.AiRecruiter.Domain.Entities;
 using Dointo.AiRecruiter.Domain.ValueObjects;
 using Dointo.AiRecruiter.Dtos;
 using Humanizer;
+using System.Security.Claims;
 
 namespace Dointo.AiRecruiter.Application.Services;
 
 public interface IDashboardService
 {
-	Task<IProcessingState> GetDashboardMetricsAsync( );
+	Task<IProcessingState> GetDashboardMetricsAsync(ClaimsPrincipal user);
 	Task<IProcessingState> GetJobPostInsightsAsync( );
 	Task<IProcessingState> GetCandidatePipelineMetricsAsync( );
 }
@@ -22,18 +23,20 @@ internal class DashboardService(IReadOnlyRepository readOnlyRepository) : IDashb
 	private readonly MessageBuilder _messageBuilder = new( );
 	private const string DASHBOARD_STRING = "Dashboard";
 
-	public Task<IProcessingState> GetDashboardMetricsAsync( )
+	public Task<IProcessingState> GetDashboardMetricsAsync(ClaimsPrincipal user)
 	{
 		_messageBuilder.Clear( );
-
+		var ownerId = user.GetOwnerId( );
 		try
 		{
-			var jobQuery = _readOnlyRepository.Query<Job>( );
+			var jobQuery = _readOnlyRepository.Query<Job>( ).Where(x => x.CreatedBy == ownerId);
 			var activeJobCount = jobQuery.Any( )
 				? jobQuery.Count(j => j.Status == JobStatus.Open)
 				: 0;
 
-			var allInterviews = _readOnlyRepository.Query<Interview>( ).ToList( );
+			var jobIds = jobQuery.Select(j => j.Id).ToList( );
+
+			var allInterviews = _readOnlyRepository.Query<Interview>( ).Where(x => jobIds.Contains(x.Job.JobId)).ToList( );
 
 			var totalScreened = allInterviews.Count;
 			var passedInterviews = allInterviews.Count(i => i.IsPassed( ));

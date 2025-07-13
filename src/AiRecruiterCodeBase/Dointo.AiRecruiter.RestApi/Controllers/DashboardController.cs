@@ -19,7 +19,7 @@ public class DashboardController(IDashboardService service) : ControllerBase
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 	public async Task<IActionResult> GetDashboardMetrics( )
 	{
-		var result = await _service.GetDashboardMetricsAsync( );
+		var result = await _service.GetDashboardMetricsAsync(User);
 
 		return result switch
 		{

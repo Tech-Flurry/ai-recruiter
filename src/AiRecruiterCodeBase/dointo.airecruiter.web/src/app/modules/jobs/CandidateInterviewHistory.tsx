@@ -24,23 +24,38 @@ const CandidateInterviewHistory: React.FC = () => {
     const [startDate, setStartDate] = useState('')
     const [endDate, setEndDate] = useState('')
 
-    const fetchHistory = useCallback(async () => {
-        try {
-            const res = await axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/Interviews/history`, {
-                withCredentials: true,
-            })
-            const sorted = [...res.data].sort(
-                (a, b) => new Date(b.interviewedAt).getTime() - new Date(a.interviewedAt).getTime()
-            )
-            setHistory(sorted)
-            setFilteredHistory(sorted)
-        } catch (err) {
-            console.error(err)
-            setError('Failed to fetch interview history.')
-        } finally {
-            setLoading(false)
-        }
-    }, [])
+	const fetchHistory = useCallback(async () => {
+		const token = localStorage.getItem('kt-auth-react-v'); 
+
+		if (!token) {
+			console.error("❌ Auth token not found.");
+			setError("You are not authenticated.");
+			setLoading(false);
+			return;
+		}
+
+		try {
+			const res = await axios.get(
+				`${import.meta.env.VITE_APP_API_BASE_URL}/Interviews/history`,
+				{
+					headers: {
+						Authorization: `Bearer ${token}`,
+					},
+				}
+			);
+
+			const sorted = [...res.data].sort(
+				(a, b) => new Date(b.interviewedAt).getTime() - new Date(a.interviewedAt).getTime()
+			);
+			setHistory(sorted);
+			setFilteredHistory(sorted);
+		} catch (err) {
+			console.error(err);
+			setError("Failed to fetch interview history.");
+		} finally {
+			setLoading(false);
+		}
+	}, []);
 
     useEffect(() => {
         fetchHistory()

@@ -11,22 +11,33 @@ const InterviewReport: React.FC = () => {
 	const [report, setReport] = useState<any>(null)
 
 	useEffect(() => {
-		if (interviewId) {
-			axios
-				.get(`${import.meta.env.VITE_APP_API_BASE_URL}/Interviews/interview-report/${interviewId}`)
-				.then((res) => {
-					setReport(res.data);
-					setLoading(false)
-				})
-				.catch((err) => {
-					console.error('Error loading interview report:', err)
-					setLoading(false)
-				})
+		if (!interviewId) return;
+
+		const token = localStorage.getItem('kt-auth-react-v');
+		if (!token) {
+			console.error('Auth token not found.');
+			setLoading(false);
+			return;
 		}
-	}, [interviewId])
+
+		axios
+			.get(`${import.meta.env.VITE_APP_API_BASE_URL}/Interviews/interview-report/${interviewId}`, {
+				headers: {
+					Authorization: `Bearer ${token}`,
+				},
+			})
+			.then((res) => {
+				setReport(res.data);
+				setLoading(false);
+			})
+			.catch((err) => {
+				console.error('Error loading interview report:', err);
+				setLoading(false);
+			});
+	}, [interviewId]);
 
 	if (loading) return <div>Loading interview report...</div>
-	if (!report) return <div>Interview report not found.</div>
+	if (report) return <div>Interview report not found.</div>
 
 	return (
 		<KTCard className="mt-5">

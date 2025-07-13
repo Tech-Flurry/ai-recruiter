@@ -48,17 +48,13 @@ public class InterviewsController(IInterviewsService service) : ControllerBase
 	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<InterviewHistoryDto>))]
 	public async Task<IActionResult> GetInterviewHistoryByOwner( )
 	{
-		var ownerId = User.Identity?.Name ?? "system";
-		var result = await _service.GetInterviewHistoryByOwnerAsync(ownerId);
+		var result = await _service.GetInterviewHistoryByOwnerAsync(User);
 		return Ok(result);
 	}
 	[HttpGet("interview-report/{interviewId}")]
 	public async Task<IActionResult> GetInterviewReport(string interviewId)
 	{
 		var report = await _service.GetReportAsync(interviewId);
-		if (report == null)
-			return NotFound(new { message = "Interview report not found." });
-
 		return Ok(report);
 	}
 

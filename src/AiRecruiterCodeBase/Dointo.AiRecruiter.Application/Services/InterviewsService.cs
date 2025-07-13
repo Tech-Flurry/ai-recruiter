@@ -10,6 +10,7 @@ using Dointo.AiRecruiter.Domain.Validators;
 using Dointo.AiRecruiter.Domain.ValueObjects;
 using Dointo.AiRecruiter.Dtos;
 using Humanizer;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace Dointo.AiRecruiter.Application.Services;
@@ -21,8 +22,8 @@ public interface IInterviewsService
 	Task<IProcessingState> GetInterviewResultForCandidateAsync(string interviewId);
 	Task<IProcessingState> NextQuestionAsync(QuestionDto questionDto, string interviewId);
 	Task<IProcessingState> GetInterviewResultAsync(string interviewId);
-	Task<List<InterviewHistoryDto>> GetInterviewHistoryByOwnerAsync(string ownerId);
-	Task<InterviewReportDto?> GetReportAsync(string interviewId);
+	Task<IProcessingState> GetInterviewHistoryByOwnerAsync(ClaimsPrincipal user);
+	Task<IProcessingState> GetReportAsync(string interviewId);
 
 
 }
@@ -145,39 +146,80 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 			_messageBuilder.AddFormat(Messages.RECORD_RETRIEVED_FORMAT).AddString(INTERVIEW_STRING).Build( ),
 			result);
 	}
-	public async Task<List<InterviewHistoryDto>> GetInterviewHistoryByOwnerAsync(string ownerId)
+	public async Task<IProcessingState> GetInterviewHistoryByOwnerAsync(ClaimsPrincipal user)
 	{
+		_messageBuilder.Clear( );
 
-		var interviews = await _interviewsRepository.GetByOwnerAsync(ownerId);
-		var interviewDtos = interviews.Select(_interviewHistoryResolver.Resolve).ToList( );
-		var interviewDict = interviews.ToDictionary(x => x.Id);
-
-		foreach (var item in interviewDtos)
+		try
 		{
-			if (interviewDict.TryGetValue(item.InterviewId, out var interview))
+			var ownerId = user.GetOwnerId( );
+			var interviews = await _interviewsRepository.GetByOwnerAsync(ownerId);
+			var interviewDtos = interviews.Select(_interviewHistoryResolver.Resolve).ToList( );
+			var interviewDict = interviews.ToDictionary(x => x.Id);
+			foreach (var item in interviewDtos)
 			{
-				var jobId = interview.Job.JobId;
-				var job = await _readOnlyRepository.FindByIdAsync<Job>(jobId);
-				item.JobStatus = job.Status.Humanize( );
+				if (interviewDict.TryGetValue(item.InterviewId, out var interview))
+				{
+					var jobId = interview.Job.JobId;
+					var job = await _readOnlyRepository.FindByIdAsync<Job>(jobId);
+					item.JobStatus = job.Status.Humanize( );
+				}
 			}
+
+			return new SuccessState<List<InterviewHistoryDto>>(
+				_messageBuilder
+					.AddFormat(Messages.RECORD_RETRIEVED_FORMAT)
+					.AddString(INTERVIEW_STRING)
+					.Build( ),
+				interviewDtos
+			);
 		}
-
-		return interviewDtos;
-	}
-	public async Task<InterviewReportDto?> GetReportAsync(string interviewId)
-	{
-		var interview = await _interviewsRepository.GetInterviewResultByInterviewIdAsync(interviewId);
-		if (interview == null)
-			return null;
-
-		var dto = _reportResolver.Resolve(interview);
-		var job = await _readOnlyRepository.FindByIdAsync<Job>(interview.Job.JobId);
-		if (job != null)
+		catch (Exception ex)
 		{
-			dto.Status = job.Status.Humanize( );
+			throw new Exception("Failed to retrieve interview history.", ex);
 		}
+	}
 
-		return dto;
+	public async Task<IProcessingState> GetReportAsync(string interviewId)
+	{
+		_messageBuilder.Clear( );
+
+		try
+		{
+			var interview = await _interviewsRepository.GetInterviewResultByInterviewIdAsync(interviewId);
+
+			if (interview == null)
+			{
+				return new BusinessErrorState(
+					_messageBuilder
+						.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT)
+						.AddString("Interview Report")
+						.Build( ));
+			}
+			var dto = _reportResolver.Resolve(interview);
+			var job = await _readOnlyRepository.FindByIdAsync<Job>(interview.Job.JobId);
+			if (job != null)
+			{
+				dto.Status = job.Status.Humanize( );
+			}
+			return new SuccessState<InterviewReportDto>(
+				_messageBuilder
+					.AddFormat(Messages.RECORD_RETRIEVED_FORMAT)
+					.AddString("Interview Report")
+					.Build( ),
+				dto
+			);
+		}
+		catch (Exception ex)
+		{
+			return new ExceptionState(
+				_messageBuilder
+					.AddFormat(Messages.ERROR_OCCURRED_FORMAT)
+					.AddString("Interview Report")
+					.Build( ),
+				ex.Message
+			);
+		}
 	}
 
 	public async Task<IProcessingState> GetInterviewResultAsync(string interviewId)

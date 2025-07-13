@@ -29,7 +29,7 @@ const JobPost: React.FC = () => {
 
 	useEffect(() => {
 		const fetchJobs = async () => {
-		  const token = localStorage.getItem('authToken'); // retrieve token
+			const token = localStorage.getItem('kt-auth-react-v');
 		  if (!token) {
 			console.error("Token not found.");
 			return;
@@ -40,7 +40,7 @@ const JobPost: React.FC = () => {
 			  `${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts`,
 			  {
 				headers: {
-				  Authorization: `Bearer ${token}`, // attach token in header
+				  Authorization: `Bearer ${token}`,
 				},
 			  }
 			);

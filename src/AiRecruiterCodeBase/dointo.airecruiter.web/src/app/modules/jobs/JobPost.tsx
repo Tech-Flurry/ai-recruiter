@@ -62,15 +62,26 @@ function JobPost() {
 			})
 			.filter(Boolean);
 
-	// Initialize Tagify only once, destroy previous instance if any
 	useEffect(() => {
 		const fetchSkills = async () => {
+			const token = localStorage.getItem('kt-auth-react-v'); 
+
+			if (!token) {
+				console.error("❌ Token not found.");
+				return;
+			}
+
 			try {
 				const response = await axios.get(
 					`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/skills`,
-					{ withCredentials: true }
+					{
+						headers: {
+							Authorization: `Bearer ${token}`,
+						},
+					}
 				);
-				console.log("Skills API response:", response.data);
+
+				console.log("✅ Skills API response:", response.data);
 
 				const skills = normalizeSkills(response.data.data);
 
@@ -101,14 +112,25 @@ function JobPost() {
 		fetchSkills();
 	}, []);
 
-	// Load job data for edit mode and fill form including skills
+
 	useEffect(() => {
 		if (isEditMode && jobId) {
 			const fetchJob = async () => {
+				const token = localStorage.getItem('kt-auth-react-v');
+				if (!token) {
+					console.error("❌ Auth token not found.");
+					toastr.error("You are not authenticated.");
+					return;
+				}
+
 				try {
 					const res = await axios.get<{ data: JobPost }>(
 						`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/${jobId}`,
-						{ withCredentials: true }
+						{
+							headers: {
+								Authorization: `Bearer ${token}`,
+							},
+						}
 					);
 
 					const job = res.data?.data as JobPost;
@@ -125,6 +147,7 @@ function JobPost() {
 					const additionalInput = formRef.current?.elements.namedItem(
 						"additionalQuestions"
 					) as HTMLTextAreaElement;
+
 					if (currencyInput) currencyInput.value = job.budgetCurrency || "USD";
 					if (additionalInput) additionalInput.value = job.additionalQuestions || "";
 
@@ -145,6 +168,7 @@ function JobPost() {
 			fetchJob();
 		}
 	}, [isEditMode, jobId]);
+
 
 	// *** Changed here: only update description state, no auto skill extraction ***
 	const handleJobDescriptionChange = (value: string) => {

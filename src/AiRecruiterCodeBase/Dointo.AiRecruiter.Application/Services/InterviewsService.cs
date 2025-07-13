@@ -28,7 +28,7 @@ public interface IInterviewsService
 }
 
 internal class InterviewsService(ICandidateRepository candidatesRepository, IResolver<Candidate, CreateCandidateDto> createCandidateResolver, ICandidatesAgent candidatesAgent, IInterviewsRepository interviewRepository, IResolver<Interview, InterviewGeneratedDto> interviewDtoResolver, IInterviewAgent interviewAgent, IResolver<Question, QuestionDto> questionDtoResolver, IResolver<Interview, CandidateInterviewResultDto> resultResolver,
-	IResolver<Interview, InterviewResultDto> interviewResultsResolver,IResolver<Interview,InterviewReportDto> interviewReportDtoResolver,IReadOnlyRepository readOnlyRepository, IResolver<Interview, InterviewHistoryDto> interviewHistoryResolver) : IInterviewsService
+	IResolver<Interview, InterviewResultDto> interviewResultsResolver, IResolver<Interview, InterviewReportDto> interviewReportDtoResolver, IReadOnlyRepository readOnlyRepository, IResolver<Interview, InterviewHistoryDto> interviewHistoryResolver) : IInterviewsService
 {
 	private const string CANDIDATE_STRING = nameof(Candidate);
 	private const string INTERVIEW_STRING = nameof(Interview);
@@ -108,7 +108,18 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 			var interview = await _readOnlyRepository.FindByIdAsync<Interview>(interviewId);
 			var candidate = await _readOnlyRepository.FindByIdAsync<Candidate>(interview.Interviewee.CandidateId);
 			var (scoredQuestion, terminate) = await _interviewAgent.ScoreQuestionAsync(interview, question);
+			var aiScore = await _interviewAgent.GetAiScore(question.Answer ?? string.Empty);
+			var aiPercent = ( aiScore / 5 ) * 100;
+			var finalizedScore = scoredQuestion.ScoreObtained - ( aiPercent / 100 * scoredQuestion.ScoreObtained );
+			scoredQuestion.ScoreObtained = finalizedScore;
 			interview.Questions.Add(scoredQuestion);
+			if (aiScore > 2)
+				interview.Violations.Add($"Question: {scoredQuestion.Question} has an AI score of {aiScore}, which is above the acceptable threshold.");
+			if (interview.Violations.Count > 3)
+			{
+				interview.Violations.Add("Interview has more than 3 violations.");
+				terminate = true;
+			}
 			var nextQuestionDto = new NextQuestionDto { Terminate = terminate || interview.Questions.Count == 25 };
 			if (!terminate)
 			{
@@ -255,5 +266,5 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 		}
 	}
 
- 
+
 }

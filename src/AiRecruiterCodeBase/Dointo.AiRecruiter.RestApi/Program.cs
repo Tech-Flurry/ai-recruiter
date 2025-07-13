@@ -53,7 +53,7 @@ builder.Services.AddSwaggerGen(c =>
 // ✅ Register Mongo + App dependencies
 builder.Services.AddDbInfrastructure("MongoDb:ConnectionString", "MongoDb:DatabaseName");
 builder.Services.AddApplication( );
-builder.Services.AddAiInfrastructure("OpenAi");
+builder.Services.AddAiInfrastructure(builder.Configuration["AiDetectorBaseUrl"]!, "OpenAi");
 
 
 var app = builder.Build( );

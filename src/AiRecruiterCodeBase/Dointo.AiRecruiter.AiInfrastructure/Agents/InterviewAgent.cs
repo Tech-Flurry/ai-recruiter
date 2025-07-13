@@ -3,12 +3,14 @@ using Dointo.AiRecruiter.AiInfrastructure.Utils;
 using Dointo.AiRecruiter.Application.AiAbstractions;
 using Dointo.AiRecruiter.Domain.Entities;
 using Dointo.AiRecruiter.Domain.ValueObjects;
+using System.Net.Http.Json;
 using System.Text.Json;
 
 namespace Dointo.AiRecruiter.AiInfrastructure.Agents;
-internal class InterviewAgent(AiProviderFactory aiProviderFactory) : IInterviewAgent
+internal class InterviewAgent(AiProviderFactory aiProviderFactory, IHttpClientFactory clientFactory) : IInterviewAgent
 {
 	private readonly AiProviderFactory _aiProviderFactory = aiProviderFactory;
+	private readonly IHttpClientFactory _clientFactory = clientFactory;
 
 	public async Task<string> GenerateInterviewStarter(string jobTitle, string candidateName)
 	{
@@ -138,9 +140,30 @@ Instructions:
 		});
 	}
 
+	public async Task<double> GetAiScore(string text)
+	{
+		if (string.IsNullOrWhiteSpace(text))
+			return 0;
+		try
+		{
+			var client = _clientFactory.CreateClient(Setup.AI_DETECTOR);
+			var response = await client.PostAsJsonAsync<AiScoreRequest>("api/ScoreFunction", new(text));
+			var dto = await response.Content.ReadFromJsonAsync<AiScoreDto>( );
+			if (dto == null)
+				return 0;
+			return dto.Score;
+		}
+		catch (Exception)
+		{
+			return 0;
+		}
+	}
+
 	private sealed record ScoredQuestionCompletionDto(double Score, bool Terminate);
 	private sealed record QuestionCompletionDto(string Question);
 	private sealed record ScoredInterviewCompletionDto(string Analysis, double Score);
+	private sealed record AiScoreRequest(string Text);
+	private sealed record AiScoreDto(double Score, string Label);
 	private sealed record ScoredSkillsCompletionDto( )
 	{
 		public List<SkillRating> Skills { get; set; } = [ ];

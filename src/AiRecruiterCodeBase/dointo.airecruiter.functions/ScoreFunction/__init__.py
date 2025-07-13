@@ -61,10 +61,17 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     try:
         ppl = calculate_perplexity(text, model, tokenizer)
+        score = 0
+        if ppl >= 80:
+            score = 0
+        elif ppl <= 60:
+            score = 5
+        else:
+            score = 5 - ((ppl - 60) / 20) * 5
         label = ai_label(ppl)
         return func.HttpResponse(
             json.dumps({
-                "perplexity": ppl,
+                "score": score,
                 "label": label
             }),
             status_code=200,

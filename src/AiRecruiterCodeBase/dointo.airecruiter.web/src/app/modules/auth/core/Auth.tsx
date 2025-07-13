@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import {FC, useState, useEffect, createContext, useContext, Dispatch, SetStateAction} from 'react'
+import {FC, useState, useEffect, createContext, useContext, Dispatch, SetStateAction, useRef} from 'react'
 import {LayoutSplashScreen} from '../../../../_metronic/layout/core'
 import {AuthModel, UserModel} from './_models'
 import * as authHelper from './AuthHelpers'
@@ -55,6 +55,7 @@ const AuthProvider: FC<WithChildren> = ({children}) => {
 const AuthInit: FC<WithChildren> = ({children}) => {
   const {auth, currentUser, logout, setCurrentUser} = useAuth()
   const [showSplashScreen, setShowSplashScreen] = useState(true)
+  const didRequest = useRef(false)
 
   // We should request user by authToken (IN OUR EXAMPLE IT'S API_TOKEN) before rendering the application
   useEffect(() => {
@@ -68,7 +69,7 @@ const AuthInit: FC<WithChildren> = ({children}) => {
         }
       } catch (error) {
         console.error(error)
-        if (currentUser) {
+        if (!auth) {
           logout()
         }
       } finally {
@@ -76,14 +77,20 @@ const AuthInit: FC<WithChildren> = ({children}) => {
       }
     }
 
-    if (auth && auth.api_token) {
-      requestUser(auth.api_token)
-    } else {
-      logout()
-      setShowSplashScreen(false)
+    if (!didRequest.current) {
+      if (auth && auth.api_token) {
+        requestUser(auth.api_token)
+      } else {
+        logout()
+        setShowSplashScreen(false)
+      }
+      didRequest.current = true
     }
-    // eslint-disable-next-line
-  }, [])
+
+    return () => {
+      didRequest.current = true
+    }
+  }, []) // Empty dependency array - runs only once
 
   return showSplashScreen ? <LayoutSplashScreen /> : <>{children}</>
 }

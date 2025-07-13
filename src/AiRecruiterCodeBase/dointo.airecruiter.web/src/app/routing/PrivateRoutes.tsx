@@ -1,5 +1,6 @@
 import { FC, lazy, Suspense } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, Outlet } from 'react-router-dom'
+import { useAuth } from '../modules/auth'
 import { MasterLayout } from '../../_metronic/layout/MasterLayout'
 import TopBarProgress from 'react-topbar-progress-indicator'
 import { DashboardWrapper } from '../pages/dashboard/DashboardWrapper'
@@ -9,10 +10,14 @@ import { WithChildren } from '../../_metronic/helpers'
 import BuilderPageWrapper from '../pages/layout-builder/BuilderPageWrapper'
 import JobsIndex from '../modules/jobs/JobsIndex'
 
-// 🔐 Simple wrapper to protect routes
-const RequireAuth: FC<WithChildren> = ({ children }) => {
-  const token = localStorage.getItem('authToken')
-  return token ? children : <Navigate to="/auth/login" replace />
+const RequireAuth = () => {
+	const { currentUser } = useAuth()
+
+	if (!currentUser) {
+		return <Navigate to='/auth/login' replace />
+	}
+
+	return <Outlet />
 }
 
 const PrivateRoutes = () => {
@@ -25,107 +30,49 @@ const PrivateRoutes = () => {
 
   return (
     <Routes>
-      <Route element={<MasterLayout />}>
-        {/* 🔁 Wrap all protected routes in RequireAuth */}
-        <Route
-          path="auth/*"
-          element={<Navigate to="/dashboard" replace />}
-        />
-        <Route
-          path="dashboard"
-          element={
-            <RequireAuth>
-              <DashboardWrapper />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="builder"
-          element={
-            <RequireAuth>
-              <SuspensedView>
-                <BuilderPageWrapper />
-              </SuspensedView>
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="menu-test"
-          element={
-            <RequireAuth>
-              <MenuTestPage />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="jobs/*"
-          element={
-            <RequireAuth>
-              <JobsIndex />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="crafted/pages/profile/*"
-          element={
-            <RequireAuth>
-              <SuspensedView>
-                <ProfilePage />
-              </SuspensedView>
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="crafted/pages/wizards/*"
-          element={
-            <RequireAuth>
-              <SuspensedView>
-                <WizardsPage />
-              </SuspensedView>
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="crafted/widgets/*"
-          element={
-            <RequireAuth>
-              <SuspensedView>
-                <WidgetsPage />
-              </SuspensedView>
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="crafted/account/*"
-          element={
-            <RequireAuth>
-              <SuspensedView>
-                <AccountPage />
-              </SuspensedView>
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="apps/chat/*"
-          element={
-            <RequireAuth>
-              <SuspensedView>
-                <ChatPage />
-              </SuspensedView>
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="apps/user-management/*"
-          element={
-            <RequireAuth>
-              <SuspensedView>
-                <UsersPage />
-              </SuspensedView>
-            </RequireAuth>
-          }
-        />
-        <Route path="*" element={<Navigate to="/error/404" />} />
+      <Route element={<RequireAuth />}>
+        <Route element={<MasterLayout />}>
+          <Route path='auth/*' element={<Navigate to='/dashboard' replace />} />
+          <Route path='dashboard' element={<DashboardWrapper />} />
+          <Route path='builder' element={
+            <SuspensedView>
+              <BuilderPageWrapper />
+            </SuspensedView>
+          } />
+          <Route path='menu-test' element={<MenuTestPage />} />
+          <Route path='jobs/*' element={<JobsIndex />} />
+          <Route path='crafted/pages/profile/*' element={
+            <SuspensedView>
+              <ProfilePage />
+            </SuspensedView>
+          } />
+          <Route path='crafted/pages/wizards/*' element={
+            <SuspensedView>
+              <WizardsPage />
+            </SuspensedView>
+          } />
+          <Route path='crafted/widgets/*' element={
+            <SuspensedView>
+              <WidgetsPage />
+            </SuspensedView>
+          } />
+          <Route path='crafted/account/*' element={
+            <SuspensedView>
+              <AccountPage />
+            </SuspensedView>
+          } />
+          <Route path='apps/chat/*' element={
+            <SuspensedView>
+              <ChatPage />
+            </SuspensedView>
+          } />
+          <Route path='apps/user-management/*' element={
+            <SuspensedView>
+              <UsersPage />
+            </SuspensedView>
+          } />
+          <Route path='*' element={<Navigate to='/error/404' />} />
+        </Route>
       </Route>
     </Routes>
   )

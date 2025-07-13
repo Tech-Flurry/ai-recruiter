@@ -11,6 +11,10 @@
         "Path": "dointo.airecruiter.web\\dointo.airecruiter.web.esproj",
         "Action": "Start",
         "DebugTarget": "localhost (Chrome)"
+      },
+      {
+        "Path": "dointo.airecruiter.functions\\dointo.airecruiter.functions.pyproj",
+        "Action": "Start"
       }
     ]
   }

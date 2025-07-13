@@ -1,0 +1,4 @@
+azure-functions
+transformers
+torch
+hf_xet

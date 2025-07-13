@@ -4,6 +4,8 @@ import torch
 import logging
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast
 
+APPLICATION_JSON = "application/json"
+
 def calculate_perplexity(text, model, tokenizer, stride=512):
     logging.info("Calculating perplexity for input text of length %d", len(text))
     encodings = tokenizer(text, return_tensors="pt")
@@ -56,7 +58,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(
             json.dumps({"error": "Invalid JSON"}),
             status_code=400,
-            mimetype="application/json"
+            mimetype=APPLICATION_JSON
         )
 
     text = req_body.get("text")
@@ -65,7 +67,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(
             json.dumps({"error": "Please provide a valid 'text' field with at least 20 characters."}),
             status_code=400,
-            mimetype="application/json"
+            mimetype=APPLICATION_JSON
         )
 
     try:
@@ -85,12 +87,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "label": label
             }),
             status_code=200,
-            mimetype="application/json"
+            mimetype=APPLICATION_JSON
         )
     except Exception as e:
         logging.exception("Exception occurred during processing.")
         return func.HttpResponse(
             json.dumps({"error": str(e)}),
             status_code=500,
-            mimetype="application/json"
+            mimetype=APPLICATION_JSON
         )

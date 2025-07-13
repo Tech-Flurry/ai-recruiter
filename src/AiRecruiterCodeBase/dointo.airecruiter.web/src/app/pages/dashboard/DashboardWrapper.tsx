@@ -54,14 +54,14 @@ const DashboardPage = () => {
 					},
 				}
 
-				const [metricsRes, pipelineRes, /*insightsRes*/] = await Promise.all([
+				const [metricsRes, pipelineRes, insightsRes] = await Promise.all([
 					axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/Dashboard`, headers),
 					axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/Dashboard/pipeline-metrics`, headers),
-					//axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/Dashboard/insights`, headers),
+					axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/Dashboard/insights`, headers),
 				])
 				setMetrics(metricsRes.data)
 				setPipelineMetrics(pipelineRes.data)
-				//setInsights(insightsRes.data)
+				setInsights(insightsRes.data)
 
 			} catch (err) {
 				console.error('❌ Failed to fetch dashboard data:', err)

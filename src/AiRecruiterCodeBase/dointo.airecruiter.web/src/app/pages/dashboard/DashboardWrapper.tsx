@@ -39,7 +39,7 @@ const DashboardPage = () => {
 	const [error, setError] = useState(false)
 
 	useEffect(() => {
-		const token = localStorage.getItem('authToken')
+		const token = localStorage.getItem('kt-auth-react-v')
 		if (!token) {
 			console.error("Auth token not found.")
 			setError(true)
@@ -54,7 +54,7 @@ const DashboardPage = () => {
 					},
 				}
 
-				const [metricsRes, pipelineRes, insightsRes] = await Promise.all([
+				const [metricsRes, pipelineRes, /*insightsRes*/] = await Promise.all([
 					axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/Dashboard`, headers),
 					axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/Dashboard/pipeline-metrics`, headers),
 					//axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/Dashboard/insights`, headers),

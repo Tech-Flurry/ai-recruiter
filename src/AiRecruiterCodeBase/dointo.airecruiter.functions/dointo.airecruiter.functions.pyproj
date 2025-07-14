@@ -1,0 +1,52 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>a64b65d0-5aba-475d-9d57-ad0f7d88d447</ProjectGuid>
+    <ProjectHome>.</ProjectHome>
+    <StartupFile>dointo.airecruiter.functions.py</StartupFile>
+    <SearchPath>
+    </SearchPath>
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <Name>dointo.airecruiter.functions</Name>
+    <RootNamespace>dointo.airecruiter.functions</RootNamespace>
+    <IsWindowsApplication>False</IsWindowsApplication>
+    <InterpreterId>Global|PythonCore|3.12</InterpreterId>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="dointo.airecruiter.functions.py" />
+    <Compile Include="ScoreFunction\__init__.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="ScoreFunction\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="host.json" />
+    <Content Include="local.settings.json" />
+    <Content Include="ScoreFunction\function.json" />
+    <Content Include="ScoreFunction\host.json" />
+    <Content Include="ScoreFunction\README.md" />
+    <Content Include="ScoreFunction\requirements.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <InterpreterReference Include="Global|PythonCore|3.12" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
+  <!-- Uncomment the CoreCompile target to enable the Build command in
+       Visual Studio and specify your pre- and post-build commands in
+       the BeforeBuild and AfterBuild targets below. -->
+  <!--<Target Name="CoreCompile" />-->
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+</Project>

@@ -32,6 +32,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 		{
 			ValidateIssuerSigningKey = true,
 			IssuerSigningKey = new SymmetricSecurityKey(key),
+			ValidateLifetime = true,
+			ValidIssuer = builder.Configuration["Jwt:Issuer"],
 			ValidateIssuer = true,
 			ValidateAudience = false
 		};
@@ -47,6 +49,29 @@ builder.Services.AddSwaggerGen(c =>
 		Title = "AI Recruiter API",
 		Version = "v1",
 		Description = "Backend API for the AI-based recruitment system"
+	});
+	c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+	{
+		Description = "Insert the JWT token as: Bearer {your token}",
+		Name = "Authorization",
+		In = ParameterLocation.Header,
+		Type = SecuritySchemeType.Http,
+		Scheme = "bearer",
+		BearerFormat = "JWT"
+	});
+	c.AddSecurityRequirement(new OpenApiSecurityRequirement
+	{
+		{
+			new OpenApiSecurityScheme
+			{
+				Reference = new OpenApiReference
+				{
+					Id = "Bearer",
+					Type = ReferenceType.SecurityScheme,
+				}
+			},
+			new List<string>()
+		}
 	});
 });
 

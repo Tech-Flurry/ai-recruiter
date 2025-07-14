@@ -10,6 +10,8 @@ using Dointo.AiRecruiter.Domain.Validators;
 using Dointo.AiRecruiter.Domain.ValueObjects;
 using Dointo.AiRecruiter.Dtos;
 using Humanizer;
+using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace Dointo.AiRecruiter.Application.Services;
@@ -21,10 +23,9 @@ public interface IInterviewsService
 	Task<IProcessingState> GetInterviewResultForCandidateAsync(string interviewId);
 	Task<IProcessingState> NextQuestionAsync(QuestionDto questionDto, string interviewId);
 	Task<IProcessingState> GetInterviewResultAsync(string interviewId);
-	Task<List<InterviewHistoryDto>> GetInterviewHistoryByOwnerAsync(string ownerId);
-	Task<InterviewReportDto?> GetReportAsync(string interviewId);
-
-
+	Task<IProcessingState> GetInterviewHistoryByOwnerAsync(ClaimsPrincipal user);
+	Task<IProcessingState> GetReportAsync(string interviewId);
+	Task<IProcessingState> GetCandidateByUserAsync(ClaimsPrincipal user);
 }
 
 internal class InterviewsService(ICandidateRepository candidatesRepository, IResolver<Candidate, CreateCandidateDto> createCandidateResolver, ICandidatesAgent candidatesAgent, IInterviewsRepository interviewRepository, IResolver<Interview, InterviewGeneratedDto> interviewDtoResolver, IInterviewAgent interviewAgent, IResolver<Question, QuestionDto> questionDtoResolver, IResolver<Interview, CandidateInterviewResultDto> resultResolver,
@@ -156,39 +157,112 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 			_messageBuilder.AddFormat(Messages.RECORD_RETRIEVED_FORMAT).AddString(INTERVIEW_STRING).Build( ),
 			result);
 	}
-	public async Task<List<InterviewHistoryDto>> GetInterviewHistoryByOwnerAsync(string ownerId)
+    public async Task<IProcessingState> GetInterviewHistoryByOwnerAsync(ClaimsPrincipal user)
+    {
+        _messageBuilder.Clear();
+
+        try
+        {
+            var ownerId = user.GetOwnerId();
+            var interviews = await _interviewsRepository.GetByOwnerAsync(ownerId);
+
+            var interviewDtos = interviews.Select(_interviewHistoryResolver.Resolve).ToList();
+
+            if (interviewDtos.Count == 0)
+            {
+                return new SuccessState<List<InterviewHistoryDto>>(
+                    _messageBuilder
+                        .AddFormat("No interviews found for this user.")
+                        .Build(),
+                    interviewDtos
+                );
+            }
+
+            // Prepare lookup to map interview to job
+            var jobIds = interviews
+                .Select(i => i.Job?.JobId)
+                .Where(id => id != null)
+                .Distinct()
+                .ToList();
+
+            var jobs = _readOnlyRepository.Query<Job>()
+                .Where(j => jobIds.Contains(j.Id))
+                .ToList();
+
+            var jobDict = jobs.ToDictionary(j => j.Id);
+            var interviewDict = interviews.ToDictionary(x => x.Id);
+
+            // Update each DTO with job status
+            foreach (var item in interviewDtos)
+            {
+                if (interviewDict.TryGetValue(item.InterviewId, out var interview))
+                {
+                    var jobId = interview.Job?.JobId;
+                    if (jobId != null && jobDict.TryGetValue(jobId, out var job))
+                    {
+                        item.JobStatus = job.Status.Humanize();
+                    }
+                    else
+                    {
+                        item.JobStatus = "Unknown";
+                    }
+                }
+            }
+
+            return new SuccessState<List<InterviewHistoryDto>>(
+                _messageBuilder
+                    .AddFormat(Messages.RECORD_RETRIEVED_FORMAT)
+                    .AddString(INTERVIEW_STRING)
+                    .Build(),
+                interviewDtos
+            );
+        }
+        catch (Exception ex)
+        {
+			return new ExceptionState("Failed to retrieve interview history.", ex.Message);
+        }
+    }
+
+	public async Task<IProcessingState> GetReportAsync(string interviewId)
 	{
+		_messageBuilder.Clear( );
 
-		var interviews = await _interviewsRepository.GetByOwnerAsync(ownerId);
-		var interviewDtos = interviews.Select(_interviewHistoryResolver.Resolve).ToList( );
-		var interviewDict = interviews.ToDictionary(x => x.Id);
-
-		foreach (var item in interviewDtos)
+		try
 		{
-			if (interviewDict.TryGetValue(item.InterviewId, out var interview))
+			var interview = await _interviewsRepository.GetInterviewResultByInterviewIdAsync(interviewId);
+
+			if (interview == null)
 			{
-				var jobId = interview.Job.JobId;
-				var job = await _readOnlyRepository.FindByIdAsync<Job>(jobId);
-				item.JobStatus = job.Status.Humanize( );
+				return new BusinessErrorState(
+					_messageBuilder
+						.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT)
+						.AddString("Interview Report")
+						.Build( ));
 			}
+			var dto = _reportResolver.Resolve(interview);
+			var job = await _readOnlyRepository.FindByIdAsync<Job>(interview.Job.JobId);
+			if (job != null)
+			{
+				dto.Status = job.Status.Humanize( );
+			}
+			return new SuccessState<InterviewReportDto>(
+				_messageBuilder
+					.AddFormat(Messages.RECORD_RETRIEVED_FORMAT)
+					.AddString("Interview Report")
+					.Build( ),
+				dto
+			);
 		}
-
-		return interviewDtos;
-	}
-	public async Task<InterviewReportDto?> GetReportAsync(string interviewId)
-	{
-		var interview = await _interviewsRepository.GetInterviewResultByInterviewIdAsync(interviewId);
-		if (interview == null)
-			return null;
-
-		var dto = _reportResolver.Resolve(interview);
-		var job = await _readOnlyRepository.FindByIdAsync<Job>(interview.Job.JobId);
-		if (job != null)
+		catch (Exception ex)
 		{
-			dto.Status = job.Status.Humanize( );
+			return new ExceptionState(
+				_messageBuilder
+					.AddFormat(Messages.ERROR_OCCURRED_FORMAT)
+					.AddString("Interview Report")
+					.Build( ),
+				ex.Message
+			);
 		}
-
-		return dto;
 	}
 
 	public async Task<IProcessingState> GetInterviewResultAsync(string interviewId)
@@ -266,5 +340,17 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 		}
 	}
 
-
+	public Task<IProcessingState> GetCandidateByUserAsync(ClaimsPrincipal user)
+	{
+		var ownerId = user.GetOwnerId( );
+		var candidate = _readOnlyRepository.Query<Candidate>( )
+			.FirstOrDefault(c => c.CreatedBy == ownerId);
+		if (candidate is null)
+			return Task.FromResult<IProcessingState>(new BusinessErrorState(
+				_messageBuilder.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT).AddString(CANDIDATE_STRING).Build( )));
+		var dto = _createCandidateResolver.Resolve(candidate);
+		return Task.FromResult<IProcessingState>(new SuccessState<CreateCandidateDto>(
+			_messageBuilder.AddFormat(Messages.RECORD_RETRIEVED_FORMAT).AddString(CANDIDATE_STRING).Build( ),
+			dto));
+	}
 }

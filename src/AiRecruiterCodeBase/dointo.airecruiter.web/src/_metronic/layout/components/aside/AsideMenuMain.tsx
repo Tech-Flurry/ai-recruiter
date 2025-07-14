@@ -1,38 +1,39 @@
-﻿import { useIntl } from 'react-intl'
+﻿
+import { useEffect, useState } from 'react'
+import { useIntl } from 'react-intl'
 import { KTIcon } from '../../../helpers'
 import { AsideMenuItemWithSub } from './AsideMenuItemWithSub'
 import { AsideMenuItem } from './AsideMenuItem'
 
 export function AsideMenuMain() {
 	const intl = useIntl()
+	const [role, setRole] = useState('recruiter') // default to recruiter
 
+	useEffect(() => {
+		const savedRole = localStorage.getItem('role')
+		if (savedRole) {
+			setRole(savedRole)
+		}
+	}, [])
 	return (
 		<>
-			<AsideMenuItem
-				to='/dashboard'
-				icon='element-11'
-				title={intl.formatMessage({ id: 'MENU.DASHBOARD' })}
-			/>
-
-			<div className='menu-item'>
-				<div className='menu-content pt-8 pb-2'>
-					<span className='menu-section text-muted text-uppercase fs-8 ls-1'>Hire</span>
-				</div>
-			</div>
-
-			<AsideMenuItem
-				to='/jobs/list'
-				icon='element-10'
-				title={intl.formatMessage({ id: 'MENU.JOBS' })}
-			/>
-
-			{/* ✅ Added Candidate Interview History page to sidebar */}
-			<AsideMenuItem
-				to='/jobs/interview-history'
-				icon='chart'
-				title='Interview History'
-			/>
-
+			{role === 'recruiter' ? (
+				<>
+					<AsideMenuItem to='/dashboard' icon='element-11' title='Recruiter Dashboard' />
+					<AsideMenuItem to='/jobs/list' icon='element-10' title='Jobs' />
+					<AsideMenuItem to='/apps/user-management/users' icon='shield-tick' title='User Management' />
+				</>
+			) : (
+				<>
+					<AsideMenuItem to='/dashboard' icon='element-11' title='Candidate Dashboard' />
+						<AsideMenuItem
+							to='/jobs/interview-history'
+							icon='chart'
+							title='Interview History'
+						/>
+					<AsideMenuItem to='/profile' icon='profile-circle' title='My Profile' />
+				</>
+			)}
 			<AsideMenuItemWithSub to='/crafted/pages' title='Pages' icon='gift'>
 				<AsideMenuItemWithSub to='/crafted/pages/profile' title='Profile' hasBullet={true}>
 					<AsideMenuItem to='/crafted/pages/profile/overview' title='Overview' hasBullet={true} />

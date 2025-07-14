@@ -10,6 +10,7 @@ using Dointo.AiRecruiter.Domain.Validators;
 using Dointo.AiRecruiter.Domain.ValueObjects;
 using Dointo.AiRecruiter.Dtos;
 using Humanizer;
+using System.Security.Claims;
 
 namespace Dointo.AiRecruiter.Application.Services;
 
@@ -17,7 +18,7 @@ public interface IJobPostsService
 {
 	Task<IProcessingState> DeleteAsync(string id);
 	Task<IProcessingState> GetByIdAsync(string id);
-	Task<IProcessingState> GetJobsListAsync( );
+	Task<IProcessingState> GetJobsListAsync(ClaimsPrincipal user);
 	Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username);
 	Task<IProcessingState> CloseMultipleJobsAsync(CloseMultipleJobsDto closeJobDto);
 	Task<IProcessingState> ExtractSkillsFromDescriptionAsync(string jobDescription);
@@ -57,9 +58,10 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		}
 	}
 
-	public async Task<IProcessingState> GetJobsListAsync( )
+	public async Task<IProcessingState> GetJobsListAsync(ClaimsPrincipal user)
 	{
-		var jobs = await _repository.GetByOwnerAsync("system");
+		var userId = user.GetOwnerId( );
+		var jobs = await _repository.GetByOwnerAsync(userId);
 		var interviewsSet = _readOnlyRepository.Query<Interview>( );
 		_messageBuilder.Clear( );
 		var jobPostDtos = jobs.Select(x =>
@@ -124,8 +126,6 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 	public async Task<IProcessingState> ExtractSkillsFromDescriptionAsync(string jobDescription)
 	{
 		_messageBuilder.Clear( );
-
-		// Validate input
 		if (string.IsNullOrWhiteSpace(jobDescription))
 		{
 			return new BusinessErrorState(
@@ -137,15 +137,10 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 
 		try
 		{
-			// Get predefined skills from database or in-memory repository
 			var predefinedSkills = QuerySkills( )
 				.Select(skillDto => skillDto.Name)
 				.ToList( );
-
-			// Call AI agent to extract skills (make sure this method is implemented correctly)
 			var extractedSkills = await _jobsAgent.ExtractSkillsAsync(jobDescription, predefinedSkills);
-
-			// Return success with extracted skills
 			return new SuccessState<List<string>>(
 				_messageBuilder
 					.AddFormat(Messages.RECORD_RETRIEVED_FORMAT)
@@ -155,11 +150,8 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		}
 		catch (Exception ex)
 		{
-			// Log the exception here - replace with your logger if you have one
 			Console.WriteLine($"Error in ExtractSkillsFromDescriptionAsync: {ex.Message}");
 			Console.WriteLine(ex.StackTrace);
-
-			// Return a controlled error state with the exception message
 			return new ExceptionState(
 				_messageBuilder
 					.AddFormat(Messages.ERROR_OCCURRED_FORMAT)
@@ -190,8 +182,6 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 
         var interviews = _readOnlyRepository.Query<Interview>();
         var interviewees = jobPost.GetSortedInterviewees(interviews);
-
-        // Assuming you need to return a success state with the interviewees
         return new SuccessState<List<Interviewee>>(
             _messageBuilder.AddFormat(Messages.RECORD_RETRIEVED_FORMAT).AddString(JOB_STRING).Build(),
             interviewees

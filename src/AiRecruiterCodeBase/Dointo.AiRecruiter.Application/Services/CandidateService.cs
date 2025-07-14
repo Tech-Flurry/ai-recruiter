@@ -33,24 +33,10 @@ internal class CandidateService(
 			.Where(i => i.Job.JobId == jobId)
 			.ToList( );
 
-		if (interviews.Count == 0)
-		{
-			return Task.FromResult<IProcessingState>(
-				new BusinessErrorState(_messageBuilder.AddString("No candidates found for this job.").Build( ))
-			);
-		}
-
 		var candidateDtos = interviews
 			.Select(_resolver.Resolve)
 			.Where(dto => dto != null)
 			.ToList( );
-
-		if (!candidateDtos.Any( ))
-		{
-			return Task.FromResult<IProcessingState>(
-				new BusinessErrorState(_messageBuilder.AddString("No candidates found for this job.").Build( ))
-			);
-		}
 
 		return Task.FromResult<IProcessingState>(
 			new SuccessState<List<CandidateListDto>>(

@@ -14,22 +14,27 @@ public class UnitOfWorkMiddleware(RequestDelegate next, ILogger<UnitOfWorkMiddle
 		{
 			await _next(context);
 			if (dbContext.ChangeTracker.HasChanges( ))
-				await dbContext.SaveChangesAsync( );
+			{
+				if (context.User.Identity?.IsAuthenticated == true)
+					await dbContext.SaveChangesAsync(context.User);
+				else
+					await dbContext.SaveChangesAsync( );
+			}
 		}
-        catch (Exception ex)
-        {
-            if (!context.Response.HasStarted)
-            {
-                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-                context.Response.ContentType = "application/json";
-                var error = new ErrorState("An error occurred while processing your request.");
-                await context.Response.WriteAsJsonAsync(error);
-            }
-            else
-            {
-                _logger.LogWarning("The response has already started, the error handler will not be executed.");
-            }
-            _logger.LogError(ex, "Transaction failed. Rolling back.");
-        }
+		catch (Exception ex)
+		{
+			if (!context.Response.HasStarted)
+			{
+				context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+				context.Response.ContentType = "application/json";
+				var error = new ErrorState("An error occurred while processing your request.");
+				await context.Response.WriteAsJsonAsync(error);
+			}
+			else
+			{
+				_logger.LogWarning("The response has already started, the error handler will not be executed.");
+			}
+			_logger.LogError(ex, "Transaction failed. Rolling back.");
+		}
 	}
 }

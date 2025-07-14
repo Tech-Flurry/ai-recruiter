@@ -36,27 +36,49 @@ const DashboardPage = () => {
 	const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
 	const [insights, setInsights] = useState<JobPostInsight[]>([])
 	const [pipelineMetrics, setPipelineMetrics] = useState<CandidatePipelineMetrics | null>(null)
+	const [error, setError] = useState(false)
 
 	useEffect(() => {
+		const token = localStorage.getItem('kt-auth-react-v')
+		if (!token) {
+			console.error("Auth token not found.")
+			setError(true)
+			return
+		}
+
 		const fetchDashboardData = async () => {
 			try {
-				const metricsRes = await axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/Dashboard`)
+				const headers = {
+					headers: {
+						Authorization: `Bearer ${token}`,
+					},
+				}
+
+				const [metricsRes, pipelineRes, insightsRes] = await Promise.all([
+					axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/Dashboard`, headers),
+					axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/Dashboard/pipeline-metrics`, headers),
+					axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/Dashboard/insights`, headers),
+				])
 				setMetrics(metricsRes.data)
-
-				const pipelineRes = await axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/Dashboard/pipeline-metrics`)
 				setPipelineMetrics(pipelineRes.data)
-
-				const insightsRes = await axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/Dashboard/insights`)
 				setInsights(insightsRes.data)
+
 			} catch (err) {
 				console.error('❌ Failed to fetch dashboard data:', err)
+				setError(true)
 			}
 		}
 
 		fetchDashboardData()
 	}, [])
 
-	if (!metrics || !pipelineMetrics) return <div className='text-center p-10'>Loading dashboard...</div>
+	if (error) {
+		return <div className='text-danger text-center p-10'>Failed to load dashboard. Please try again later.</div>
+	}
+
+	if (!metrics || !pipelineMetrics) {
+		return <div className='text-center p-10'>Loading dashboard...</div>
+	}
 
 	return (
 		<>
@@ -112,7 +134,7 @@ const DashboardPage = () => {
 							{ icon: 'user', color: 'warning', title: 'Applications Received', subtitle: 'Candidates applied' },
 							{ icon: 'shield-tick', color: 'info', title: 'Screening in Progress', subtitle: 'Initial screening ongoing' },
 							{ icon: 'calendar', color: 'danger', title: 'Interviews Conducted', subtitle: 'Interview stage' },
-							{ icon: 'check-circle', color: 'primary', title: 'Candidates Selected', subtitle: 'Final selections made' }
+							{ icon: 'check-circle', color: 'primary', title: 'Candidates Selected', subtitle: 'Final selections made' },
 						]}
 					/>
 				</div>
@@ -165,6 +187,9 @@ const DashboardPage = () => {
 										))}
 									</tbody>
 								</table>
+								{insights.length === 0 && (
+									<div className='text-muted text-center mt-5'>No insights available.</div>
+								)}
 							</div>
 						</div>
 					</div>

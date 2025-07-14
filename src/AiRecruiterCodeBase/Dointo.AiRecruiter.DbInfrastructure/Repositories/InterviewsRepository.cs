@@ -72,7 +72,7 @@ internal class InterviewsRepository(AiRecruiterDbContext dbContext)
 			return [ ];
 
 		return await QueryableEntity
-			.Where(i => i.CreatedBy == ownerId || i.CreatedBy == "System")
+			.Where(i => i.CreatedBy == ownerId)
 			.OrderByDescending(i => i.EndTime)
 			.ToListAsync( );
 	}

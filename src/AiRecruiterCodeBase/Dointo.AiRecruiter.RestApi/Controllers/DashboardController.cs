@@ -1,10 +1,11 @@
 ﻿using Dointo.AiRecruiter.Application.Services;
 using Dointo.AiRecruiter.Core.States;
 using Dointo.AiRecruiter.Dtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dointo.AiRecruiter.RestApi.Controllers;
-
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class DashboardController(IDashboardService service) : ControllerBase

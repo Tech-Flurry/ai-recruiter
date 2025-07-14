@@ -40,7 +40,7 @@ const JobPost: React.FC = () => {
 			  `${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts`,
 			  {
 				headers: {
-				  Authorization: `Bearer ${token}`,
+				  Authorization: `Bearer ${token.api_token}`,
 				},
 			  }
 			);

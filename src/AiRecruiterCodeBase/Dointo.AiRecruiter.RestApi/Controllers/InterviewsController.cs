@@ -1,20 +1,26 @@
 ﻿using Dointo.AiRecruiter.Application.Services;
 using Dointo.AiRecruiter.Dtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dointo.AiRecruiter.RestApi.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class InterviewsController(IInterviewsService service) : ControllerBase
 {
 	private readonly IInterviewsService _service = service;
-
 	[HttpPost("create-candidate")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
 	public async Task<IActionResult> CreateCandidate([FromBody] CreateCandidateDto dto) =>
-		Ok(await _service.CreateCandidateAsync(dto, User.Identity?.Name ?? "system"));
+	Ok(await _service.CreateCandidateAsync(dto, User.Identity?.Name ?? "system"));
+
+	[HttpGet("get-candidate")]
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(CreateCandidateDto))]
+	public async Task<IActionResult> GetCandidate() =>
+		Ok(await _service.GetCandidateByUserAsync(User));
 
 	[HttpGet("generate-interview/{candidateId}/{jobId}")]
 	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(InterviewGeneratedDto))]

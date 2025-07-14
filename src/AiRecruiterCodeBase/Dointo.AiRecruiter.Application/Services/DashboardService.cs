@@ -146,14 +146,13 @@ internal class DashboardService(IReadOnlyRepository readOnlyRepository) : IDashb
 
 			var interviews = _readOnlyRepository
 				.Query<Interview>( )
-				.Where(i => !i.IsDeleted)
+				.Where(i => ownerJobs.Contains(i.Job.JobId) && !i.IsDeleted)
 				.ToList( );
 
 			var weeklyApplications = interviews
 				.Count(i => i.CreatedAt >= now.AddDays(-7));
 
 			var newCandidates = interviews
-				.Where(x => ownerJobs.Contains(x.Job.JobId))
 				.GroupBy(i => i.Interviewee.Email)
 				.Select(g => g.OrderBy(x => x.CreatedAt).First( ))
 				.Count(i => i.CreatedAt >= now.AddDays(-14));

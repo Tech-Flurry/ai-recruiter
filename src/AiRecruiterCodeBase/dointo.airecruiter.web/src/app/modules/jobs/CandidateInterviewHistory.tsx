@@ -44,7 +44,7 @@ const CandidateInterviewHistory: React.FC = () => {
 				}
 			);
 
-			const sorted = [...res.data].sort(
+			const sorted = [...res.data.data].sort(
 				(a, b) => new Date(b.interviewedAt).getTime() - new Date(a.interviewedAt).getTime()
 			);
 			setHistory(sorted);

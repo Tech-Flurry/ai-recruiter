@@ -182,18 +182,28 @@ function JobPost() {
 			return;
 		}
 
+		const token = localStorage.getItem("kt-auth-react-v");
+		if (!token) {
+			toastr.error("Authentication token not found.");
+			return;
+		}
+
 		setIsGenerating(true);
 		try {
 			const response = await axios.post(
 				`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/extract-skills`,
 				{ jobDescription },
 				{
-					headers: { "Content-Type": "application/json" },
-					withCredentials: true,
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${token}`,
+					},
 				}
 			);
+
 			const skillsRaw = response.data?.data;
 			console.log("Extracted skills:", skillsRaw);
+
 			if (Array.isArray(skillsRaw) && skillsRaw.length > 0) {
 				const skills = normalizeSkills(skillsRaw);
 				tagifyInstanceRef.current?.removeAllTags();
@@ -209,6 +219,7 @@ function JobPost() {
 			setIsGenerating(false);
 		}
 	};
+
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();

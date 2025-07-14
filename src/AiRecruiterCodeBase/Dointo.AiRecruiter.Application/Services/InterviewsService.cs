@@ -219,7 +219,7 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
         }
         catch (Exception ex)
         {
-            throw new Exception("Failed to retrieve interview history.", ex);
+			return new ExceptionState("Failed to retrieve interview history.", ex.Message);
         }
     }
 

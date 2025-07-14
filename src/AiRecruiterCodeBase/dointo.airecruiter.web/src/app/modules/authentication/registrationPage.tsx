@@ -22,7 +22,7 @@ const RegistrationPage: React.FC = () => {
       const token = response.data?.token
       if (token) {
         console.log('Received Token:', token)
-        localStorage.setItem('authToken', token)
+        localStorage.setItem('kt-auth-react-v', token)
         navigate('/dashboard')
       } else {
         setError('Registration failed. No token returned.')

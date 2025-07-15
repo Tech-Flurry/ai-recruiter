@@ -71,7 +71,7 @@ const ConductJob: React.FC = () => {
 						<p className="mt-3">Checking for existing candidate...</p>
 					</div>
 				</div>
-				<style jsx>{`
+				<style jsx="true">{`
 					.conduct-job-container {
 						min-height: 100vh;
 						background: #f8f9fa;
@@ -132,7 +132,7 @@ const ConductJob: React.FC = () => {
 				<InterviewRoom jobId={jobId} candidateId={candidateId} />
 			)}
 
-			<style jsx>{`
+			<style jsx="true">{`
 				.conduct-job-container {
 					min-height: 100vh;
 					background: #f8f9fa;

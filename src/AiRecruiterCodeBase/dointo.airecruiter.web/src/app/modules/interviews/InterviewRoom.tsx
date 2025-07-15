@@ -39,7 +39,7 @@ const InterviewRoom: FC<InterviewRoomProps> = ({ jobId, candidateId }) => {
 						</div>
 					</div>
 				</div>
-				<style jsx>{`
+				<style jsx="true">{`
 					.interview-room-container {
 						height: 100vh;
 						background-color: #1a1a1a;
@@ -82,7 +82,7 @@ const InterviewRoom: FC<InterviewRoomProps> = ({ jobId, candidateId }) => {
 				</div>
 			</div>
 
-			<style jsx>{`
+			<style jsx="true">{`
 				.interview-room-container {
 					height: 100vh;
 					background-color: #1a1a1a;

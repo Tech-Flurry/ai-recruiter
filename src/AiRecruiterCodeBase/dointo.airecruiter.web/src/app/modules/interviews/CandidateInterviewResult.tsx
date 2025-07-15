@@ -149,7 +149,7 @@ const CandidateInterviewResult: React.FC<CandidateInterviewResultProps> = ({ int
 				</div>
 			</div>
 
-			<style jsx>{`
+			<style jsx="true">{`
 				.result-container {
 					min-height: 100vh;
 					background: #1a1a1a;

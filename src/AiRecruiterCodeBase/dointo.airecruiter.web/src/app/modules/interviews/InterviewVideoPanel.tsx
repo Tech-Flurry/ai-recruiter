@@ -44,7 +44,7 @@ const InterviewVideoPanel: FC<InterviewVideoPanelProps> = ({ isSpeaking, isRecor
 				)}
 			</div>
 
-			<style jsx>{`
+			<style jsx="true">{`
 				.video-panel {
 					height: 100vh;
 					display: flex;

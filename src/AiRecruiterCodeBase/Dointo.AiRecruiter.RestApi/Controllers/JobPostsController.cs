@@ -1,5 +1,6 @@
 ﻿using Dointo.AiRecruiter.Application.Services;
 using Dointo.AiRecruiter.Dtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 
@@ -7,6 +8,7 @@ namespace Dointo.AiRecruiter.RestApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class JobPostsController(IJobPostsService service) : ControllerBase
 {
 	private readonly IJobPostsService _service = service;
@@ -20,7 +22,7 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 	[HttpGet]
 	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<JobListDto>))]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<IActionResult> GetJobsList( ) => Ok(await _service.GetJobsListAsync( ));
+	public async Task<IActionResult> GetJobsList( ) => Ok(await _service.GetJobsListAsync(User));
 
 	[HttpPost]
 	[ProducesResponseType(StatusCodes.Status200OK)]

@@ -53,7 +53,6 @@ function JobPost() {
 	const [isEditable, setIsEditable] = useState(true);
 	const [isGenerating, setIsGenerating] = useState(false);
 
-	// Helper to normalize API skill formats to string[]
 	const normalizeSkills = (skills: any[]): string[] =>
 		skills
 			.map((s) => {
@@ -63,15 +62,26 @@ function JobPost() {
 			})
 			.filter(Boolean);
 
-	// Initialize Tagify only once, destroy previous instance if any
 	useEffect(() => {
 		const fetchSkills = async () => {
+			const token = localStorage.getItem('kt-auth-react-v'); 
+
+			if (!token) {
+				console.error("❌ Token not found.");
+				return;
+			}
+
 			try {
 				const response = await axios.get(
 					`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/skills`,
-					{ withCredentials: true }
+					{
+						headers: {
+							Authorization: `Bearer ${token}`,
+						},
+					}
 				);
-				console.log("Skills API response:", response.data);
+
+				console.log("✅ Skills API response:", response.data);
 
 				const skills = normalizeSkills(response.data.data);
 
@@ -102,14 +112,25 @@ function JobPost() {
 		fetchSkills();
 	}, []);
 
-	// Load job data for edit mode and fill form including skills
+
 	useEffect(() => {
 		if (isEditMode && jobId) {
 			const fetchJob = async () => {
+				const token = localStorage.getItem('kt-auth-react-v');
+				if (!token) {
+					console.error("❌ Auth token not found.");
+					toastr.error("You are not authenticated.");
+					return;
+				}
+
 				try {
 					const res = await axios.get<{ data: JobPost }>(
 						`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/${jobId}`,
-						{ withCredentials: true }
+						{
+							headers: {
+								Authorization: `Bearer ${token}`,
+							},
+						}
 					);
 
 					const job = res.data?.data as JobPost;
@@ -126,6 +147,7 @@ function JobPost() {
 					const additionalInput = formRef.current?.elements.namedItem(
 						"additionalQuestions"
 					) as HTMLTextAreaElement;
+
 					if (currencyInput) currencyInput.value = job.budgetCurrency || "USD";
 					if (additionalInput) additionalInput.value = job.additionalQuestions || "";
 
@@ -147,6 +169,7 @@ function JobPost() {
 		}
 	}, [isEditMode, jobId]);
 
+
 	// *** Changed here: only update description state, no auto skill extraction ***
 	const handleJobDescriptionChange = (value: string) => {
 		setJobDescription(value);
@@ -159,18 +182,28 @@ function JobPost() {
 			return;
 		}
 
+		const token = localStorage.getItem("kt-auth-react-v");
+		if (!token) {
+			toastr.error("Authentication token not found.");
+			return;
+		}
+
 		setIsGenerating(true);
 		try {
 			const response = await axios.post(
 				`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/extract-skills`,
 				{ jobDescription },
 				{
-					headers: { "Content-Type": "application/json" },
-					withCredentials: true,
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${token}`,
+					},
 				}
 			);
+
 			const skillsRaw = response.data?.data;
 			console.log("Extracted skills:", skillsRaw);
+
 			if (Array.isArray(skillsRaw) && skillsRaw.length > 0) {
 				const skills = normalizeSkills(skillsRaw);
 				tagifyInstanceRef.current?.removeAllTags();
@@ -186,6 +219,7 @@ function JobPost() {
 			setIsGenerating(false);
 		}
 	};
+
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();

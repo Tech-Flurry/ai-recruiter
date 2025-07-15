@@ -4,11 +4,13 @@ using Dointo.AiRecruiter.Application.AiAbstractions;
 using Dointo.AiRecruiter.Domain.Entities;
 using Dointo.AiRecruiter.Domain.ValueObjects;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Dointo.AiRecruiter.AiInfrastructure.Agents;
-internal class InterviewAgent(AiProviderFactory aiProviderFactory) : IInterviewAgent
+internal class InterviewAgent(AiProviderFactory aiProviderFactory, IHttpClientFactory clientFactory) : IInterviewAgent
 {
 	private readonly AiProviderFactory _aiProviderFactory = aiProviderFactory;
+	private readonly IHttpClientFactory _clientFactory = clientFactory;
 
 	public async Task<string> GenerateInterviewStarter(string jobTitle, string candidateName)
 	{
@@ -180,9 +182,62 @@ Instructions:
 		});
 	}
 
+	public async Task<double> GetAiScore(string text)
+	{
+		if (string.IsNullOrWhiteSpace(text))
+			return 0;
+		try
+		{
+			text = SanitizeTextForJson(text);
+			if (text.Length > 5000)
+				text = text[..5000];
+
+			var client = _clientFactory.CreateClient(Setup.AI_DETECTOR);
+			Console.WriteLine($"Sending to AI detector: {text}");
+			var jsonPayload = JsonSerializer.Serialize(new { text });
+			var stringContent = new StringContent(
+				jsonPayload,
+				System.Text.Encoding.UTF8,
+				"application/json");
+
+			var response = await client.PostAsync("api/ScoreFunction", stringContent);
+			var responseContent = await response.Content.ReadAsStringAsync( );
+			Console.WriteLine($"Response status: {response.StatusCode}, Content: {responseContent}");
+
+			if (!response.IsSuccessStatusCode)
+				return 0;
+
+			var dto = JsonSerializer.Deserialize<AiScoreDto>(responseContent);
+			if (dto == null)
+				return 0;
+
+			return dto.Score;
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Error calling AI detector: {ex.Message}");
+			return 0;
+		}
+	}
+
+	private static string SanitizeTextForJson(string text)
+	{
+		if (string.IsNullOrEmpty(text))
+			return string.Empty;
+		text = text.Replace("\r\n", " ")
+				   .Replace("\n", " ")
+				   .Replace("\r", " ")
+				   .Replace("\t", " ")
+				   .Replace("\b", "");
+		var sanitizedChars = text.Where(c => !char.IsControl(c)).ToArray( );
+		return new string(sanitizedChars);
+	}
+
 	private sealed record ScoredQuestionCompletionDto(double Score, bool Terminate);
 	private sealed record QuestionCompletionDto(string Question);
 	private sealed record ScoredInterviewCompletionDto(string Analysis, double Score);
+	private sealed record AiScoreRequest([property: JsonPropertyName("text")] string Text);
+	private sealed record AiScoreDto([property: JsonPropertyName("score")] double Score, [property: JsonPropertyName("label")] string Label);
 	private sealed record ScoredSkillsCompletionDto( )
 	{
 		public List<SkillRating> Skills { get; set; } = [ ];

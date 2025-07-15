@@ -16,7 +16,7 @@ internal class InterviewAgent(AiProviderFactory aiProviderFactory, IHttpClientFa
 	{
 		var aiProvider = _aiProviderFactory.GetProvider(AiProviders.OpenAi);
 		var context = "You are a recruitment expert and taking interview of a candidate. You need to start the interview by easing the candidate and asking to introduce themselves.";
-		var prompt = @$"You are hiring for the job: {jobTitle}. The name of the candidate in front of you is ""{candidateName}"". Briefly introduce yourself and let them know that you are an ai recruiter named 'Riku'. Then, ask them to intoduce themselves.
+		var prompt = @$"You are hiring for the job: {jobTitle}. The Name of the candidate in front of you is ""{candidateName}"". Briefly introduce yourself and let them know that you are an ai recruiter named 'Riku'. Then, ask them to intoduce themselves.
 Instructions:
 - Keep your tone friendly
 - Don't use jargons or fluff
@@ -29,7 +29,7 @@ Instructions:
 	{
 		var aiProvider = _aiProviderFactory.GetProvider(AiProviders.OpenAi);
 		var context = "You are a technical recruitment expert and you need to generate the next question for a candidate in an interview. You're a human not a bot.";
-		var prompt = @$"You are hiring for the job: {interview.Job.JobTitle}. Required Experience for the job is {interview.Job.RequiredExperience} years. The name of the candidate in front of you is ""{interview.Interviewee.Name}"". The candidate has answered the following questions:
+		var prompt = @$"You are hiring for the job: {interview.Job.JobTitle}. Required Experience for the job is {interview.Job.RequiredExperience} years. The Name of the candidate in front of you is ""{interview.Interviewee.Name}"". The candidate has answered the following questions:
 {JsonSerializer.Serialize(interview.Questions.Select(x => x.Question))}
 Required skills for the job are: {string.Join(", ", interview.Job.RequiredSkills)}.
 Job Description: {interview.Job.JobDescription}.
@@ -51,7 +51,7 @@ Instructions:
 - You should maintain a friendly tone
 - You should sound like a real human instead of a bot
 - Change the pattern of your sentence each time to make it realistic
-- Do not call candidate's name every time
+- Do not call candidate's Name every time
 - You should always sound natural";
 		var completion = await aiProvider.GetCompletionAsync(OpenAiModels.GPT_4_1, context, prompt, JsonUtils.GetJsonSchemaOf(typeof(QuestionCompletionDto)), "question");
 		return JsonSerializer.Deserialize<QuestionCompletionDto>(completion)?.Question ?? string.Empty;
@@ -84,6 +84,48 @@ Instructions:
 		var scoreCompletion = JsonSerializer.Deserialize<ScoredInterviewCompletionDto>(completion) ?? new ScoredInterviewCompletionDto(string.Empty, 0);
 		return (scoreCompletion.Analysis, scoreCompletion.Score);
 	}
+	public async Task<string> GenerateCandidatePerformanceOverviewAsync(List<Interview> interviews)
+	{
+		if (interviews is { Count: 0 })
+		{
+			return "No interview data available to generate performance overview.";
+		}
+
+		var aiProvider = _aiProviderFactory.GetProvider(AiProviders.OpenAi);
+
+		var context = "You are a virtual interview coach. You need to provide constructive, encouraging feedback to the candidate based on their past interview performance.";
+
+		var prompt = @$"
+You've recently completed several interviews — here’s a personalized performance summary to guide your growth and highlight your strengths. Below is a summary of your interview data:
+
+{JsonSerializer.Serialize(interviews.Select(i => new
+		{
+			Job = i.Job?.JobTitle,
+			InterviewDate = i.StartTime.ToShortDateString( ),
+			Ai_Score = i.AiScore,
+			SkillScores = i.ScoredSkills,
+			ScoredQuestions = i.Questions
+		}))}
+
+Instructions:
+- Write a brief, encouraging performance summary for the candidate (3–4 sentences) 
+- Address the candidate directly using “you”
+- Highlight strengths that appear consistently (e.g., ""Your communication skills are strong"")
+- Mention one or two improvement areas in a supportive tone
+- If applicable, acknowledge improvement or consistency over time
+- Use a motivating and positive tone (like a coach or mentor would)
+- Avoid formal or recruiter-style language
+";
+
+		var completion = await aiProvider.GetCompletionAsync(
+			OpenAiModels.GPT_4_1,
+			context,
+			prompt
+		);
+
+		return completion?.Trim( ) ?? "Unable to generate performance summary at this time.";
+	}
+
 
 	public async Task<(ScoredQuestion question, bool terminate)> ScoreQuestionAsync(Interview interview, Question question)
 	{
@@ -131,7 +173,7 @@ Instructions:
 - The score should be based on the candidate's answers to the questions asked in the interview
 - The score should be based on the candidate's fit for the job based on their skills and experience
 - You have to match the required skills with the candidate's score per question
-- Provide the scores in a json array with skill name and score in the given schema for skills";
+- Provide the scores in a json array with skill Name and score in the given schema for skills";
 		var completion = aiProvider.GetCompletionAsync(OpenAiModels.GPT_4_1, context, prompt, JsonUtils.GetJsonSchemaOf(typeof(ScoredSkillsCompletionDto)), "skills");
 		return completion.ContinueWith(task =>
 		{

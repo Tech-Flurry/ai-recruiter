@@ -5,6 +5,7 @@ import JobPost from './JobPost'
 import ConductJob from './ConductJob'
 import JobScreening from './JobScreening'
 import InterviewResult from './InterviewResult'
+import CandidateDashboard from './CandidateDashboard'
 import CandidateInterviewHistory from './CandidateInterviewHistory'
 import InterviewReport from './InterviewReport'
 
@@ -78,6 +79,15 @@ function JobsIndex() {
 						<>
 							<PageTitle breadcrumbs={jobsBreadCrumbs}>Interview Result</PageTitle>
 							<InterviewResult />
+						</>
+					}
+				/>
+				<Route
+					path='candidate-dashboard'
+					element={
+						<>
+							<PageTitle breadcrumbs={jobsBreadCrumbs}>Candidate Dashboard</PageTitle>
+							<CandidateDashboard />
 						</>
 					}
 				/>

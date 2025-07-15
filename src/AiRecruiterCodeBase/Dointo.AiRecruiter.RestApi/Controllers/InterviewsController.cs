@@ -1,4 +1,5 @@
 ﻿using Dointo.AiRecruiter.Application.Services;
+using Dointo.AiRecruiter.Core.States;
 using Dointo.AiRecruiter.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -50,6 +51,22 @@ public class InterviewsController(IInterviewsService service) : ControllerBase
 		var state = await _service.GetInterviewResultAsync(interviewId);
 		return Ok(state);
 	}
+
+
+	[HttpGet("candidate-dashboard")]
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(CandidateDashboardDto))]
+	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+	public async Task<IActionResult> GetCandidateDashboard( )
+	{
+		var state = await _service.GetCandidateDashboardAsync(User);
+
+		if (state is BusinessErrorState)
+			return NotFound(state);
+
+		return Ok(state);
+	}
+
 	[HttpGet("history")]
 	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<InterviewHistoryDto>))]
 	public async Task<IActionResult> GetInterviewHistoryByOwner( )
@@ -63,7 +80,4 @@ public class InterviewsController(IInterviewsService service) : ControllerBase
 		var report = await _service.GetReportAsync(interviewId);
 		return Ok(report);
 	}
-
-
-
 }

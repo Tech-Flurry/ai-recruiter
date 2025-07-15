@@ -25,7 +25,7 @@ export function AsideMenuMain() {
 				</>
 			) : (
 				<>
-					<AsideMenuItem to='/dashboard' icon='element-11' title='Candidate Dashboard' />
+						<AsideMenuItem to='/jobs/candidate-dashboard' icon='element-11' title='Candidate Dashboard' />
 						<AsideMenuItem
 							to='/jobs/interview-history'
 							icon='chart'

@@ -23,13 +23,15 @@ public interface IInterviewsService
 	Task<IProcessingState> GetInterviewResultForCandidateAsync(string interviewId);
 	Task<IProcessingState> NextQuestionAsync(QuestionDto questionDto, string interviewId);
 	Task<IProcessingState> GetInterviewResultAsync(string interviewId);
+
+	Task<IProcessingState> GetCandidateDashboardAsync(ClaimsPrincipal user);
 	Task<IProcessingState> GetInterviewHistoryByOwnerAsync(ClaimsPrincipal user);
 	Task<IProcessingState> GetReportAsync(string interviewId);
 	Task<IProcessingState> GetCandidateByUserAsync(ClaimsPrincipal user);
 }
 
 internal class InterviewsService(ICandidateRepository candidatesRepository, IResolver<Candidate, CreateCandidateDto> createCandidateResolver, ICandidatesAgent candidatesAgent, IInterviewsRepository interviewRepository, IResolver<Interview, InterviewGeneratedDto> interviewDtoResolver, IInterviewAgent interviewAgent, IResolver<Question, QuestionDto> questionDtoResolver, IResolver<Interview, CandidateInterviewResultDto> resultResolver,
-	IResolver<Interview, InterviewResultDto> interviewResultsResolver, IResolver<Interview, InterviewReportDto> interviewReportDtoResolver, IReadOnlyRepository readOnlyRepository, IResolver<Interview, InterviewHistoryDto> interviewHistoryResolver) : IInterviewsService
+	IResolver<Interview, InterviewResultDto> interviewResultsResolver, IReadOnlyRepository readOnlyRepository, IResolver<Interview, InterviewReportDto> interviewReportDtoResolver, IResolver<Interview, InterviewHistoryDto> interviewHistoryResolver) : IInterviewsService
 {
 	private const string CANDIDATE_STRING = nameof(Candidate);
 	private const string INTERVIEW_STRING = nameof(Interview);
@@ -100,6 +102,83 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 		}
 	}
 
+	public async Task<IProcessingState> GetCandidateDashboardAsync(ClaimsPrincipal user)
+	{
+		_messageBuilder.Clear( );
+
+		try
+		{
+			var ownerId = user.GetOwnerId( );
+			var interviews = await _interviewsRepository.GetByOwnerAsync(ownerId);
+
+			var past = interviews.Where(i => i.StartTime <= DateTime.UtcNow).ToList( );
+			var upcoming = interviews.Where(i => i.StartTime > DateTime.UtcNow).ToList( );
+			var totalInterviews = past.Count;
+			var averageScore = totalInterviews != 0 ? Math.Round(past.Average(i => i.AiScore), 2) : 0;
+			var passRate = totalInterviews != 0
+				? Math.Round((double)past.Count(i => i.IsPassed( )) / totalInterviews * 100, 1)
+				: 0;
+			var upcomingCount = upcoming.Count;
+
+			var topSkills = past
+				.SelectMany(i => i.ScoredSkills)
+				.GroupBy(s => s.Skill)
+				.Select(g => new SkillProgressDto
+				{
+					Skill = g.Key,
+					Level = (int)Math.Round(g.Average(x => x.Rating))
+				})
+				.OrderByDescending(s => s.Level)
+				.Take(3)
+				.ToList( );
+
+			var recentActivities = past
+				.OrderByDescending(i => i.EndTime ?? i.StartTime)
+				.Take(3)
+				.Select(i => $"Completed Interview: {i.Job.JobTitle} – {i.AiScore} score")
+				.ToList( );
+
+			var next = upcoming.FirstOrDefault( );
+			if (next != null)
+			{
+				recentActivities.Add($"Upcoming Interview: {next.Job.JobTitle} – {next.StartTime:MMMM dd}");
+			}
+
+			var candidate = await _readOnlyRepository.FindByIdAsync<Candidate>(interviews.Select(x => x.Interviewee.CandidateId).First( ));
+			candidate.PerformanceSummary ??= await _interviewAgent.GenerateCandidatePerformanceOverviewAsync(past);
+
+
+			var dto = new CandidateDashboardDto
+			{
+				Name = candidate.Name.FullName,
+				Summary = candidate.PerformanceSummary,
+				TotalInterviews = totalInterviews,
+				AverageScore = averageScore,
+				PassRate = passRate,
+				UpcomingInterviews = upcomingCount,
+				TopSkills = topSkills,
+				RecentActivities = recentActivities
+			};
+
+			return new SuccessState<CandidateDashboardDto>(
+				_messageBuilder
+					.AddFormat(Messages.RECORD_RETRIEVED_FORMAT)
+					.AddString("Candidate Dashboard")
+					.Build( ),
+				dto);
+		}
+		catch (Exception ex)
+		{
+			return new ExceptionState(
+				_messageBuilder
+					.AddFormat(Messages.ERROR_OCCURRED_FORMAT)
+					.AddString("Candidate Dashboard")
+					.Build( ),
+				ex.Message);
+		}
+	}
+
+
 	public async Task<IProcessingState> NextQuestionAsync(QuestionDto questionDto, string interviewId)
 	{
 		_messageBuilder.Clear( );
@@ -153,6 +232,8 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 		var result = _resultResolver.Resolve(interview);
 		result.InterviewLength = interview.GetLength( ).Minutes;
 		result.IsPassed = interview.IsPassed( );
+		var candidate = await _readOnlyRepository.FindByIdAsync<Candidate>(interview.Interviewee.CandidateId);
+		candidate.PerformanceSummary = null;
 		return new SuccessState<CandidateInterviewResultDto>(
 			_messageBuilder.AddFormat(Messages.RECORD_RETRIEVED_FORMAT).AddString(INTERVIEW_STRING).Build( ),
 			result);

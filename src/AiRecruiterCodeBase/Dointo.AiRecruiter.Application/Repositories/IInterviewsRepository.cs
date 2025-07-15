@@ -9,5 +9,4 @@ public interface IInterviewsRepository
 	Task<Interview?> GetInterviewResultByInterviewIdAsync(string interviewId);
 	Task<List<Interview>> GetByOwnerAsync(string ownerId);
 
-
 }

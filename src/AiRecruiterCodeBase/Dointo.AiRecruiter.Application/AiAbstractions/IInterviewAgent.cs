@@ -10,4 +10,6 @@ public interface IInterviewAgent
 	Task<(string analysis, double score)> ScoreInterviewAsync(Interview interview);
 	Task<(ScoredQuestion question, bool terminate)> ScoreQuestionAsync(Interview interview, Question question);
 	Task<List<SkillRating>> ScoreSkillsAsync(Interview interview);
+	Task<string> GenerateCandidatePerformanceOverviewAsync(List<Interview> interviews);
+
 }

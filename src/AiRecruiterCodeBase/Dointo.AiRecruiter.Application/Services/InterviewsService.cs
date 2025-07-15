@@ -187,16 +187,6 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 		try
 		{
 			var interviews = await _interviewsRepository.GetByOwnerAsync(ownerId);
-
-			if (interviews is { Count: 0 })
-			{
-				return new BusinessErrorState(
-					_messageBuilder
-						.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT)
-						.AddString("Candidate Interviews")
-						.Build( ));
-			}
-
 			var past = interviews.Where(i => i.StartTime <= DateTime.UtcNow).ToList( );
 			var upcoming = interviews.Where(i => i.StartTime > DateTime.UtcNow).ToList( );
 

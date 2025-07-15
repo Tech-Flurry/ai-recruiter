@@ -193,7 +193,7 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 				{
 					headers: {
 						'Content-Type': 'application/json',
-						Authorization: `Bearer ${tokenObj}`,
+						Authorization: `Bearer ${tokenObj.api_token}`,
 					},
 				}
 			)

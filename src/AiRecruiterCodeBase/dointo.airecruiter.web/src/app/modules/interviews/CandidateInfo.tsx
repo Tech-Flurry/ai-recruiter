@@ -1,7 +1,9 @@
-﻿import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+﻿import React, { useState, useEffect } from "react";
+import axios from "axios";
 
-interface CandidateInfoProps { onCandidateCreated?: (candidateId: string) => void }
+interface CandidateInfoProps {
+	onCandidateCreated?: (candidateId: string) => void;
+}
 interface Credential {
 	certificate: string;
 	institution: string;
@@ -40,43 +42,45 @@ interface Candidate {
 }
 
 const emptyCredential = (): Credential => ({
-	certificate: '',
-	institution: '',
-	yearOfCompletion: '',
+	certificate: "",
+	institution: "",
+	yearOfCompletion: "",
 });
 
 const emptyExperience = (): Experience => ({
-	jobTitle: '',
-	company: '',
-	details: '',
-	startDate: '',
-	endDate: '',
+	jobTitle: "",
+	company: "",
+	details: "",
+	startDate: "",
+	endDate: "",
 });
 
 const emptySkillRating = (): SkillRating => ({
-	skill: '',
+	skill: "",
 	rating: 5,
 });
 
 const initialCandidate: Candidate = {
-	firstName: '',
-	lastName: '',
-	dateOfBirth: '',
-	email: '',
-	phone: '',
-	jobTitle: '',
-	location: '',
+	firstName: "",
+	lastName: "",
+	dateOfBirth: "",
+	email: "",
+	phone: "",
+	jobTitle: "",
+	location: "",
 	educationHistory: [],
 	certifications: [],
 	experiences: [],
 	skills: [],
 };
 
-const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => {
+const CandidateInfo: React.FC<CandidateInfoProps> = ({
+	onCandidateCreated,
+}) => {
 	const [candidate, setCandidate] = useState<Candidate>(initialCandidate);
 	const [availableSkills, setAvailableSkills] = useState<Skill[]>([]);
-	const [statusMessage, setStatusMessage] = useState('');
-	const [statusAlertClass, setStatusAlertClass] = useState('alert-info');
+	const [statusMessage, setStatusMessage] = useState("");
+	const [statusAlertClass, setStatusAlertClass] = useState("alert-info");
 	const [isProcessing, setIsProcessing] = useState(false);
 
 	useEffect(() => {
@@ -87,7 +91,9 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 			.catch(() => setAvailableSkills([]));
 	}, []);
 
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+	const handleChange = (
+		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+	) => {
 		const { name, value } = e.target;
 		setCandidate((prev) => ({
 			...prev,
@@ -96,7 +102,7 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 	};
 
 	const handleCredentialChange = (
-		listName: 'educationHistory' | 'certifications',
+		listName: "educationHistory" | "certifications",
 		idx: number,
 		field: keyof Credential,
 		value: string
@@ -132,14 +138,17 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 		});
 	};
 
-	const addCredential = (listName: 'educationHistory' | 'certifications') => {
+	const addCredential = (listName: "educationHistory" | "certifications") => {
 		setCandidate((prev) => ({
 			...prev,
 			[listName]: [...prev[listName], emptyCredential()],
 		}));
 	};
 
-	const removeCredential = (listName: 'educationHistory' | 'certifications', idx: number) => {
+	const removeCredential = (
+		listName: "educationHistory" | "certifications",
+		idx: number
+	) => {
 		setCandidate((prev) => {
 			const updatedList = [...prev[listName]];
 			updatedList.splice(idx, 1);
@@ -177,71 +186,69 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 		});
 	};
 	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault()
-		setStatusMessage('')
-		setStatusAlertClass('alert-info')
-		setIsProcessing(true)
+		e.preventDefault();
+		setStatusMessage("");
+		setStatusAlertClass("alert-info");
+		setIsProcessing(true);
 
 		try {
-			const rawToken = localStorage.getItem('kt-auth-react-v')
-			if (!rawToken) throw new Error('Missing auth token')
-			const tokenObj = JSON.parse(rawToken)
-			if (!tokenObj.api_token) throw new Error('Invalid auth token')
+			const rawToken = localStorage.getItem("kt-auth-react-v");
+			if (!rawToken) throw new Error("Missing auth token");
+			const tokenObj = JSON.parse(rawToken);
+			if (!tokenObj.api_token) throw new Error("Invalid auth token");
 
 			// 📡 Submit API request
 			const response = await axios.post(
 				`${import.meta.env.VITE_APP_API_BASE_URL}/interviews/create-candidate`,
-				{ ...candidate, id: '' },
+				{ ...candidate, id: "" },
 				{
 					headers: {
-						'Content-Type': 'application/json',
-						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${tokenObj.api_token}`,
 					},
 				}
-			)
+			);
 
-			const result = response.data
+			const result = response.data;
 			if (result.success) {
 				if (onCandidateCreated && result.data?.id) {
-					onCandidateCreated(result.data.id)
+					onCandidateCreated(result.data.id);
 				}
-				setStatusMessage(result.message)
-				setStatusAlertClass('alert-success')
-				setCandidate(initialCandidate)
-			}
-			else if (result.errors) {
+				setStatusMessage(result.message);
+				setStatusAlertClass("alert-success");
+				setCandidate(initialCandidate);
+			} else if (result.errors) {
 				setStatusMessage(
 					result.message +
-					'\n' +
-					result.errors
-						.map((e: any) => `${e.propertyName}: ${e.errorMessage}`)
-						.join('\n')
-				)
-				setStatusAlertClass('alert-warning')
-			}
-			else if (result.exceptionMessage) {
-				setStatusMessage(result.message + '\n' + result.exceptionMessage)
-				setStatusAlertClass('alert-danger')
-			}
-			else {
-				setStatusMessage('Unknown response from server.')
-				setStatusAlertClass('alert-danger')
+						"\n" +
+						result.errors
+							.map((e: any) => `${e.propertyName}: ${e.errorMessage}`)
+							.join("\n")
+				);
+				setStatusAlertClass("alert-warning");
+			} else if (result.exceptionMessage) {
+				setStatusMessage(result.message + "\n" + result.exceptionMessage);
+				setStatusAlertClass("alert-danger");
+			} else {
+				setStatusMessage("Unknown response from server.");
+				setStatusAlertClass("alert-danger");
 			}
 		} catch (ex: any) {
 			setStatusMessage(
 				`An error occurred: ${ex.response?.data?.message || ex.message}`
-			)
-			setStatusAlertClass('alert-danger')
+			);
+			setStatusAlertClass("alert-danger");
 		} finally {
-			setIsProcessing(false)
+			setIsProcessing(false);
 		}
-	}
-
+	};
 
 	return (
 		<div>
 			<h3>Create Candidate</h3>
-			{statusMessage && <div className={`alert ${statusAlertClass}`}>{statusMessage}</div>}
+			{statusMessage && (
+				<div className={`alert ${statusAlertClass}`}>{statusMessage}</div>
+			)}
 			<form onSubmit={handleSubmit}>
 				<div className="form-group">
 					<label>First Name</label>
@@ -316,7 +323,11 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 				{/* Education History */}
 				<div className="form-group my-2">
 					<label>Education History</label>
-					<button type="button" className="btn btn-secondary btn-sm mb-2" onClick={() => addCredential('educationHistory')}>
+					<button
+						type="button"
+						className="btn btn-secondary btn-sm mb-2"
+						onClick={() => addCredential("educationHistory")}
+					>
 						+
 					</button>
 					{candidate.educationHistory.map((edu, idx) => (
@@ -327,7 +338,14 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 										className="form-control"
 										placeholder="Degree"
 										value={edu.certificate}
-										onChange={(e) => handleCredentialChange('educationHistory', idx, 'certificate', e.target.value)}
+										onChange={(e) =>
+											handleCredentialChange(
+												"educationHistory",
+												idx,
+												"certificate",
+												e.target.value
+											)
+										}
 									/>
 								</div>
 								<div className="col-md-4">
@@ -335,7 +353,14 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 										className="form-control"
 										placeholder="Name of Institution"
 										value={edu.institution}
-										onChange={(e) => handleCredentialChange('educationHistory', idx, 'institution', e.target.value)}
+										onChange={(e) =>
+											handleCredentialChange(
+												"educationHistory",
+												idx,
+												"institution",
+												e.target.value
+											)
+										}
 									/>
 								</div>
 								<div className="col-md-3">
@@ -344,11 +369,22 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 										type="date"
 										placeholder="Completion Date"
 										value={edu.yearOfCompletion}
-										onChange={(e) => handleCredentialChange('educationHistory', idx, 'yearOfCompletion', e.target.value)}
+										onChange={(e) =>
+											handleCredentialChange(
+												"educationHistory",
+												idx,
+												"yearOfCompletion",
+												e.target.value
+											)
+										}
 									/>
 								</div>
 								<div className="col-md-1 text-end">
-									<button type="button" className="btn btn-outline-danger btn-sm" onClick={() => removeCredential('educationHistory', idx)}>
+									<button
+										type="button"
+										className="btn btn-outline-danger btn-sm"
+										onClick={() => removeCredential("educationHistory", idx)}
+									>
 										🗑
 									</button>
 								</div>
@@ -360,7 +396,11 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 				{/* Certifications */}
 				<div className="form-group my-2">
 					<label>Certifications</label>
-					<button type="button" className="btn btn-secondary btn-sm mb-2" onClick={() => addCredential('certifications')}>
+					<button
+						type="button"
+						className="btn btn-secondary btn-sm mb-2"
+						onClick={() => addCredential("certifications")}
+					>
 						+
 					</button>
 					{candidate.certifications.map((cert, idx) => (
@@ -371,7 +411,14 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 										className="form-control"
 										placeholder="Certificate"
 										value={cert.certificate}
-										onChange={(e) => handleCredentialChange('certifications', idx, 'certificate', e.target.value)}
+										onChange={(e) =>
+											handleCredentialChange(
+												"certifications",
+												idx,
+												"certificate",
+												e.target.value
+											)
+										}
 									/>
 								</div>
 								<div className="col-md-4">
@@ -379,7 +426,14 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 										className="form-control"
 										placeholder="Institution"
 										value={cert.institution}
-										onChange={(e) => handleCredentialChange('certifications', idx, 'institution', e.target.value)}
+										onChange={(e) =>
+											handleCredentialChange(
+												"certifications",
+												idx,
+												"institution",
+												e.target.value
+											)
+										}
 									/>
 								</div>
 								<div className="col-md-3">
@@ -388,11 +442,22 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 										type="date"
 										placeholder="Year of Completion"
 										value={cert.yearOfCompletion}
-										onChange={(e) => handleCredentialChange('certifications', idx, 'yearOfCompletion', e.target.value)}
+										onChange={(e) =>
+											handleCredentialChange(
+												"certifications",
+												idx,
+												"yearOfCompletion",
+												e.target.value
+											)
+										}
 									/>
 								</div>
 								<div className="col-md-1 text-end">
-									<button type="button" className="btn btn-outline-danger btn-sm" onClick={() => removeCredential('certifications', idx)}>
+									<button
+										type="button"
+										className="btn btn-outline-danger btn-sm"
+										onClick={() => removeCredential("certifications", idx)}
+									>
 										🗑
 									</button>
 								</div>
@@ -404,7 +469,11 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 				{/* Experiences */}
 				<div className="form-group my-2">
 					<label>Experiences</label>
-					<button type="button" className="btn btn-secondary btn-sm mb-2" onClick={addExperience}>
+					<button
+						type="button"
+						className="btn btn-secondary btn-sm mb-2"
+						onClick={addExperience}
+					>
 						+
 					</button>
 					{candidate.experiences.map((exp, idx) => (
@@ -415,7 +484,9 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 										className="form-control"
 										placeholder="Job Title"
 										value={exp.jobTitle}
-										onChange={(e) => handleExperienceChange(idx, 'jobTitle', e.target.value)}
+										onChange={(e) =>
+											handleExperienceChange(idx, "jobTitle", e.target.value)
+										}
 									/>
 								</div>
 								<div className="col-md-3">
@@ -423,7 +494,9 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 										className="form-control"
 										placeholder="Company"
 										value={exp.company}
-										onChange={(e) => handleExperienceChange(idx, 'company', e.target.value)}
+										onChange={(e) =>
+											handleExperienceChange(idx, "company", e.target.value)
+										}
 									/>
 								</div>
 								<div className="col-md-3">
@@ -431,7 +504,9 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 										className="form-control"
 										placeholder="Details"
 										value={exp.details}
-										onChange={(e) => handleExperienceChange(idx, 'details', e.target.value)}
+										onChange={(e) =>
+											handleExperienceChange(idx, "details", e.target.value)
+										}
 									/>
 								</div>
 								<div className="col-md-1">
@@ -440,7 +515,9 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 										type="date"
 										placeholder="Start Date"
 										value={exp.startDate}
-										onChange={(e) => handleExperienceChange(idx, 'startDate', e.target.value)}
+										onChange={(e) =>
+											handleExperienceChange(idx, "startDate", e.target.value)
+										}
 									/>
 								</div>
 								<div className="col-md-1">
@@ -449,11 +526,17 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 										type="date"
 										placeholder="End Date (optional)"
 										value={exp.endDate}
-										onChange={(e) => handleExperienceChange(idx, 'endDate', e.target.value)}
+										onChange={(e) =>
+											handleExperienceChange(idx, "endDate", e.target.value)
+										}
 									/>
 								</div>
 								<div className="col-md-1 text-end">
-									<button type="button" className="btn btn-outline-danger btn-sm" onClick={() => removeExperience(idx)}>
+									<button
+										type="button"
+										className="btn btn-outline-danger btn-sm"
+										onClick={() => removeExperience(idx)}
+									>
 										🗑
 									</button>
 								</div>
@@ -465,7 +548,11 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 				{/* Skills */}
 				<div className="form-group my-2">
 					<label>Skills</label>
-					<button type="button" className="btn btn-secondary btn-sm mb-2" onClick={addSkill}>
+					<button
+						type="button"
+						className="btn btn-secondary btn-sm mb-2"
+						onClick={addSkill}
+					>
 						+
 					</button>
 					{candidate.skills.map((skill, idx) => (
@@ -475,7 +562,9 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 									<select
 										className="form-control"
 										value={skill.skill}
-										onChange={(e) => handleSkillChange(idx, 'skill', e.target.value)}
+										onChange={(e) =>
+											handleSkillChange(idx, "skill", e.target.value)
+										}
 									>
 										<option value="">Select skill</option>
 										{availableSkills.map((s) => (
@@ -489,7 +578,9 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 									<select
 										className="form-control"
 										value={skill.rating}
-										onChange={(e) => handleSkillChange(idx, 'rating', Number(e.target.value))}
+										onChange={(e) =>
+											handleSkillChange(idx, "rating", Number(e.target.value))
+										}
 									>
 										{[1, 2, 3, 4, 5].map((r) => (
 											<option key={r} value={r}>
@@ -499,7 +590,11 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 									</select>
 								</div>
 								<div className="col-md-1 text-end">
-									<button type="button" className="btn btn-outline-danger btn-sm" onClick={() => removeSkill(idx)}>
+									<button
+										type="button"
+										className="btn btn-outline-danger btn-sm"
+										onClick={() => removeSkill(idx)}
+									>
 										🗑
 									</button>
 								</div>
@@ -508,14 +603,22 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 					))}
 				</div>
 
-				<button type="submit" className="btn btn-primary" disabled={isProcessing}>
+				<button
+					type="submit"
+					className="btn btn-primary"
+					disabled={isProcessing}
+				>
 					{isProcessing ? (
 						<>
-							<span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+							<span
+								className="spinner-border spinner-border-sm me-2"
+								role="status"
+								aria-hidden="true"
+							></span>
 							Submitting...
 						</>
 					) : (
-						'Start Interview'
+						"Start Interview"
 					)}
 				</button>
 			</form>

@@ -16,7 +16,7 @@ internal class InterviewAgent(AiProviderFactory aiProviderFactory, IHttpClientFa
 	{
 		var aiProvider = _aiProviderFactory.GetProvider(AiProviders.OpenAi);
 		var context = "You are a recruitment expert and taking interview of a candidate. You need to start the interview by easing the candidate and asking to introduce themselves.";
-		var prompt = @$"You are hiring for the job: {jobTitle}. The name of the candidate in front of you is ""{candidateName}"". Briefly introduce yourself and let them know that you are an ai recruiter named 'Riku'. Then, ask them to intoduce themselves.
+		var prompt = @$"You are hiring for the job: {jobTitle}. The name of the candidate in front of you is ""{candidateName}"". Briefly introduce yourself and let them know that you are an ai recruiter named 'Riki'. Then, ask them to intoduce themselves.
 Instructions:
 - Keep your tone friendly
 - Don't use jargons or fluff

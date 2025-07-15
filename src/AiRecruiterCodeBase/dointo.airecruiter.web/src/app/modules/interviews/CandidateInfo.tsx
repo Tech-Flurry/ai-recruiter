@@ -187,15 +187,13 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 			if (!rawToken) throw new Error('Missing auth token')
 			const tokenObj = JSON.parse(rawToken)
 			if (!tokenObj.api_token) throw new Error('Invalid auth token')
-
-			// 📡 Submit API request
 			const response = await axios.post(
 				`${import.meta.env.VITE_APP_API_BASE_URL}/interviews/create-candidate`,
 				{ ...candidate, id: '' },
 				{
 					headers: {
 						'Content-Type': 'application/json',
-						Authorization: `Bearer ${token}`,
+						Authorization: `Bearer ${tokenObj}`,
 					},
 				}
 			)

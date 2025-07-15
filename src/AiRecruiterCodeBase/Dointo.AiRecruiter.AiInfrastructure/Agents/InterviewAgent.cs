@@ -67,6 +67,7 @@ Required skills for the job are: {string.Join(", ", interview.Job.RequiredSkills
 Experience required: {interview.Job.RequiredExperience} years.
 Instructions:
 - You need to score the overall interview out of 10
+- There's field name {nameof(ScoredQuestion.ScoreObtained)} and another field {nameof(ScoredQuestion.TotalScore)} in the interview questions, you need to use these fields to calculate the overall score
 - The score should be based on the total score obtained by the candidate in all the questions asked
 - The score can not be greater than 10
 - The score can be upto 2 decimal digits like 9.56, 8.25 etc., but can also be in a single digit

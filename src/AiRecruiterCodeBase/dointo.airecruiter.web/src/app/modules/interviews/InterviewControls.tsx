@@ -1,13 +1,7 @@
 import * as React from "react";
-import { FC, useState, useRef, useEffect } from "react";
+import { FC, useState, useRef, useEffect, useCallback } from "react";
 import axios from "axios";
 import OpenAI from "openai";
-
-type Message = {
-	user: "riki" | "candidate";
-	text: string;
-	time: string;
-};
 
 interface InterviewControlsProps {
 	jobId: string;
@@ -16,7 +10,6 @@ interface InterviewControlsProps {
 	onTerminate?: (interviewId: string) => void;
 	onSpeakingChange?: (isSpeaking: boolean) => void;
 	onRecordingChange?: (isRecording: boolean) => void;
-	onMessagesChange?: (messages: Message[]) => void;
 }
 
 const InterviewControls: FC<InterviewControlsProps> = ({
@@ -26,12 +19,11 @@ const InterviewControls: FC<InterviewControlsProps> = ({
 	onTerminate,
 	onSpeakingChange,
 	onRecordingChange,
-	onMessagesChange,
 }) => {
-	const [messages, setMessages] = useState<Message[]>([]);
 	const [interviewId, setInterviewId] = useState<string>("");
 	const [isTerminated, setIsTerminated] = useState(false);
 	const [apiKey, setApiKey] = useState<string>("");
+	const [interviewGenerated, setInterviewGenerated] = useState(false);
 	
 	// Recording states
 	const [isRecording, setIsRecording] = useState(false);
@@ -39,6 +31,7 @@ const InterviewControls: FC<InterviewControlsProps> = ({
 	const [isTranscribing, setIsTranscribing] = useState(false);
 	const [isTyping, setIsTyping] = useState(false);
 	const [showRetryMessage, setShowRetryMessage] = useState(false);
+	const [currentQuestion, setCurrentQuestion] = useState<string>("");
 	
 	// Recording refs
 	const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -55,10 +48,6 @@ const InterviewControls: FC<InterviewControlsProps> = ({
 	useEffect(() => {
 		if (onSpeakingChange) onSpeakingChange(isTyping);
 	}, [isTyping, onSpeakingChange]);
-
-	useEffect(() => {
-		if (onMessagesChange) onMessagesChange(messages);
-	}, [messages, onMessagesChange]);
 
 	// Space bar event listeners
 	useEffect(() => {
@@ -85,87 +74,66 @@ const InterviewControls: FC<InterviewControlsProps> = ({
 		};
 	}, [isRecording, isTerminated, interviewId]);
 
-	useEffect(() => {
-		const generateInterview = async () => {
-			const loadingMsg: Message = {
-				user: "riki",
-				text: "...",
-				time: "Loading",
-			};
-			setMessages([loadingMsg]);
-
-			try {
-				const token = localStorage.getItem("kt-auth-react-v");
-				if (!token) throw new Error("Missing auth token");
-				const keyRes = await axios.get(
-					`${(import.meta as any).env.VITE_APP_API_BASE_URL}/Interviews/get-api-key`,
-					{
-						headers: {
-							Authorization: `Bearer ${token}`,
-						},
-					}
-				);
-				setApiKey(keyRes.data || "");
-				const res = await axios.get(
-					`${(import.meta as any).env.VITE_APP_API_BASE_URL
-					}/Interviews/generate-interview/${candidateId}/${jobId}`,
-					{
-						headers: {
-							Authorization: `Bearer ${token}`,
-						},
-					}
-				);
-
-				setMessages([]);
-
-				if (res.data?.success) {
-					const data = res.data.data;
-					setInterviewId(data.interviewId);
-					if (onInterviewId) onInterviewId(data.interviewId);
-
-					// Start typing animation and play audio simultaneously
-					await Promise.all([
-						playAudioMessage(data.interviewStarter),
-						startTypingAnimation(data.interviewStarter)
-					]);
-				} else {
-					setMessages([
-						{
-							user: "riki",
-							text: res.data?.message || "Error starting interview.",
-							time: "Just now",
-						},
-					]);
-				}
-			} catch (error: any) {
-				console.error("Interview generation error:", error);
-				setMessages([
-					{
-						user: "riki",
-						text: axios.isAxiosError(error)
-							? error.response?.data?.message || "Server error"
-							: "Internal server error",
-						time: "Just now",
+	// Generate interview only once
+	const generateInterview = useCallback(async () => {
+		if (interviewGenerated) return; // Prevent multiple calls
+		
+		setInterviewGenerated(true);
+		
+		try {
+			const token = localStorage.getItem("kt-auth-react-v");
+			if (!token) throw new Error("Missing auth token");
+			
+			const keyRes = await axios.get(
+				`${(import.meta as any).env.VITE_APP_API_BASE_URL}/Interviews/get-api-key`,
+				{
+					headers: {
+						Authorization: `Bearer ${token}`,
 					},
-				]);
-			}
-		};
+				}
+			);
+			setApiKey(keyRes.data || "");
+			
+			const res = await axios.get(
+				`${(import.meta as any).env.VITE_APP_API_BASE_URL}/Interviews/generate-interview/${candidateId}/${jobId}`,
+				{
+					headers: {
+						Authorization: `Bearer ${token}`,
+					},
+				}
+			);
 
-		if (candidateId && jobId) {
+			if (res.data?.success) {
+				const data = res.data.data;
+				setInterviewId(data.interviewId);
+				if (onInterviewId) onInterviewId(data.interviewId);
+
+				// Start typing animation and play audio simultaneously
+				setCurrentQuestion(data.interviewStarter);
+				await Promise.all([
+					playAudioMessage(data.interviewStarter),
+					startTypingAnimation(data.interviewStarter)
+				]);
+			} else {
+				console.error("Error starting interview:", res.data?.message || "Unknown error");
+				setInterviewGenerated(false); // Allow retry on error
+			}
+		} catch (error: any) {
+			console.error("Interview generation error:", error);
+			setInterviewGenerated(false); // Allow retry on error
+		}
+	}, [candidateId, jobId, onInterviewId, interviewGenerated]);
+
+	// Use effect to generate interview once
+	useEffect(() => {
+		if (candidateId && jobId && !interviewGenerated) {
 			generateInterview();
 		}
-	}, [candidateId, jobId, onInterviewId]);
+	}, [candidateId, jobId, generateInterview, interviewGenerated]);
 
-	const startTypingAnimation = async (text: string) => {
+	const startTypingAnimation = useCallback(async (text: string) => {
 		setIsTyping(true);
-		
-		// Add typing message
-		const typingMessage: Message = {
-			user: "riki",
-			text: "",
-			time: "Just now",
-		};
-		setMessages(prev => [...prev, typingMessage]);
+		setCurrentQuestion("");
 
 		return new Promise<void>((resolve) => {
 			let currentIndex = 0;
@@ -174,17 +142,7 @@ const InterviewControls: FC<InterviewControlsProps> = ({
 			typingIntervalRef.current = window.setInterval(() => {
 				if (currentIndex < text.length) {
 					const currentText = text.substring(0, currentIndex + 1);
-					
-					// Update the last message with current typing text
-					setMessages(prev => {
-						const updated = [...prev];
-						updated[updated.length - 1] = {
-							...updated[updated.length - 1],
-							text: currentText
-						};
-						return updated;
-					});
-					
+					setCurrentQuestion(currentText);
 					currentIndex++;
 				} else {
 					if (typingIntervalRef.current) {
@@ -196,23 +154,47 @@ const InterviewControls: FC<InterviewControlsProps> = ({
 				}
 			}, typeSpeed);
 		});
-	};
+	}, []);
 
-	const sendMessage = async (messageText: string) => {
+	const playAudioMessage = useCallback(async (text: string) => {
+		if (!apiKey) return;
+
+		try {
+			const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+			const audio = await openai.audio.speech.create({
+				model: "tts-1",
+				voice: "nova",
+				input: text,
+			});
+			
+			// Convert the response to a Blob and play it in the browser
+			let audioBlob: Blob;
+			if (audio.body && typeof audio.body.getReader === "function") {
+				const response = audio as Response;
+				audioBlob = await response.blob();
+			} else if ((audio as any).blob) {
+				audioBlob = await (audio as any).blob();
+			} else {
+				throw new Error("Unsupported audio response format");
+			}
+
+			const url = URL.createObjectURL(audioBlob);
+			const audioElement = new Audio(url);
+			audioElement.play();
+			audioElement.onended = () => URL.revokeObjectURL(url);
+		} catch (error) {
+			console.error("Error playing audio:", error);
+		}
+	}, [apiKey]);
+
+	const sendMessage = useCallback(async (messageText: string) => {
 		if (!messageText.trim() || !interviewId || isTerminated) return;
 
-		const newMessages: Message[] = [
-			...messages,
-			{ user: "candidate", text: messageText, time: "Just now" },
-		];
-		setMessages(newMessages);
 		setShowRetryMessage(false);
-
-		const lastrikiMsg = [...messages].reverse().find((m) => m.user === "riki");
 
 		try {
 			const body = {
-				text: lastrikiMsg?.text || "",
+				text: currentQuestion,
 				answer: messageText,
 			};
 
@@ -220,8 +202,7 @@ const InterviewControls: FC<InterviewControlsProps> = ({
 			if (!token) throw new Error("Missing auth token");
 
 			const res = await axios.post(
-				`${(import.meta as any).env.VITE_APP_API_BASE_URL
-				}/Interviews/next-question/${interviewId}`,
+				`${(import.meta as any).env.VITE_APP_API_BASE_URL}/Interviews/next-question/${interviewId}`,
 				body,
 				{
 					headers: {
@@ -245,22 +226,19 @@ const InterviewControls: FC<InterviewControlsProps> = ({
 					}
 				} else {
 					// Start typing animation and play audio simultaneously
+					setCurrentQuestion(data.question);
 					await Promise.all([
 						playAudioMessage(data.question),
 						startTypingAnimation(data.question)
 					]);
 				}
 			} else {
-				const errorMessage = res.data.message || "Error retrieving next question.";
-				await startTypingAnimation(errorMessage);
+				console.error("Error retrieving next question:", res.data.message);
 			}
 		} catch (error: any) {
-			const errorMessage = axios.isAxiosError(error)
-				? error.response?.data?.message || "Server error"
-				: "Internal server error";
-			await startTypingAnimation(errorMessage);
+			console.error("Error sending message:", error);
 		}
-	};
+	}, [currentQuestion, interviewId, isTerminated, onTerminate, playAudioMessage, startTypingAnimation]);
 
 	const padStart = (str: string, targetLength: number, padString: string) => {
 		if (str.length >= targetLength) return str;
@@ -345,38 +323,6 @@ const InterviewControls: FC<InterviewControlsProps> = ({
 		}
 	};
 
-	const playAudioMessage = async (text: string) => {
-		if (!apiKey) return;
-
-		try {
-			const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
-			const audio = await openai.audio.speech.create({
-				model: "gpt-4o-mini-tts",
-				voice: "nova",
-				input: text,
-				instructions: "Speak like you're a professional recruiter but you should sound friendly to keep the candidate at ease",
-			});
-			
-			// Convert the response to a Blob and play it in the browser
-			let audioBlob: Blob;
-			if (audio.body && typeof audio.body.getReader === "function") {
-				const response = audio as Response;
-				audioBlob = await response.blob();
-			} else if ((audio as any).blob) {
-				audioBlob = await (audio as any).blob();
-			} else {
-				throw new Error("Unsupported audio response format");
-			}
-
-			const url = URL.createObjectURL(audioBlob);
-			const audioElement = new Audio(url);
-			audioElement.play();
-			audioElement.onended = () => URL.revokeObjectURL(url);
-		} catch (error) {
-			console.error("Error playing audio:", error);
-		}
-	};
-
 	const transcribeAudio = async (audioBlob: Blob) => {
 		if (!apiKey) return;
 		
@@ -432,6 +378,18 @@ const InterviewControls: FC<InterviewControlsProps> = ({
 	return (
 		<div className="interview-controls">
 			<div className="controls-container">
+				{/* Current Question Display */}
+				{currentQuestion && (
+					<div className="question-display">
+						<div className="question-text">
+							{currentQuestion}
+							{isTyping && (
+								<span className="typing-cursor">|</span>
+							)}
+						</div>
+					</div>
+				)}
+
 				{/* Status indicators */}
 				<div className="status-indicators">
 					{isRecording && (
@@ -483,6 +441,33 @@ const InterviewControls: FC<InterviewControlsProps> = ({
 					flex-direction: column;
 					align-items: center;
 					gap: 16px;
+				}
+
+				.question-display {
+					background: rgba(255, 255, 255, 0.1);
+					border-radius: 12px;
+					padding: 20px;
+					max-width: 600px;
+					text-align: center;
+					backdrop-filter: blur(10px);
+					border: 1px solid rgba(255, 255, 255, 0.2);
+				}
+
+				.question-text {
+					color: white;
+					font-size: 1.2rem;
+					font-weight: 500;
+					line-height: 1.5;
+				}
+
+				.typing-cursor {
+					animation: blink 1s infinite;
+					font-weight: normal;
+				}
+
+				@keyframes blink {
+					0%, 50% { opacity: 1; }
+					51%, 100% { opacity: 0; }
 				}
 
 				.status-indicators {
@@ -618,6 +603,15 @@ const InterviewControls: FC<InterviewControlsProps> = ({
 
 					.btn-content i {
 						font-size: 1.2rem;
+					}
+
+					.question-display {
+						padding: 16px;
+						max-width: 90vw;
+					}
+
+					.question-text {
+						font-size: 1.1rem;
 					}
 				}
 			`}</style>

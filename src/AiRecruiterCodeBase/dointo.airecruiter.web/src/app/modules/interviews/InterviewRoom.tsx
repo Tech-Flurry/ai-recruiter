@@ -1,7 +1,6 @@
 import * as React from "react";
 import { FC, useState } from "react";
 import InterviewVideoPanel from "./InterviewVideoPanel";
-import InterviewChatPanel from "./InterviewChatPanel";
 import InterviewControls from "./InterviewControls";
 import CandidateInterviewResult from "./CandidateInterviewResult";
 
@@ -15,7 +14,6 @@ const InterviewRoom: FC<InterviewRoomProps> = ({ jobId, candidateId }) => {
 	const [terminatedInterviewId, setTerminatedInterviewId] = useState<string>("");
 	const [isSpeaking, setIsSpeaking] = useState(false);
 	const [isRecording, setIsRecording] = useState(false);
-	const [messages, setMessages] = useState<any[]>([]);
 
 	const handleSpeakingChange = (speaking: boolean) => {
 		setIsSpeaking(speaking);
@@ -25,8 +23,8 @@ const InterviewRoom: FC<InterviewRoomProps> = ({ jobId, candidateId }) => {
 		setIsRecording(recording);
 	};
 
-	const handleMessagesChange = (newMessages: any[]) => {
-		setMessages(newMessages);
+	const handleInterviewStart = (id: string) => {
+		setInterviewId(id);
 	};
 
 	if (terminatedInterviewId) {
@@ -41,6 +39,19 @@ const InterviewRoom: FC<InterviewRoomProps> = ({ jobId, candidateId }) => {
 						</div>
 					</div>
 				</div>
+				<style jsx>{`
+					.interview-room-container {
+						height: 100vh;
+						background-color: #1a1a1a;
+						overflow: hidden;
+					}
+
+					.interview-result-panel {
+						max-width: 800px;
+						width: 100%;
+						margin: 20px;
+					}
+				`}</style>
 			</div>
 		);
 	}
@@ -49,13 +60,8 @@ const InterviewRoom: FC<InterviewRoomProps> = ({ jobId, candidateId }) => {
 		<div className="interview-room-container">
 			<div className="container-fluid h-100">
 				<div className="row h-100">
-					{/* Chat Panel - Left Side */}
-					<div className="col-md-4 col-lg-3 chat-panel-column">
-						<InterviewChatPanel messages={messages} />
-					</div>
-
-					{/* Video Panel - Center */}
-					<div className="col-md-8 col-lg-9 video-panel-column">
+					{/* Single Full-Width Video Panel */}
+					<div className="col-12 video-panel-column">
 						<InterviewVideoPanel
 							isSpeaking={isSpeaking}
 							isRecording={isRecording}
@@ -66,11 +72,10 @@ const InterviewRoom: FC<InterviewRoomProps> = ({ jobId, candidateId }) => {
 							<InterviewControls
 								jobId={jobId}
 								candidateId={candidateId}
-								onInterviewId={setInterviewId}
+								onInterviewId={handleInterviewStart}
 								onTerminate={setTerminatedInterviewId}
 								onSpeakingChange={handleSpeakingChange}
 								onRecordingChange={handleRecordingChange}
-								onMessagesChange={handleMessagesChange}
 							/>
 						</div>
 					</div>
@@ -82,12 +87,7 @@ const InterviewRoom: FC<InterviewRoomProps> = ({ jobId, candidateId }) => {
 					height: 100vh;
 					background-color: #1a1a1a;
 					overflow: hidden;
-				}
-
-				.chat-panel-column {
-					background-color: #2d2d2d;
-					border-right: 1px solid #404040;
-					padding: 0;
+					position: relative;
 				}
 
 				.video-panel-column {
@@ -102,22 +102,6 @@ const InterviewRoom: FC<InterviewRoomProps> = ({ jobId, candidateId }) => {
 					left: 50%;
 					transform: translateX(-50%);
 					z-index: 10;
-				}
-
-				.interview-result-panel {
-					max-width: 800px;
-					width: 100%;
-					margin: 20px;
-				}
-
-				@media (max-width: 768px) {
-					.chat-panel-column {
-						display: none;
-					}
-					
-					.video-panel-column {
-						width: 100%;
-					}
 				}
 			`}</style>
 		</div>

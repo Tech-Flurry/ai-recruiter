@@ -522,7 +522,7 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 						data-kt-element="input"
 						placeholder="Type your answer..."
 						value={message}
-						onChange={(e) => setMessage(e.target.value)}
+						onChange={(e) => setMessage(e.target.value)]
 						onKeyDown={onEnterPress}
 						disabled={!interviewId || isTerminated || isRecording}
 					/>
@@ -595,3 +595,6 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 };
 
 export default InterviewChat;
+
+{/* This file is deprecated - functionality moved to InterviewControls */}
+{/* TODO: Remove this file after confirming no imports reference it */}

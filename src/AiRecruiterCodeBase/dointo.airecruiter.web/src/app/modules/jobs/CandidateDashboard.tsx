@@ -10,6 +10,7 @@ interface SkillDto {
 
 interface CandidateDashboardDto {
 	name: string
+	summary: string
 	totalInterviews: number
 	averageScore: number
 	passRate: number
@@ -19,7 +20,6 @@ interface CandidateDashboardDto {
 
 const CandidateDashboard: React.FC = () => {
 	const [data, setData] = useState<CandidateDashboardDto | null>(null)
-	const [overview, setOverview] = useState<string>('')
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
 
@@ -44,18 +44,7 @@ const CandidateDashboard: React.FC = () => {
 					}
 				);
 
-				const overviewRes = await axios.get(
-					`${import.meta.env.VITE_APP_API_BASE_URL}/Interviews/candidate-performance-overview`,
-					{
-						headers: {
-							Authorization: `Bearer ${token}`,
-						},
-					}
-				);
-
-
 				setData(dashboardRes.data.data);
-				setOverview(overviewRes.data.data);
 			} catch (err: any) {
 				console.error("❌ Error fetching dashboard data:", err);
 				if (err.response?.status === 401) {
@@ -173,7 +162,7 @@ const CandidateDashboard: React.FC = () => {
 				<Tab eventKey='summary' title='Summary'>
 					<div className='p-4 bg-light rounded border'>
 						<h5 className='mb-3'>Performance Overview</h5>
-						<p className='text-muted'>{overview}</p>
+						<p className='text-muted'>{data.summary}</p>
 					</div>
 				</Tab>
 			<Tab eventKey='history' title='Recent Activity'>

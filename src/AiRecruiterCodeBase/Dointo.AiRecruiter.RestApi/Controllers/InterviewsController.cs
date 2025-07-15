@@ -67,18 +67,6 @@ public class InterviewsController(IInterviewsService service) : ControllerBase
 		return Ok(state);
 	}
 
-	[HttpGet("candidate-performance-overview")]
-	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
-	[ProducesResponseType(StatusCodes.Status404NotFound)]
-	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-	public async Task<IActionResult> GetCandidatePerformanceOverview( )
-	{
-		var state = await _service.GenerateCandidatePerformanceOverviewAsync(User);
-
-		return Ok(state);
-	}
-
-
 	[HttpGet("history")]
 	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<InterviewHistoryDto>))]
 	public async Task<IActionResult> GetInterviewHistoryByOwner( )

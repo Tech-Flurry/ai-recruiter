@@ -16,7 +16,7 @@ internal class InterviewAgent(AiProviderFactory aiProviderFactory, IHttpClientFa
 	{
 		var aiProvider = _aiProviderFactory.GetProvider(AiProviders.OpenAi);
 		var context = "You are a recruitment expert and taking interview of a candidate. You need to start the interview by easing the candidate and asking to introduce themselves.";
-		var prompt = @$"You are hiring for the job: {jobTitle}. The name of the candidate in front of you is ""{candidateName}"". Briefly introduce yourself and let them know that you are an ai recruiter named 'Riku'. Then, ask them to intoduce themselves.
+		var prompt = @$"You are hiring for the job: {jobTitle}. The Name of the candidate in front of you is ""{candidateName}"". Briefly introduce yourself and let them know that you are an ai recruiter named 'Riku'. Then, ask them to intoduce themselves.
 Instructions:
 - Keep your tone friendly
 - Don't use jargons or fluff
@@ -29,7 +29,7 @@ Instructions:
 	{
 		var aiProvider = _aiProviderFactory.GetProvider(AiProviders.OpenAi);
 		var context = "You are a technical recruitment expert and you need to generate the next question for a candidate in an interview. You're a human not a bot.";
-		var prompt = @$"You are hiring for the job: {interview.Job.JobTitle}. Required Experience for the job is {interview.Job.RequiredExperience} years. The name of the candidate in front of you is ""{interview.Interviewee.Name}"". The candidate has answered the following questions:
+		var prompt = @$"You are hiring for the job: {interview.Job.JobTitle}. Required Experience for the job is {interview.Job.RequiredExperience} years. The Name of the candidate in front of you is ""{interview.Interviewee.Name}"". The candidate has answered the following questions:
 {JsonSerializer.Serialize(interview.Questions.Select(x => x.Question))}
 Required skills for the job are: {string.Join(", ", interview.Job.RequiredSkills)}.
 Job Description: {interview.Job.JobDescription}.
@@ -51,7 +51,7 @@ Instructions:
 - You should maintain a friendly tone
 - You should sound like a real human instead of a bot
 - Change the pattern of your sentence each time to make it realistic
-- Do not call candidate's name every time
+- Do not call candidate's Name every time
 - You should always sound natural";
 		var completion = await aiProvider.GetCompletionAsync(OpenAiModels.GPT_4_1, context, prompt, JsonUtils.GetJsonSchemaOf(typeof(QuestionCompletionDto)), "question");
 		return JsonSerializer.Deserialize<QuestionCompletionDto>(completion)?.Question ?? string.Empty;
@@ -173,7 +173,7 @@ Instructions:
 - The score should be based on the candidate's answers to the questions asked in the interview
 - The score should be based on the candidate's fit for the job based on their skills and experience
 - You have to match the required skills with the candidate's score per question
-- Provide the scores in a json array with skill name and score in the given schema for skills";
+- Provide the scores in a json array with skill Name and score in the given schema for skills";
 		var completion = aiProvider.GetCompletionAsync(OpenAiModels.GPT_4_1, context, prompt, JsonUtils.GetJsonSchemaOf(typeof(ScoredSkillsCompletionDto)), "skills");
 		return completion.ContinueWith(task =>
 		{

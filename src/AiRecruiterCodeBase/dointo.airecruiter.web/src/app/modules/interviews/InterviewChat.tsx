@@ -595,6 +595,3 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 };
 
 export default InterviewChat;
-
-{/* This file is deprecated - functionality moved to InterviewControls */}
-{/* TODO: Remove this file after confirming no imports reference it */}

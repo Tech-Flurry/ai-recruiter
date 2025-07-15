@@ -136,6 +136,7 @@ const CandidateInterviewResult: React.FC<CandidateInterviewResultProps> = ({ int
 							<div key={idx} className="question-item">
 								<div className="question-header">
 									<span className="question-number">Q{idx + 1}</span>
+									<p>{q.text}</p>
 									<span className={clsx('question-score', q.score > 2.5 ? 'good' : 'poor')}>
 										{q.score.toFixed(2)}/5
 									</span>

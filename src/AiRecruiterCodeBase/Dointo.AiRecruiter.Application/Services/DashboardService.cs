@@ -103,10 +103,6 @@ internal class DashboardService(IReadOnlyRepository readOnlyRepository) : IDashb
 						? validDurations.Average( )
 						: 0;
 
-					var avgDuration = validDurations.Any( )
-						? validDurations.Average( )
-						: 0;
-
 					return new JobPostInsightDto
 					{
 						JobTitle = group.Key,

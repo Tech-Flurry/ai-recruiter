@@ -2,6 +2,7 @@
 using Dointo.AiRecruiter.Core.Extensions;
 using Dointo.AiRecruiter.DbInfrastructure.Database;
 using Dointo.AiRecruiter.Domain.Entities;
+using Dointo.AiRecruiter.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dointo.AiRecruiter.DbInfrastructure.Repositories;
@@ -19,6 +20,12 @@ public class JobPostRepository(AiRecruiterDbContext dbContext) : RepositoryBase<
 		return !allowInactive
 			? await QueryableEntity.Where(x => x.CreatedBy == ownerId && !x.IsDeleted).ToListAsync( )
 			: await _entitySet.Where(x => x.CreatedBy == ownerId).ToListAsync( );
+	}
+	public async Task<List<Job>> GetActiveCandidateJobsAsync( )
+	{
+		return await _entitySet
+			.Where(j => j.CreatedBy == "system" && !j.IsDeleted && j.Status != JobStatus.Closed)
+			.ToListAsync( );
 	}
 
 	public async Task<Job> SaveAsync(Job entity, string username)

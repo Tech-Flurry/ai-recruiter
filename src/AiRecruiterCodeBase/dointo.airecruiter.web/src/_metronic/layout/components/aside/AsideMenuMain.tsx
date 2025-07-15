@@ -25,13 +25,17 @@ export function AsideMenuMain() {
 				</>
 			) : (
 				<>
-					<AsideMenuItem to='/dashboard' icon='element-11' title='Candidate Dashboard' />
+						<AsideMenuItem to='/jobs/candidate-dashboard' icon='element-11' title='Candidate Dashboard' />
 						<AsideMenuItem
 							to='/jobs/interview-history'
 							icon='chart'
 							title='Interview History'
 						/>
-					<AsideMenuItem to='/profile' icon='profile-circle' title='My Profile' />
+						<AsideMenuItem
+							to="/jobs/view-jobs"
+							icon="briefcase" // You can use 'briefcase', 'user', etc.
+							title="My Interviews"
+						/>
 				</>
 			)}
 			<AsideMenuItemWithSub to='/crafted/pages' title='Pages' icon='gift'>

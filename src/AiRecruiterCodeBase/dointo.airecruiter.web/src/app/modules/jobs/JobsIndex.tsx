@@ -5,8 +5,10 @@ import JobPost from './JobPost'
 import ConductJob from './ConductJob'
 import JobScreening from './JobScreening'
 import InterviewResult from './InterviewResult'
+import CandidateDashboard from './CandidateDashboard'
 import CandidateInterviewHistory from './CandidateInterviewHistory'
 import InterviewReport from './InterviewReport'
+import CandidateJobView from './CandidateJobView'
 
 const jobsBreadCrumbs: Array<PageLink> = [
 	{
@@ -81,6 +83,15 @@ function JobsIndex() {
 						</>
 					}
 				/>
+				<Route
+					path='candidate-dashboard'
+					element={
+						<>
+							<PageTitle breadcrumbs={jobsBreadCrumbs}>Candidate Dashboard</PageTitle>
+							<CandidateDashboard />
+						</>
+					}
+				/>
 
 				{/* 🔹 Candidate Interview Status Page */}
 				<Route
@@ -102,6 +113,16 @@ function JobsIndex() {
 						</>
 					}
 				/>
+				<Route
+					path='view-jobs'
+					element={
+						<>
+							<PageTitle breadcrumbs={jobsBreadCrumbs}>My Interviews</PageTitle>
+							<CandidateJobView/>
+						</>
+					}
+				/>S
+
 
 
 				{/* 🔹 Default Redirect */}

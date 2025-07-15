@@ -1,4 +1,5 @@
 ﻿using Dointo.AiRecruiter.Application.Services;
+using Dointo.AiRecruiter.Core.States;
 using Dointo.AiRecruiter.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -51,5 +52,21 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 	[HttpGet("skills")]
 	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SkillDto))]
 	public IActionResult GetAllSkills( ) => Ok(_service.GetAllSkills( ));
+
+	[HttpGet("candidate-jobs")]
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<CandidateJobViewDto>))]
+	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	public async Task<IActionResult> GetCandidateJobs( )
+	{
+		var result = await _service.GetActiveCandidateJobsAsync(User );
+
+		if (result is not SuccessState<List<CandidateJobViewDto>> successState)
+			return NotFound(result.Message); 
+
+		return Ok(successState.Data);
+	}
+
+
+
 }
 

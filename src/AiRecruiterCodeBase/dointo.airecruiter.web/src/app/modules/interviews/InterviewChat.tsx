@@ -11,7 +11,7 @@ type Message = {
 	time: string;
 };
 
-const rikiAvatar = "avatars/300-1.jpg";
+const rikiAvatar = "avatars/300-12.jpg";
 const candidateAvatar = "avatars/blank.png";
 
 interface InterviewChatProps {

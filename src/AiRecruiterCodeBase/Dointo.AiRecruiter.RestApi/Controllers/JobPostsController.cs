@@ -58,10 +58,10 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	public async Task<IActionResult> GetCandidateJobs( )
 	{
-		var result = await _service.GetActiveCandidateJobsAsync( );
+		var result = await _service.GetActiveCandidateJobsAsync(User );
 
 		if (result is not SuccessState<List<CandidateJobViewDto>> successState)
-			return NotFound(result.Message); // Or BadRequest if you want to handle business/validation errors differently
+			return NotFound(result.Message); 
 
 		return Ok(successState.Data);
 	}

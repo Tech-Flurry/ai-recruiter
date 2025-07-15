@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+﻿import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { Table } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
@@ -18,11 +18,26 @@ const CandidateJobView = () => {
 
 	useEffect(() => {
 		const fetchJobs = async () => {
+			const token = localStorage.getItem('kt-auth-react-v')
+
+			if (!token) {
+				console.error('❌ Auth token not found.')
+				setError('You are not authenticated.')
+				return
+			}
+
 			try {
-				const res = await axios.get<CandidateJobDto[]>('https://localhost:7072/api/JobPosts/candidate-jobs')
+				const res = await axios.get<CandidateJobDto[]>(
+					`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/candidate-jobs`,
+					{
+						headers: {
+							Authorization: `Bearer ${token}`,
+						},
+					}
+				)
 				setJobs(res.data)
 			} catch (err) {
-				console.error('Error fetching jobs:', err)
+				console.error('❌ Error fetching jobs:', err)
 				setError('Failed to load jobs.')
 			}
 		}
@@ -42,6 +57,7 @@ const CandidateJobView = () => {
 				return <span className='badge badge-light fw-bold'>Unknown</span>
 		}
 	}
+
 
 	const getActionButton = (status: string, jobId: string) => {
 		switch (status) {

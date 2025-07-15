@@ -80,20 +80,28 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 	const [isProcessing, setIsProcessing] = useState(false);
 
 	useEffect(() => {
-		// Load available skills from API using axios
-		axios
-			.get(`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/skills`)
-			.then((res) => setAvailableSkills(res.data.data || []))
-			.catch(() => setAvailableSkills([]));
-	}, []);
+		const token = localStorage.getItem('kt-auth-react-v');
 
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-		const { name, value } = e.target;
-		setCandidate((prev) => ({
-			...prev,
-			[name]: value,
-		}));
-	};
+		if (!token) {
+			console.error("❌ Token not found.");
+			setAvailableSkills([]);
+			return;
+		}
+
+		axios
+			.get(`${import.meta.env.VITE_APP_API_BASE_URL}/JobPosts/skills`, {
+				headers: {
+					Authorization: `Bearer ${token}`,
+				},
+			})
+			.then((res) => {
+				setAvailableSkills(res.data.data || []);
+			})
+			.catch((error) => {
+				console.error("❌ Failed to fetch skills:", error);
+				setAvailableSkills([]);
+			});
+	}, []);
 
 	const handleCredentialChange = (
 		listName: 'educationHistory' | 'certifications',
@@ -118,6 +126,13 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 			updatedList[idx] = { ...updatedList[idx], [field]: value };
 			return { ...prev, experiences: updatedList };
 		});
+	};
+	const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+		const { name, value } = e.target;
+		setCandidate((prev) => ({
+			...prev,
+			[name]: value,
+		}));
 	};
 
 	const handleSkillChange = (

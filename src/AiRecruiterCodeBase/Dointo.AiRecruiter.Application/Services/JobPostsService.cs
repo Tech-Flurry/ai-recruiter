@@ -23,7 +23,7 @@ public interface IJobPostsService
 	Task<IProcessingState> CloseMultipleJobsAsync(CloseMultipleJobsDto closeJobDto);
 	Task<IProcessingState> ExtractSkillsFromDescriptionAsync(string jobDescription);
 	IProcessingState GetAllSkills( );
-	Task<IProcessingState> GetActiveCandidateJobsAsync( );
+	Task<IProcessingState> GetActiveCandidateJobsAsync(ClaimsPrincipal user );
 
 	Task<IProcessingState> GetAllInterviews(string jobId);
 
@@ -41,14 +41,24 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 	private readonly IJobsAgent _jobsAgent = jobsAgent;
 	private readonly MessageBuilder _messageBuilder = new( );
 
-	public async Task<IProcessingState> GetActiveCandidateJobsAsync( )
+	public Task<IProcessingState> GetActiveCandidateJobsAsync(ClaimsPrincipal user)
 	{
 		_messageBuilder.Clear( );
 
-		var allJobs = await _repository.GetByOwnerAsync("system");
+		// Step 1: Get list of job IDs owned by user
+		var ownerJobIds = GetOwnerJobIds(user); // List<string> or IEnumerable<string>
+
+		// Step 2: Fetch Job objects for those IDs
+		var ownerJobs = _readOnlyRepository
+			.Query<Job>( )
+			.Where(job => ownerJobIds.Contains(job.Id))
+			.ToList();
+
+		// Step 3: Get all interviews
 		var interviewsSet = _readOnlyRepository.Query<Interview>( );
 
-		var candidateJobs = allJobs
+		// Step 4: Filter and project candidate jobs
+		var candidateJobs = ownerJobs
 			.Where(job => !job.IsDeleted && job.Status != JobStatus.Closed)
 			.Select(job =>
 			{
@@ -64,11 +74,12 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 			})
 			.ToList( );
 
-		return new SuccessState<List<CandidateJobViewDto>>(
+		return Task.FromResult<IProcessingState>(new SuccessState<List<CandidateJobViewDto>>(
 			_messageBuilder.AddFormat(Messages.RECORD_RETRIEVED_FORMAT).AddString("Jobs").Build( ),
 			candidateJobs
-		);
+		));
 	}
+
 
 	public async Task<IProcessingState> SaveAsync(EditJobDto jobPostDto, string username)
 	{
@@ -223,5 +234,13 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 	{
 		_messageBuilder.Clear( );
 		return _messageBuilder.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT).AddString(JOB_STRING).Build( );
+	}
+	private List<string> GetOwnerJobIds(ClaimsPrincipal user)
+	{
+		var ownerId = user.GetOwnerId( );
+		return [.. _readOnlyRepository
+			.Query<Job>( )
+			.Where(x => x.CreatedBy == ownerId && !x.IsDeleted)
+			.Select(x => x.Id)];
 	}
 }

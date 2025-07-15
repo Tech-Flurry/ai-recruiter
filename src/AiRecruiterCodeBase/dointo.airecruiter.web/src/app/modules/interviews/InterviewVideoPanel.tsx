@@ -8,8 +8,7 @@ interface InterviewVideoPanelProps {
 }
 
 const InterviewVideoPanel: FC<InterviewVideoPanelProps> = ({ isSpeaking, isRecording }) => {
-	const rikiAvatar = "avatars/300-1.jpg";
-
+	const rikiAvatar = "avatars/300-12.jpg";
 	return (
 		<div className="video-panel">
 			<div className="video-content">
@@ -30,7 +29,7 @@ const InterviewVideoPanel: FC<InterviewVideoPanelProps> = ({ isSpeaking, isRecor
 							</div>
 						)}
 					</div>
-					
+
 					<div className="avatar-info">
 						<h2 className="avatar-name">Riki</h2>
 						<span className="avatar-status">AI Recruiter</span>

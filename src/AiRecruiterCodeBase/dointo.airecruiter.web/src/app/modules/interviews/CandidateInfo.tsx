@@ -141,14 +141,6 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({
 			return { ...prev, experiences: updatedList };
 		});
 	};
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-		const { name, value } = e.target;
-		setCandidate((prev) => ({
-			...prev,
-			[name]: value,
-		}));
-	};
-
 	const handleSkillChange = (
 		idx: number,
 		field: keyof SkillRating,

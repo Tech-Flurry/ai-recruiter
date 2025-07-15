@@ -8,9 +8,11 @@ namespace Dointo.AiRecruiter.RestApi.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
-public class InterviewsController(IInterviewsService service) : ControllerBase
+public class InterviewsController(IInterviewsService service, IConfiguration configuration) : ControllerBase
 {
 	private readonly IInterviewsService _service = service;
+	private readonly IConfiguration _configuration = configuration;
+
 	[HttpPost("create-candidate")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -19,7 +21,7 @@ public class InterviewsController(IInterviewsService service) : ControllerBase
 
 	[HttpGet("get-candidate")]
 	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(CreateCandidateDto))]
-	public async Task<IActionResult> GetCandidate() =>
+	public async Task<IActionResult> GetCandidate( ) =>
 		Ok(await _service.GetCandidateByUserAsync(User));
 
 	[HttpGet("generate-interview/{candidateId}/{jobId}")]
@@ -64,6 +66,13 @@ public class InterviewsController(IInterviewsService service) : ControllerBase
 		return Ok(report);
 	}
 
-
-
+	[HttpGet("get-api-key")]
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
+	public IActionResult GetApiKey( )
+	{
+		var apiKey = _configuration["OpenAi:ApiKey"];
+		if (string.IsNullOrEmpty(apiKey))
+			return NotFound("API key not found for the user.");
+		return Ok(apiKey);
+	}
 }

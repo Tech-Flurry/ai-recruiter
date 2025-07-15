@@ -48,7 +48,7 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 	const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 	const chunksRef = useRef<Blob[]>([]);
 	const timerRef = useRef<number | null>(null);
-	const typingIntervalRef = useRef<number | null>(null);
+	// const typingIntervalRef = useRef<number | null>(null);
 
 	useEffect(() => {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -99,7 +99,9 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 						},
 					}
 				);
-				setApiKey(keyRes.data || "");
+				const fetchedApiKey = keyRes.data || "";
+				setApiKey(fetchedApiKey); // still set for later use
+
 				const res = await axios.get(
 					`${(import.meta as any).env.VITE_APP_API_BASE_URL
 					}/Interviews/generate-interview/${candidateId}/${jobId}`,
@@ -116,10 +118,8 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 					const data = res.data.data;
 					setInterviewId(data.interviewId);
 					if (onInterviewId) onInterviewId(data.interviewId);
-
-					// Start typing animation and play audio simultaneously
 					await Promise.all([
-						playAudioMessage(data.interviewStarter),
+						playAudioMessage(data.interviewStarter, fetchedApiKey),
 						startTypingAnimation(data.interviewStarter)
 					]);
 				} else {
@@ -166,32 +166,51 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 			let currentIndex = 0;
 			const typeSpeed = 50; // milliseconds per character
 			
-			typingIntervalRef.current = window.setInterval(() => {
-				if (currentIndex < text.length) {
-					const currentText = text.substring(0, currentIndex + 1);
-					setTypingText(currentText);
+			// typingIntervalRef.current = window.setInterval(() => {
+			// 	if (currentIndex < text.length) {
+			// 		const currentText = text.substring(0, currentIndex + 1);
+			// 		setTypingText(currentText);
 					
-					// Update the last message with current typing text
-					setMessages(prev => {
-						const updated = [...prev];
-						updated[updated.length - 1] = {
-							...updated[updated.length - 1],
-							text: currentText
-						};
-						return updated;
-					});
+			// 		// Update the last message with current typing text
+			// 		setMessages(prev => {
+			// 			const updated = [...prev];
+			// 			updated[updated.length - 1] = {
+			// 				...updated[updated.length - 1],
+			// 				text: currentText
+			// 			};
+			// 			return updated;
+			// 		});
 					
-					currentIndex++;
+			// 		currentIndex++;
+			// 	} else {
+			// 		if (typingIntervalRef.current) {
+			// 			clearInterval(typingIntervalRef.current);
+			// 			typingIntervalRef.current = null;
+			// 		}
+			// 		setIsTyping(false);
+			// 		setTypingText("");
+			// 		resolve();
+			// 	}
+			// }, typeSpeed);
+			
+			// Simplified typing animation
+			const simplifiedText = text.replace(/([.?!])\s*(?=[A-Z])/g, "$1|").split("|");
+			let partIndex = 0;
+			
+			const displayNextPart = () => {
+				if (partIndex < simplifiedText.length) {
+					setTypingText(simplifiedText[partIndex]);
+					partIndex++;
 				} else {
-					if (typingIntervalRef.current) {
-						clearInterval(typingIntervalRef.current);
-						typingIntervalRef.current = null;
-					}
 					setIsTyping(false);
-					setTypingText("");
 					resolve();
+					return;
 				}
-			}, typeSpeed);
+				
+				setTimeout(displayNextPart, 500); // Adjusted speed
+			};
+			
+			displayNextPart();
 		});
 	};
 
@@ -351,11 +370,12 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 		}
 	};
 
-	const playAudioMessage = async (text: string) => {
-		if (!apiKey) return;
+	const playAudioMessage = async (text: string, keyOverride?: string) => {
+		const keyToUse = keyOverride || apiKey;
+		if (!keyToUse) return;
 
 		try {
-			const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+			const openai = new OpenAI({ apiKey: keyToUse, dangerouslyAllowBrowser: true });
 			const audio = await openai.audio.speech.create({
 				model: "gpt-4o-mini-tts",
 				voice: "nova",
@@ -363,7 +383,6 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 				instructions: "Speak like you're a professional recruiter but you should sound friendly to keep the candidate at ease",
 			});
 			
-			// Convert the response to a Blob and play it in the browser
 			let audioBlob: Blob;
 			if (audio.body && typeof audio.body.getReader === "function") {
 				const response = audio as Response;
@@ -427,9 +446,9 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 			if (timerRef.current) {
 				clearInterval(timerRef.current);
 			}
-			if (typingIntervalRef.current) {
-				clearInterval(typingIntervalRef.current);
-			}
+			// if (typingIntervalRef.current) {
+			// 	clearInterval(typingIntervalRef.current);
+			// }
 			if (mediaStreamRef.current) {
 				mediaStreamRef.current.getTracks().forEach(track => track.stop());
 			}
@@ -524,7 +543,7 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 						data-kt-element="input"
 						placeholder="Type your answer..."
 						value={message}
-						onChange={(e) => setMessage(e.target.value)]
+						onChange={(e) => setMessage(e.target.value)}
 						onKeyDown={onEnterPress}
 						disabled={!interviewId || isTerminated || isRecording}
 					/>

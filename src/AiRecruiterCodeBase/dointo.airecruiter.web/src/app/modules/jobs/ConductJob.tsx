@@ -102,7 +102,7 @@ const ConductJob: React.FC = () => {
 						Try Again
 					</button>
 				</div>
-				<style jsx>{`
+				<style jsx="true">{`
 					.conduct-job-container {
 						min-height: 100vh;
 						background: #f8f9fa;

@@ -141,7 +141,7 @@ const CandidateInterviewResult: React.FC<CandidateInterviewResultProps> = ({ int
 										{q.score.toFixed(2)}/5
 									</span>
 								</div>
-								<div className="question-text">{q.text}</div>
+								
 								<div className="answer-text">{q.answer}</div>
 							</div>
 						))}

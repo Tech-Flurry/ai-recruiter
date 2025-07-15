@@ -198,22 +198,24 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 	const sendMessage = async (messageText: string) => {
 		if (!messageText.trim() || !interviewId || isTerminated) return;
 
-		const newMessages: Message[] = [
-			...messages,
-			{ user: "candidate", text: messageText, time: "Just now" },
-		];
-		setMessages(newMessages);
+		let lastRikiMsg: Message | undefined;
+		setMessages(prevMessages => {
+			lastRikiMsg = [...prevMessages].reverse().find((m) => m.user === "riki");
+			return [
+				...prevMessages,
+				{ user: "candidate", text: messageText, time: "Just now" },
+			];
+		});
 		setMessage("");
 		setShowTextArea(false);
 
-		const lastrikiMsg = [...messages].reverse().find((m) => m.user === "riki");
+		// Wait for setMessages to complete before using lastRikiMsg
+		const body = {
+			text: lastRikiMsg?.text || "",
+			answer: messageText,
+		};
 
 		try {
-			const body = {
-				text: lastrikiMsg?.text || "",
-				answer: messageText,
-			};
-
 			const token = localStorage.getItem("kt-auth-react-v");
 			if (!token) throw new Error("Missing auth token");
 

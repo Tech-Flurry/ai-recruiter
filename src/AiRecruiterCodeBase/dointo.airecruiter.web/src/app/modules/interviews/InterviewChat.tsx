@@ -3,7 +3,6 @@ import clsx from "clsx";
 import axios from "axios";
 import { toAbsoluteUrl } from "../../../_metronic/helpers";
 import OpenAI from "openai";
-import { playAudio } from "openai/helpers/audio";
 
 type Message = {
 	user: "riki" | "candidate";
@@ -32,7 +31,19 @@ const InterviewChat: FC<InterviewChatProps> = ({
 	const [interviewId, setInterviewId] = useState<string>("");
 	const [isTerminated, setIsTerminated] = useState(false);
 	const [apiKey, setApiKey] = useState<string>("");
+	
+	// Recording states
+	const [isRecording, setIsRecording] = useState(false);
+	const [recordingSeconds, setRecordingSeconds] = useState(0);
+	const [recordedUrl, setRecordedUrl] = useState<string>("");
+	const [isTranscribing, setIsTranscribing] = useState(false);
+	
+	// Recording refs
 	const messagesEndRef = useRef<HTMLDivElement>(null);
+	const mediaStreamRef = useRef<MediaStream | null>(null);
+	const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+	const chunksRef = useRef<Blob[]>([]);
+	const timerRef = useRef<NodeJS.Timeout | null>(null);
 
 	useEffect(() => {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -60,8 +71,7 @@ const InterviewChat: FC<InterviewChatProps> = ({
 				);
 				setApiKey(keyRes.data || "");
 				const res = await axios.get(
-					`${
-						import.meta.env.VITE_APP_API_BASE_URL
+					`${import.meta.env.VITE_APP_API_BASE_URL
 					}/Interviews/generate-interview/${candidateId}/${jobId}`,
 					{
 						headers: {
@@ -113,12 +123,12 @@ const InterviewChat: FC<InterviewChatProps> = ({
 		}
 	}, [candidateId, jobId, onInterviewId]);
 
-	const sendMessage = async () => {
-		if (!message.trim() || !interviewId || isTerminated) return;
+	const sendMessage = async (messageText: string) => {
+		if (!messageText.trim() || !interviewId || isTerminated) return;
 
 		const newMessages: Message[] = [
 			...messages,
-			{ user: "candidate", text: message, time: "Just now" },
+			{ user: "candidate", text: messageText, time: "Just now" },
 			{ user: "riki", text: "...", time: "Processing" },
 		];
 		setMessages(newMessages);
@@ -129,15 +139,14 @@ const InterviewChat: FC<InterviewChatProps> = ({
 		try {
 			const body = {
 				text: lastrikiMsg?.text || "",
-				answer: message,
+				answer: messageText,
 			};
 
 			const token = localStorage.getItem("kt-auth-react-v");
 			if (!token) throw new Error("Missing auth token");
 
 			const res = await axios.post(
-				`${
-					import.meta.env.VITE_APP_API_BASE_URL
+				`${import.meta.env.VITE_APP_API_BASE_URL
 				}/Interviews/next-question/${interviewId}`,
 				body,
 				{
@@ -204,7 +213,84 @@ const InterviewChat: FC<InterviewChatProps> = ({
 	const onEnterPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
 		if (e.key === "Enter" && !e.shiftKey) {
 			e.preventDefault();
-			sendMessage();
+			sendMessage(message);
+		}
+	};
+
+	const formatTimer = (totalSeconds: number): string => {
+		const hours = Math.floor(totalSeconds / 3600);
+		const minutes = Math.floor((totalSeconds % 3600) / 60);
+		const seconds = totalSeconds % 60;
+		
+		if (hours > 0) {
+			return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+		}
+		return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+	};
+
+	const startRecording = async () => {
+		try {
+			setRecordingSeconds(0);
+			chunksRef.current = [];
+			
+			const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+			mediaStreamRef.current = stream;
+			
+			const mediaRecorder = new MediaRecorder(stream);
+			mediaRecorderRef.current = mediaRecorder;
+			
+			mediaRecorder.ondataavailable = (event) => {
+				if (event.data.size > 0) {
+					chunksRef.current.push(event.data);
+				}
+			};
+			
+			mediaRecorder.onstop = async () => {
+				const audioBlob = new Blob(chunksRef.current, { type: 'audio/wav' });
+				const url = URL.createObjectURL(audioBlob);
+				setRecordedUrl(url);
+				
+				// Transcribe the audio
+				await transcribeAudio(audioBlob);
+				
+				// Clean up
+				if (mediaStreamRef.current) {
+					mediaStreamRef.current.getTracks().forEach(track => track.stop());
+					mediaStreamRef.current = null;
+				}
+			};
+			
+			mediaRecorder.start();
+			setIsRecording(true);
+			
+			// Start timer
+			timerRef.current = setInterval(() => {
+				setRecordingSeconds(prev => prev + 1);
+			}, 1000);
+			
+		} catch (error) {
+			console.error("Error starting recording:", error);
+		}
+	};
+
+	const stopRecording = () => {
+		if (mediaRecorderRef.current && isRecording) {
+			mediaRecorderRef.current.stop();
+			setIsRecording(false);
+			
+			// Stop timer
+			if (timerRef.current) {
+				clearInterval(timerRef.current);
+				timerRef.current = null;
+			}
+		}
+	};
+
+	const toggleRecording = () => {
+		if (isRecording) {
+			stopRecording();
+		} else {
+			startRecording();
 		}
 	};
 
@@ -217,16 +303,15 @@ const InterviewChat: FC<InterviewChatProps> = ({
 				model: "gpt-4o-mini-tts",
 				voice: "nova",
 				input: text,
-				instructions: "Speak like you're a prfessional recruiter but you should sound friendly to keep the candidate at ease",
+				instructions: "Speak like you're a professional recruiter but you should sound friendly to keep the candidate at ease",
 			});
+			
 			// Convert the response to a Blob and play it in the browser
 			let audioBlob: Blob;
 			if (audio.body && typeof audio.body.getReader === "function") {
-				// If audio.body is a ReadableStream (fetch Response)
 				const response = audio as Response;
 				audioBlob = await response.blob();
 			} else if (audio.blob) {
-				// If audio.blob() is available
 				audioBlob = await audio.blob();
 			} else {
 				throw new Error("Unsupported audio response format");
@@ -235,12 +320,59 @@ const InterviewChat: FC<InterviewChatProps> = ({
 			const url = URL.createObjectURL(audioBlob);
 			const audioElement = new Audio(url);
 			audioElement.play();
-			// Optionally, clean up the object URL after playback
 			audioElement.onended = () => URL.revokeObjectURL(url);
 		} catch (error) {
 			console.error("Error playing audio:", error);
 		}
 	};
+
+	const transcribeAudio = async (audioBlob: Blob) => {
+		if (!apiKey) return;
+		
+		setIsTranscribing(true);
+		
+		try {
+			const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+			
+			// Create a File object from the Blob
+			const audioFile = new File([audioBlob], "recording.wav", {
+				type: "audio/wav",
+			});
+			
+			const transcription = await openai.audio.transcriptions.create({
+				model: "whisper-1",
+				file: audioFile,
+				response_format: "text",
+			});
+			
+			const transcribedText = transcription || "";
+			
+			if (transcribedText.trim()) {
+				setMessage(transcribedText);
+				// Automatically send the transcribed message
+				await sendMessage(transcribedText);
+			}
+		} catch (error) {
+			console.error("Error transcribing audio:", error);
+		} finally {
+			setIsTranscribing(false);
+		}
+	};
+
+	// Clean up on unmount
+	useEffect(() => {
+		return () => {
+			if (timerRef.current) {
+				clearInterval(timerRef.current);
+			}
+			if (mediaStreamRef.current) {
+				mediaStreamRef.current.getTracks().forEach(track => track.stop());
+			}
+			if (recordedUrl) {
+				URL.revokeObjectURL(recordedUrl);
+			}
+		};
+	}, [recordedUrl]);
 
 	return (
 		<div className="card-body" id="kt_interview_chat_body">
@@ -250,7 +382,7 @@ const InterviewChat: FC<InterviewChatProps> = ({
 				data-kt-element="messages"
 			>
 				{messages.map((msg, idx) => {
-					const isRiki = msg.user === "Riki";
+					const isRiki = msg.user === "riki";
 					const avatar = isRiki ? rikiAvatar : candidateAvatar;
 					const name = isRiki ? "Riki" : "You";
 					const state = isRiki ? "info" : "primary";
@@ -321,23 +453,65 @@ const InterviewChat: FC<InterviewChatProps> = ({
 					className="form-control form-control-flush mb-3"
 					rows={1}
 					data-kt-element="input"
-					placeholder="Type your answer..."
+					placeholder="Type your answer or use voice recording..."
 					value={message}
 					onChange={(e) => setMessage(e.target.value)}
 					onKeyDown={onEnterPress}
-					disabled={!interviewId || isTerminated}
+					disabled={!interviewId || isTerminated || isRecording}
 				/>
-				<div className="d-flex flex-stack">
-					<div />
-					<button
-						className="btn btn-primary"
-						type="button"
-						data-kt-element="send"
-						onClick={sendMessage}
-						disabled={!message.trim() || !interviewId || isTerminated}
-					>
-						Send
-					</button>
+				<div className="d-flex flex-stack align-items-center">
+					<div className="d-flex align-items-center">
+						{isRecording && (
+							<div className="me-3">
+								<span className="badge badge-light-primary fs-7">
+									<i className="fas fa-circle text-danger me-1" style={{ fontSize: '8px' }}></i>
+									Recording {formatTimer(recordingSeconds)}
+								</span>
+							</div>
+						)}
+						{isTranscribing && (
+							<div className="me-3">
+								<span className="badge badge-light-info fs-7">
+									<i className="fas fa-spinner fa-spin me-1"></i>
+									Transcribing...
+								</span>
+							</div>
+						)}
+						{recordedUrl && !isTranscribing && (
+							<div className="me-3">
+								<audio controls src={recordedUrl} style={{ height: '30px' }} />
+							</div>
+						)}
+					</div>
+					<div className="d-flex align-items-center">
+						<button
+							className="btn btn-sm btn-light-primary me-2"
+							type="button"
+							onClick={toggleRecording}
+							disabled={!interviewId || isTerminated || isTranscribing}
+						>
+							{isRecording ? (
+								<>
+									<i className="fas fa-stop me-1"></i>
+									Stop
+								</>
+							) : (
+								<>
+									<i className="fas fa-microphone me-1"></i>
+									Record
+								</>
+							)}
+						</button>
+						<button
+							className="btn btn-primary"
+							type="button"
+							data-kt-element="send"
+							onClick={() => sendMessage(message)}
+							disabled={!message.trim() || !interviewId || isTerminated || isRecording}
+						>
+							Send
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>

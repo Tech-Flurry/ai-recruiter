@@ -19,11 +19,7 @@ export function HeaderWrapper() {
 			<div className='header-brand'>
 				{/* begin::Logo */}
 				<Link to='/'>
-					<img
-						alt='Logo'
-						src={toAbsoluteUrl('media/logos/dointo.svg')}
-						className='h-25px h-lg-25px'
-					/>
+					<h4>Ai Recruiter</h4>
 				</Link>
 				{/* end::Logo */}
 

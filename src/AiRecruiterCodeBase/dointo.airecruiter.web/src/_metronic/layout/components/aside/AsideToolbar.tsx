@@ -67,12 +67,6 @@ const AsideToolbar = () => {
         </div>
       </div>
       {/* end::User */}
-
-      {/* begin::Aside search */}
-      <div className='aside-search py-5'>
-        <Search />
-      </div>
-      {/* end::Aside search */}
     </>
   )
 }

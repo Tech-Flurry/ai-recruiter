@@ -14,33 +14,13 @@ const Footer: FC = () => {
         <div className='text-gray-900 order-2 order-md-1'>
           <span className='text-muted fw-bold me-2'>{new Date().getFullYear()} &copy;</span>
           <a href='#' className='text-gray-800 text-hover-primary'>
-            Dointo
+            AiRecruiter
           </a>
         </div>
         {/* end::Copyright */}
-
-        {/* begin::Nav */}
-        <ul className='menu menu-gray-600 menu-hover-primary fw-bold order-1'>
-          <li className='menu-item'>
-            <a href='https://dointo.com/' className='menu-link ps-0 pe-2'>
-              About
-            </a>
-          </li>
-          <li className='menu-item'>
-            <a href='https://dointo.com/' className='menu-link pe-0 pe-2'>
-              Contact
-            </a>
-          </li>
-          <li className='menu-item'>
-            <a href='https://dointo.com/' className='menu-link pe-0'>
-              Support
-            </a>
-          </li>
-        </ul>
-        {/* end::Nav */}
-      </div>
       {/* end::Container */}
-    </div>
+			</div>
+		</div>
   )
 }
 

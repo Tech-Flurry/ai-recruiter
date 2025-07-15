@@ -48,17 +48,6 @@ const MasterLayout = () => {
           <Footer />
         </div>
       </div>
-
-      {/* begin:: Drawers */}
-      <ActivityDrawer />
-      {/* <RightToolbar /> */}
-      <DrawerMessenger />
-      {/* end:: Drawers */}
-
-      {/* begin:: Modals */}
-
-      {/* end:: Modals */}
-      <ScrollTop />
     </PageDataProvider>
   )
 }

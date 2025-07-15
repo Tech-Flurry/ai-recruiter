@@ -1,10 +1,11 @@
 ﻿using Dointo.AiRecruiter.Application.Services;
 using Dointo.AiRecruiter.Core.States;
 using Dointo.AiRecruiter.Dtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dointo.AiRecruiter.RestApi.Controllers;
-
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class DashboardController(IDashboardService service) : ControllerBase
@@ -19,7 +20,7 @@ public class DashboardController(IDashboardService service) : ControllerBase
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 	public async Task<IActionResult> GetDashboardMetrics( )
 	{
-		var result = await _service.GetDashboardMetricsAsync( );
+		var result = await _service.GetDashboardMetricsAsync(User);
 
 		return result switch
 		{
@@ -39,7 +40,7 @@ public class DashboardController(IDashboardService service) : ControllerBase
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 	public async Task<IActionResult> GetJobPostInsights( )
 	{
-		var result = await _service.GetJobPostInsightsAsync( );
+		var result = await _service.GetJobPostInsightsAsync(User);
 
 		return result switch
 		{
@@ -59,7 +60,7 @@ public class DashboardController(IDashboardService service) : ControllerBase
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 	public async Task<IActionResult> GetCandidatePipelineMetrics( )
 	{
-		var result = await _service.GetCandidatePipelineMetricsAsync( );
+		var result = await _service.GetCandidatePipelineMetricsAsync(User);
 
 		return result switch
 		{

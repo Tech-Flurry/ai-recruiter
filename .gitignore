@@ -362,3 +362,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/src/AiRecruiterCodeBase/dointo.airecruiter.web/package-lock.json
+/src/AiRecruiterCodeBase/dointo.airecruiter.web/yarn.lock

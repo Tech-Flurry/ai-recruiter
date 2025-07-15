@@ -176,52 +176,65 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 			return { ...prev, skills: updatedList };
 		});
 	};
-
 	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setStatusMessage('');
-		setStatusAlertClass('alert-info');
-		setIsProcessing(true);
+		e.preventDefault()
+		setStatusMessage('')
+		setStatusAlertClass('alert-info')
+		setIsProcessing(true)
 
 		try {
+			const rawToken = localStorage.getItem('kt-auth-react-v')
+			if (!rawToken) throw new Error('Missing auth token')
+			const tokenObj = JSON.parse(rawToken)
+			if (!tokenObj.api_token) throw new Error('Invalid auth token')
 			const response = await axios.post(
 				`${import.meta.env.VITE_APP_API_BASE_URL}/interviews/create-candidate`,
 				{ ...candidate, id: '' },
-				{ headers: { 'Content-Type': 'application/json' } }
-			);
+				{
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${tokenObj.api_token}`,
+					},
+				}
+			)
 
-			const result = response.data;
+			const result = response.data
 			if (result.success) {
 				if (onCandidateCreated && result.data?.id) {
 					onCandidateCreated(result.data.id)
 				}
-				setStatusMessage(result.message);
-				setStatusAlertClass('alert-success');
-				setCandidate(initialCandidate);
-			} else if (result.errors) {
+				setStatusMessage(result.message)
+				setStatusAlertClass('alert-success')
+				setCandidate(initialCandidate)
+			}
+			else if (result.errors) {
 				setStatusMessage(
 					result.message +
-					(result.errors
-						? result.errors.map((e: any) => `${e.propertyName}: ${e.errorMessage}`).join('\n')
-						: '')
-				);
-				setStatusAlertClass('alert-warning');
-			} else if (result.exceptionMessage) {
-				setStatusMessage(result.message + '\n' + result.exceptionMessage);
-				setStatusAlertClass('alert-danger');
-			} else {
-				setStatusMessage('Unknown response from server.');
-				setStatusAlertClass('alert-danger');
+					'\n' +
+					result.errors
+						.map((e: any) => `${e.propertyName}: ${e.errorMessage}`)
+						.join('\n')
+				)
+				setStatusAlertClass('alert-warning')
+			}
+			else if (result.exceptionMessage) {
+				setStatusMessage(result.message + '\n' + result.exceptionMessage)
+				setStatusAlertClass('alert-danger')
+			}
+			else {
+				setStatusMessage('Unknown response from server.')
+				setStatusAlertClass('alert-danger')
 			}
 		} catch (ex: any) {
 			setStatusMessage(
 				`An error occurred: ${ex.response?.data?.message || ex.message}`
-			);
-			setStatusAlertClass('alert-danger');
+			)
+			setStatusAlertClass('alert-danger')
 		} finally {
-			setIsProcessing(false);
+			setIsProcessing(false)
 		}
-	};
+	}
+
 
 	return (
 		<div>

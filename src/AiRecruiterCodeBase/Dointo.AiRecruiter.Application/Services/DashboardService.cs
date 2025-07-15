@@ -6,14 +6,15 @@ using Dointo.AiRecruiter.Domain.Entities;
 using Dointo.AiRecruiter.Domain.ValueObjects;
 using Dointo.AiRecruiter.Dtos;
 using Humanizer;
+using System.Security.Claims;
 
 namespace Dointo.AiRecruiter.Application.Services;
 
 public interface IDashboardService
 {
-	Task<IProcessingState> GetDashboardMetricsAsync( );
-	Task<IProcessingState> GetJobPostInsightsAsync( );
-	Task<IProcessingState> GetCandidatePipelineMetricsAsync( );
+	Task<IProcessingState> GetDashboardMetricsAsync(ClaimsPrincipal user);
+	Task<IProcessingState> GetJobPostInsightsAsync(ClaimsPrincipal user);
+	Task<IProcessingState> GetCandidatePipelineMetricsAsync(ClaimsPrincipal user);
 }
 
 internal class DashboardService(IReadOnlyRepository readOnlyRepository) : IDashboardService
@@ -22,18 +23,20 @@ internal class DashboardService(IReadOnlyRepository readOnlyRepository) : IDashb
 	private readonly MessageBuilder _messageBuilder = new( );
 	private const string DASHBOARD_STRING = "Dashboard";
 
-	public Task<IProcessingState> GetDashboardMetricsAsync( )
+	public Task<IProcessingState> GetDashboardMetricsAsync(ClaimsPrincipal user)
 	{
 		_messageBuilder.Clear( );
-
+		var ownerId = user.GetOwnerId( );
 		try
 		{
-			var jobQuery = _readOnlyRepository.Query<Job>( );
+			var jobQuery = _readOnlyRepository.Query<Job>( ).Where(x => x.CreatedBy == ownerId);
 			var activeJobCount = jobQuery.Any( )
 				? jobQuery.Count(j => j.Status == JobStatus.Open)
 				: 0;
 
-			var allInterviews = _readOnlyRepository.Query<Interview>( ).ToList( );
+			var jobIds = jobQuery.Select(j => j.Id).ToList( );
+
+			var allInterviews = _readOnlyRepository.Query<Interview>( ).Where(x => jobIds.Contains(x.Job.JobId)).ToList( );
 
 			var totalScreened = allInterviews.Count;
 			var passedInterviews = allInterviews.Count(i => i.IsPassed( ));
@@ -73,26 +76,16 @@ internal class DashboardService(IReadOnlyRepository readOnlyRepository) : IDashb
 		}
 	}
 
-	public Task<IProcessingState> GetJobPostInsightsAsync( )
+	public Task<IProcessingState> GetJobPostInsightsAsync(ClaimsPrincipal user)
 	{
 		_messageBuilder.Clear( );
-
 		try
 		{
+			var ownerJobs = GetOwnerJobIds(user);
 			var interviews = _readOnlyRepository
 				.Query<Interview>( )
-				.Where(x => !x.IsDeleted)
+				.Where(x => !x.IsDeleted && ownerJobs.Contains(x.Job.JobId))
 				.ToList( );
-
-			if (interviews is { Count: 0 })
-			{
-				return Task.FromResult<IProcessingState>(new BusinessErrorState(
-					_messageBuilder
-						.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT)
-						.AddString("Interview Data")
-						.Build( )
-				));
-			}
 
 			var insights = interviews
 				.GroupBy(i => i.Job.JobTitle)
@@ -105,6 +98,10 @@ internal class DashboardService(IReadOnlyRepository readOnlyRepository) : IDashb
 						.Where(x => x.EndTime.HasValue && x.EndTime > x.StartTime)
 						.Select(x => x.GetLength( ).TotalMinutes)
 						.ToList( );
+
+					var avgDuration = validDurations.Any( )
+						? validDurations.Average( )
+						: 0;
 
 					var avgDuration = validDurations.Any( )
 						? validDurations.Average( )
@@ -141,8 +138,7 @@ internal class DashboardService(IReadOnlyRepository readOnlyRepository) : IDashb
 		}
 	}
 
-
-	public Task<IProcessingState> GetCandidatePipelineMetricsAsync( )
+	public Task<IProcessingState> GetCandidatePipelineMetricsAsync(ClaimsPrincipal user)
 	{
 		_messageBuilder.Clear( );
 
@@ -150,17 +146,18 @@ internal class DashboardService(IReadOnlyRepository readOnlyRepository) : IDashb
 		{
 			var now = DateTime.UtcNow;
 
+			var ownerJobs = GetOwnerJobIds(user);
+
 			var interviews = _readOnlyRepository
 				.Query<Interview>( )
-				.Where(i => !i.IsDeleted)
+				.Where(i => ownerJobs.Contains(i.Job.JobId) && !i.IsDeleted)
 				.ToList( );
 
 			var weeklyApplications = interviews
 				.Count(i => i.CreatedAt >= now.AddDays(-7));
 
 			var newCandidates = interviews
-				.Where(i => i.Interviewee is not null)
-				.GroupBy(i => i.Interviewee.Email) // Assuming Email is unique
+				.GroupBy(i => i.Interviewee.Email)
 				.Select(g => g.OrderBy(x => x.CreatedAt).First( ))
 				.Count(i => i.CreatedAt >= now.AddDays(-14));
 
@@ -168,7 +165,7 @@ internal class DashboardService(IReadOnlyRepository readOnlyRepository) : IDashb
 				.Count(i => i.StartTime >= now.AddDays(-7));
 
 			var screenedCandidates = interviews
-				.Count(i => i.AiScore >= 7.0);
+				.Count(i => i.IsPassed( ));
 
 			var metrics = new CandidatePipelineMetricsDto
 			{
@@ -200,6 +197,15 @@ internal class DashboardService(IReadOnlyRepository readOnlyRepository) : IDashb
 				)
 			);
 		}
+	}
+
+	private List<string> GetOwnerJobIds(ClaimsPrincipal user)
+	{
+		var ownerId = user.GetOwnerId( );
+		return [.. _readOnlyRepository
+			.Query<Job>( )
+			.Where(x => x.CreatedBy == ownerId && !x.IsDeleted)
+			.Select(x => x.Id)];
 	}
 
 }

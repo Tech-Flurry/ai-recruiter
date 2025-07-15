@@ -23,19 +23,28 @@ const CandidateInterviewResult: React.FC<CandidateInterviewResultProps> = ({ int
 	const [result, setResult] = useState<CandidateInterviewResultDto | null>(null)
 	const [loading, setLoading] = useState<boolean>(true)
 	const [errorMessage, setErrorMessage] = useState<string>('')
-
 	useEffect(() => {
 		const fetchInterviewResult = async () => {
 			setLoading(true)
 			setErrorMessage('')
 
+			const token = localStorage.getItem('kt-auth-react-v')
+			if (!token) {
+				setErrorMessage('Auth token not found.')
+				setLoading(false)
+				return
+			}
+
 			try {
-				// Example: GET /api/Interviews/candidate-results/{interviewId}
 				const response = await axios.get(
-					`${import.meta.env.VITE_APP_API_BASE_URL}/interviews/candidate-results/${interviewId}`
+					`${import.meta.env.VITE_APP_API_BASE_URL}/interviews/candidate-results/${interviewId}`,
+					{
+						headers: {
+							Authorization: `Bearer ${token}`,
+						},
+					}
 				)
 
-				// Your API response is typically wrapped in a success state
 				if (response.data.success && response.data.data) {
 					setResult(response.data.data)
 				} else {

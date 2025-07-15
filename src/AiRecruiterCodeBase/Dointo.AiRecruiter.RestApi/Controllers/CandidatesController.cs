@@ -1,10 +1,12 @@
 ﻿using Dointo.AiRecruiter.Application.Services;
 using Dointo.AiRecruiter.Core.States;
 using Dointo.AiRecruiter.Dtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dointo.AiRecruiter.RestApi.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class CandidatesController(ICandidateService service) : ControllerBase
@@ -18,14 +20,7 @@ public class CandidatesController(ICandidateService service) : ControllerBase
 	public async Task<IActionResult> GetCandidatesByJobId(string jobId)
 	{
 		var result = await _service.GetCandidatesByJobIdAsync(jobId);
-
-		if (result is BusinessErrorState error)
-			return NotFound(new { success = false, message = error.Message });
-
-		if (result is SuccessState<List<CandidateListDto>> success)
-			return Ok(new { success = true, data = success.Data });
-
-		return StatusCode(500, new { success = false, message = "Unexpected error." });
+		return Ok(result);
 	}
 
 	// ✅ PATCH: api/Candidates/update-status
@@ -50,5 +45,4 @@ public class CandidatesController(ICandidateService service) : ControllerBase
 
 		return StatusCode(500, new { success = false, message = "Unexpected error." });
 	}
-
 }

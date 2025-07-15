@@ -7,7 +7,8 @@ namespace Dointo.AiRecruiter.AiInfrastructure.Config;
 
 public static class Setup
 {
-	public static void AddAiInfrastructure(this IServiceCollection services, params string[ ] aiProviderConfigs)
+	public const string AI_DETECTOR = "AiDetectorClient";
+	public static void AddAiInfrastructure(this IServiceCollection services, string aiDetectorUrl, params string[ ] aiProviderConfigs)
 	{
 		//injections
 		services.AddSingleton(sp =>
@@ -21,6 +22,7 @@ public static class Setup
 			}
 			return aiProviderFactory;
 		});
+		services.AddHttpClient(AI_DETECTOR, client => client.BaseAddress = new Uri(aiDetectorUrl));
 		//agents  
 		services.AddTransient<IJobsAgent, JobsAgent>( );
 		services.AddTransient<ICandidatesAgent, CandidatesAgent>( );

@@ -11,8 +11,15 @@ const InterviewResultWrapper = () => {
 
 		console.log("Fetching result for jobId:", jobId);
 
+		const token = localStorage.getItem('kt-auth-react-v');
+
 		axios
-			.get(`${import.meta.env.VITE_APP_API_BASE_URL}/InterviewResults/${jobId}`)
+			.get(`${import.meta.env.VITE_APP_API_BASE_URL}/InterviewResults/${jobId}`, {
+				headers: {
+					Authorization: `Bearer ${token}`,
+				},
+				withCredentials: true,
+			})
 			.then(res => {
 				console.log("API Success:", res.data);
 				setResult(res.data);

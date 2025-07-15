@@ -1,5 +1,6 @@
 import React, { FC, useState, useRef, useEffect } from 'react'
 import clsx from 'clsx'
+import axios from 'axios'
 import { toAbsoluteUrl } from '../../../_metronic/helpers'
 
 type Message = {
@@ -10,7 +11,13 @@ type Message = {
 
 const rikuAvatar = 'avatars/300-1.jpg'
 const candidateAvatar = 'avatars/blank.png'
-interface InterviewChatProps { jobId: string, candidateId: string, onInterviewId?: (id: string) => void, onTerminate?: (interviewId: string) => void }
+
+interface InterviewChatProps {
+	jobId: string
+	candidateId: string
+	onInterviewId?: (id: string) => void
+	onTerminate?: (interviewId: string) => void
+}
 
 const InterviewChat: FC<InterviewChatProps> = ({ jobId, candidateId, onInterviewId, onTerminate }) => {
 	const [messages, setMessages] = useState<Message[]>([])
@@ -23,26 +30,28 @@ const InterviewChat: FC<InterviewChatProps> = ({ jobId, candidateId, onInterview
 		messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
 	}, [messages])
 
-	// On component load, generate interview
 	useEffect(() => {
 		const generateInterview = async () => {
-			// Show loading message
 			const loadingMsg: Message = { user: 'riku', text: '...', time: 'Loading' }
 			setMessages([loadingMsg])
 
 			try {
-				const res = await fetch(`${import.meta.env.VITE_APP_API_BASE_URL}/Interviews/generate-interview/${candidateId}/${jobId}`)
-				const result = await res.json()
+				const token = localStorage.getItem('kt-auth-react-v')
+				if (!token) throw new Error("Missing auth token")
 
-				// Remove the '...' placeholder
+				const res = await axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/Interviews/generate-interview/${candidateId}/${jobId}`, {
+					headers: {
+						Authorization: `Bearer ${token}`,
+					},
+				})
+
 				setMessages([])
 
-				if (result?.success) {
-					// Grab interview info
-					const data = result.data
+				if (res.data?.success) {
+					const data = res.data.data
 					setInterviewId(data.interviewId)
 					if (onInterviewId) onInterviewId(data.interviewId)
-					// Show the interview starter from server
+
 					setMessages([
 						{
 							user: 'riku',
@@ -51,108 +60,104 @@ const InterviewChat: FC<InterviewChatProps> = ({ jobId, candidateId, onInterview
 						},
 					])
 				} else {
-					// Handle errors or business messages
 					setMessages([
 						{
 							user: 'riku',
-							text: result.message || 'Error starting interview.',
+							text: res.data?.message || 'Error starting interview.',
 							time: 'Just now',
 						},
 					])
 				}
-			} catch (err) {
+			} catch (error: any) {
+				console.error("Interview generation error:", error)
 				setMessages([
 					{
 						user: 'riku',
-						text: 'Internal server error',
+						text: axios.isAxiosError(error)
+							? error.response?.data?.message || 'Server error'
+							: 'Internal server error',
 						time: 'Just now',
 					},
 				])
 			}
 		}
 
-		generateInterview()
+		if (candidateId && jobId) {
+			generateInterview()
+		}
 	}, [candidateId, jobId, onInterviewId])
 
 	const sendMessage = async () => {
 		if (!message.trim() || !interviewId || isTerminated) return
 
-		// Candidate's reply
 		const newMessages: Message[] = [
 			...messages,
 			{ user: 'candidate', text: message, time: 'Just now' },
-			{ user: 'riku', text: '...', time: 'Processing' }, // Show loading
+			{ user: 'riku', text: '...', time: 'Processing' },
 		]
 		setMessages(newMessages)
 		setMessage('')
 
-		// Figuring out the last question asked by Riku
 		const lastRikuMsg = [...messages].reverse().find((m) => m.user === 'riku')
 
-		// Call next-question
 		try {
 			const body = {
-				text: lastRikuMsg?.text || '', // question text from Riku
-				answer: message,               // candidate’s answer
+				text: lastRikuMsg?.text || '',
+				answer: message,
 			}
 
-			const res = await fetch(`${import.meta.env.VITE_APP_API_BASE_URL}/Interviews/next-question/${interviewId}`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(body),
-			})
-			const result = await res.json()
+			const token = localStorage.getItem('kt-auth-react-v')
+			if (!token) throw new Error("Missing auth token")
 
-			// Remove the '...' placeholder
+			const res = await axios.post(
+				`${import.meta.env.VITE_APP_API_BASE_URL}/Interviews/next-question/${interviewId}`,
+				body,
+				{
+					headers: {
+						Authorization: `Bearer ${token}`,
+						'Content-Type': 'application/json',
+					},
+				}
+			)
+
 			const withoutLoading = [...newMessages]
-			withoutLoading.pop() // remove the last item which is the '...' 
-			setMessages(withoutLoading)
+			withoutLoading.pop()
 
-			if (result?.success) {
-				const data = result.data
+			if (res.data?.success) {
+				const data = res.data.data
 				if (data.terminate) {
-					// End of interview
 					setIsTerminated(true)
 					setMessages([
 						...withoutLoading,
-						{
-							user: 'riku',
-							text: 'Interview has ended. Thank you!',
-							time: 'Just now',
-						},
-						])
+						{ user: 'riku', text: 'Interview has ended. Thank you!', time: 'Just now' },
+					])
 					if (onTerminate && interviewId) {
 						onTerminate(interviewId)
 					}
 				} else {
-					// Show the next question
 					setMessages([
 						...withoutLoading,
-						{
-							user: 'riku',
-							text: data.question,
-							time: 'Just now',
-						},
+						{ user: 'riku', text: data.question, time: 'Just now' },
 					])
 				}
 			} else {
-				// Show error message from server
 				setMessages([
 					...withoutLoading,
-					{
-						user: 'riku',
-						text: result.message || 'Error retrieving next question.',
-						time: 'Just now',
-					},
+					{ user: 'riku', text: res.data.message || 'Error retrieving next question.', time: 'Just now' },
 				])
 			}
-		} catch (err) {
-			// Show fallback error
+		} catch (error: any) {
 			const withoutLoading = [...newMessages]
 			withoutLoading.pop()
 			setMessages([
 				...withoutLoading,
-				{ user: 'riku', text: 'Internal server error', time: 'Just now' },
+				{
+					user: 'riku',
+					text: axios.isAxiosError(error)
+						? error.response?.data?.message || 'Server error'
+						: 'Internal server error',
+					time: 'Just now',
+				},
 			])
 		}
 	}

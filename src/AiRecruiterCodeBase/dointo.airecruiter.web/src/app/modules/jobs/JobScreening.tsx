@@ -50,8 +50,23 @@ const JobScreen: React.FC = () => {
 
 	useEffect(() => {
 		const fetchCandidates = async () => {
+			const token = localStorage.getItem('kt-auth-react-v');
+			if (!token) {
+				console.error('Auth token not found.');
+				toastr.error('You are not authorized.');
+				return;
+			}
+
 			try {
-				const response = await axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/candidates/by-job/${jobId}`);
+				const response = await axios.get(
+					`${import.meta.env.VITE_APP_API_BASE_URL}/candidates/by-job/${jobId}`,
+					{
+						headers: {
+							Authorization: `Bearer ${token}`,
+						},
+					}
+				);
+
 				if (response.data.success) {
 					const apiCandidates = response.data.data.map((cand: any, index: number) => ({
 						id: index + 1,
@@ -80,8 +95,22 @@ const JobScreen: React.FC = () => {
 		};
 
 		const fetchJobTitle = async () => {
+			const token = localStorage.getItem('kt-auth-react-v');
+			if (!token) {
+				console.error('Auth token not found.');
+				return;
+			}
+
 			try {
-				const res = await axios.get(`${import.meta.env.VITE_APP_API_BASE_URL}/candidates/job-title/${jobId}`);
+				const res = await axios.get(
+					`${import.meta.env.VITE_APP_API_BASE_URL}/candidates/job-title/${jobId}`,
+					{
+						headers: {
+							Authorization: `Bearer ${token}`,
+						},
+					}
+				);
+
 				if (res.data?.success && res.data.jobTitle) {
 					setJobTitle(res.data.jobTitle);
 				} else {
@@ -115,6 +144,13 @@ const JobScreen: React.FC = () => {
 
 		setUpdatingId(id);
 
+		const token = localStorage.getItem('kt-auth-react-v');
+		if (!token) {
+			toastr.error("Auth token not found.");
+			setUpdatingId(null);
+			return;
+		}
+
 		try {
 			const response = await axios.patch(
 				`${import.meta.env.VITE_APP_API_BASE_URL}/candidates/update-status`,
@@ -122,7 +158,12 @@ const JobScreen: React.FC = () => {
 					interviewId: candidate.interviewId,
 					status: newStatus
 				},
-				{ headers: { "Content-Type": "application/json" } }
+				{
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${token}`,
+					},
+				}
 			);
 
 			if (response.status === 200 && response.data?.success !== false) {
@@ -142,6 +183,7 @@ const JobScreen: React.FC = () => {
 			setUpdatingId(null);
 		}
 	};
+
 
 	const toggleCandidateSelection = (id: number) => {
 		setSelectedCandidates((prev) => {

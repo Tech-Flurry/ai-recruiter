@@ -25,23 +25,53 @@ const CandidateDashboard: React.FC = () => {
 
 	useEffect(() => {
 		const fetchDashboardData = async () => {
-			try {
-				const baseUrl = import.meta.env.VITE_APP_API_BASE_URL
+			const token = localStorage.getItem('kt-auth-react-v');
 
-				const dashboardRes = await axios.get(`${baseUrl}/Interviews/candidate-dashboard`)
-				const overviewRes = await axios.get(`${baseUrl}/Interviews/candidate-performance-overview`)
-
-				setData(dashboardRes.data.data)
-				setOverview(overviewRes.data)
-			} catch (err: any) {
-				setError('Failed to load dashboard. Please try again.')
-			} finally {
-				setLoading(false)
+			if (!token) {
+				console.error("❌ Authentication token not found.");
+				setError('Authentication token not found.');
+				setLoading(false);
+				return;
 			}
-		}
 
-		fetchDashboardData()
-	}, [])
+			try {
+				const dashboardRes = await axios.get(
+					`${import.meta.env.VITE_APP_API_BASE_URL}/Interviews/candidate-dashboard`,
+					{
+						headers: {
+							Authorization: `Bearer ${token}`,
+						},
+					}
+				);
+
+				const overviewRes = await axios.get(
+					`${import.meta.env.VITE_APP_API_BASE_URL}/Interviews/candidate-performance-overview`,
+					{
+						headers: {
+							Authorization: `Bearer ${token}`,
+						},
+					}
+				);
+
+
+				setData(dashboardRes.data.data);
+				setOverview(overviewRes.data.data);
+			} catch (err: any) {
+				console.error("❌ Error fetching dashboard data:", err);
+				if (err.response?.status === 401) {
+					setError('Unauthorized. Please log in again.');
+				} else {
+					setError('Failed to load dashboard. Please try again.');
+				}
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		fetchDashboardData();
+	}, []);
+
+
 
 	const getVariant = (level: number) => {
 		if (level >= 80) return 'success'
@@ -150,23 +180,24 @@ const CandidateDashboard: React.FC = () => {
 	<div className='p-4 bg-light rounded border'>
 		<h5 className='mb-4 text-dark fw-bold'>Activity Timeline</h5>
 		<div className='timeline'>
-			{data.recentActivities.length > 0 ? (
-				data.recentActivities.map((item, index) => (
-					<div key={index} className='timeline-item d-flex mb-4'>
-						<div className='timeline-label'>
-							<span className='bullet bullet-dot bg-primary me-4'></span>
-						</div>
-						<div className='flex-grow-1'>
-							<div className='d-flex justify-content-between align-items-center mb-1'>
-								<span className='fw-semibold text-gray-800'>{item}</span>
-								<span className='badge bg-light-primary text-primary'>#{index + 1}</span>
-							</div>
-						</div>
-					</div>
-				))
-			) : (
-				<div className='text-muted'>No recent activity found.</div>
-			)}
+							{data?.recentActivities?.length > 0 ? (
+								data.recentActivities.map((item, index) => (
+									<div key={index} className='timeline-item d-flex mb-4'>
+										<div className='timeline-label'>
+											<span className='bullet bullet-dot bg-primary me-4'></span>
+										</div>
+										<div className='flex-grow-1'>
+											<div className='d-flex justify-content-between align-items-center mb-1'>
+												<span className='fw-semibold text-gray-800'>{item}</span>
+												<span className='badge bg-light-primary text-primary'>#{index + 1}</span>
+											</div>
+										</div>
+									</div>
+								))
+							) : (
+								<div className='text-muted'>No recent activity found.</div>
+							)}
+
 		</div>
 	</div>
 </Tab>

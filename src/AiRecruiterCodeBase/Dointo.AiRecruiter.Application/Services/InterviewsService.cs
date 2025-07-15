@@ -24,8 +24,8 @@ public interface IInterviewsService
 	Task<IProcessingState> NextQuestionAsync(QuestionDto questionDto, string interviewId);
 	Task<IProcessingState> GetInterviewResultAsync(string interviewId);
 
-	Task<IProcessingState> GetCandidateDashboardAsync(string ownerId);
-	Task<IProcessingState> GenerateCandidatePerformanceOverviewAsync(string owerId);
+	Task<IProcessingState> GetCandidateDashboardAsync(ClaimsPrincipal user);
+	Task<IProcessingState> GenerateCandidatePerformanceOverviewAsync(ClaimsPrincipal user);
 	Task<IProcessingState> GetInterviewHistoryByOwnerAsync(ClaimsPrincipal user);
 	Task<IProcessingState> GetReportAsync(string interviewId);
 	Task<IProcessingState> GetCandidateByUserAsync(ClaimsPrincipal user);
@@ -103,40 +103,20 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 		}
 	}
 
-	public async Task<IProcessingState> GenerateCandidatePerformanceOverviewAsync(string ownerId)
+	public async Task<IProcessingState> GenerateCandidatePerformanceOverviewAsync(ClaimsPrincipal user)
 	{
 		_messageBuilder.Clear( );
 
 		try
 		{
-			// ✅ Get all interviews
+			var ownerId = user.GetOwnerId( );
 			var interviews = await _interviewsRepository.GetByOwnerAsync(ownerId);
-			if (interviews is { Count: 0 })
-			{
-				return new BusinessErrorState(
-					_messageBuilder
-						.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT)
-						.AddString("Candidate Interviews")
-						.Build( ));
-			}
-
 			var pastInterviews = interviews
 				.Where(i => i.StartTime <= DateTime.UtcNow)
 				.ToList( );
 
-			if (pastInterviews.Count == 0)
-			{
-				return new BusinessErrorState(
-					_messageBuilder
-						.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT)
-						.AddString("Past Interviews")
-						.Build( ));
-			}
-
-			// ✅ Check existing summary
 			var existingSummary = await _performanceSummaryRepository.GetByOwnerIdAsync(ownerId);
 
-			// ✅ If summary exists and no new interview since then, return cached
 			if (existingSummary != null && pastInterviews.All(i => i.StartTime <= existingSummary.GeneratedOn))
 			{
 				return new SuccessState<string>(
@@ -144,14 +124,11 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 						.AddFormat(Messages.RECORD_RETRIEVED_FORMAT)
 						.AddString("Cached Performance Overview")
 						.Build( ),
-					existingSummary.Summary
-				);
+					existingSummary.Summary);
 			}
 
-			// ✅ Else generate fresh summary via AI
 			var summary = await _interviewAgent.GenerateCandidatePerformanceOverviewAsync(pastInterviews);
 
-			// ✅ Upsert new summary
 			await _performanceSummaryRepository.SaveAsync(new PerformanceSummary
 			{
 				OwnerId = ownerId,
@@ -164,8 +141,7 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 					.AddFormat(Messages.RECORD_RETRIEVED_FORMAT)
 					.AddString("Generated Performance Overview")
 					.Build( ),
-				summary
-			);
+				summary);
 		}
 		catch (Exception ex)
 		{
@@ -174,25 +150,28 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 					.AddFormat(Messages.ERROR_OCCURRED_FORMAT)
 					.AddString("Performance Overview")
 					.Build( ),
-				ex.Message
-			);
+				ex.Message);
 		}
 	}
 
 
-	public async Task<IProcessingState> GetCandidateDashboardAsync(string ownerId)
+	public async Task<IProcessingState> GetCandidateDashboardAsync(ClaimsPrincipal user)
 	{
 		_messageBuilder.Clear( );
 
 		try
 		{
+			var ownerId = user.GetOwnerId( );
 			var interviews = await _interviewsRepository.GetByOwnerAsync(ownerId);
+
 			var past = interviews.Where(i => i.StartTime <= DateTime.UtcNow).ToList( );
 			var upcoming = interviews.Where(i => i.StartTime > DateTime.UtcNow).ToList( );
 
 			var totalInterviews = past.Count;
-			var averageScore = past.Count != 0 ? Math.Round(past.Average(i => i.AiScore), 2) : 0;
-			var passRate = past.Count != 0 ? Math.Round((double)( past.Count(i => i.IsPassed( )) / (double)past.Count ), 1) : 0;
+			var averageScore = totalInterviews != 0 ? Math.Round(past.Average(i => i.AiScore), 2) : 0;
+			var passRate = totalInterviews != 0
+				? Math.Round((double)past.Count(i => i.IsPassed( )) / totalInterviews * 100, 1)
+				: 0;
 			var upcomingCount = upcoming.Count;
 
 			var topSkills = past
@@ -219,7 +198,7 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 				recentActivities.Add($"Upcoming Interview: {next.Job.JobTitle} – {next.StartTime:MMMM dd}");
 			}
 
-			var candidateName = interviews.First( ).Interviewee?.Name ?? "Candidate";
+			var candidateName = interviews.FirstOrDefault( )?.Interviewee?.Name ?? "Candidate";
 
 			var dto = new CandidateDashboardDto
 			{
@@ -249,6 +228,7 @@ internal class InterviewsService(ICandidateRepository candidatesRepository, IRes
 				ex.Message);
 		}
 	}
+
 
 	public async Task<IProcessingState> NextQuestionAsync(QuestionDto questionDto, string interviewId)
 	{

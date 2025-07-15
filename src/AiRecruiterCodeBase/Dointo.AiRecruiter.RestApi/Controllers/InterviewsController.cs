@@ -59,9 +59,7 @@ public class InterviewsController(IInterviewsService service) : ControllerBase
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 	public async Task<IActionResult> GetCandidateDashboard( )
 	{
-		var ownerId = "system";
-
-		var state = await _service.GetCandidateDashboardAsync(ownerId);
+		var state = await _service.GetCandidateDashboardAsync(User);
 
 		if (state is BusinessErrorState)
 			return NotFound(state);
@@ -75,16 +73,9 @@ public class InterviewsController(IInterviewsService service) : ControllerBase
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 	public async Task<IActionResult> GetCandidatePerformanceOverview( )
 	{
-		var ownerId = User.Identity?.Name ?? "system";
-		var state = await _service.GenerateCandidatePerformanceOverviewAsync(ownerId);
+		var state = await _service.GenerateCandidatePerformanceOverviewAsync(User);
 
-		return state switch
-		{
-			SuccessState<string> success => Ok(success.Data),
-			BusinessErrorState => NotFound( ),
-			ExceptionState ex => StatusCode(StatusCodes.Status500InternalServerError, ex.Message),
-			_ => BadRequest("Unexpected error occurred")
-		};
+		return Ok(state);
 	}
 
 

@@ -22,33 +22,26 @@ interface InterviewChatProps {
 }
 
 const InterviewChat: FC<InterviewChatProps> = (props) => {
-	const {
-		jobId,
-		candidateId,
-		onInterviewId,
-		onTerminate,
-	} = props;
+	const { jobId, candidateId, onInterviewId, onTerminate } = props;
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [message, setMessage] = useState("");
 	const [interviewId, setInterviewId] = useState<string>("");
 	const [isTerminated, setIsTerminated] = useState(false);
 	const [apiKey, setApiKey] = useState<string>("");
-	
+
 	// Recording states
 	const [isRecording, setIsRecording] = useState(false);
 	const [recordingSeconds, setRecordingSeconds] = useState(0);
 	const [isTranscribing, setIsTranscribing] = useState(false);
 	const [showTextArea, setShowTextArea] = useState(false);
 	const [isTyping, setIsTyping] = useState(false);
-	const [typingText, setTypingText] = useState("");
-	
+
 	// Recording refs
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const mediaStreamRef = useRef<MediaStream | null>(null);
 	const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 	const chunksRef = useRef<Blob[]>([]);
 	const timerRef = useRef<number | null>(null);
-	// const typingIntervalRef = useRef<number | null>(null);
 
 	useEffect(() => {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -92,7 +85,9 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 				const token = localStorage.getItem("kt-auth-react-v");
 				if (!token) throw new Error("Missing auth token");
 				const keyRes = await axios.get(
-					`${(import.meta as any).env.VITE_APP_API_BASE_URL}/Interviews/get-api-key`,
+					`${
+						(import.meta as any).env.VITE_APP_API_BASE_URL
+					}/Interviews/get-api-key`,
 					{
 						headers: {
 							Authorization: `Bearer ${token}`,
@@ -103,7 +98,8 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 				setApiKey(fetchedApiKey); // still set for later use
 
 				const res = await axios.get(
-					`${(import.meta as any).env.VITE_APP_API_BASE_URL
+					`${
+						(import.meta as any).env.VITE_APP_API_BASE_URL
 					}/Interviews/generate-interview/${candidateId}/${jobId}`,
 					{
 						headers: {
@@ -118,10 +114,8 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 					const data = res.data.data;
 					setInterviewId(data.interviewId);
 					if (onInterviewId) onInterviewId(data.interviewId);
-					await Promise.all([
-						playAudioMessage(data.interviewStarter, fetchedApiKey),
-						startTypingAnimation(data.interviewStarter)
-					]);
+					await playAudioMessage(data.interviewStarter, fetchedApiKey);
+					await startTypingAnimation(data.interviewStarter);
 				} else {
 					setMessages([
 						{
@@ -152,64 +146,34 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 
 	const startTypingAnimation = async (text: string) => {
 		setIsTyping(true);
-		setTypingText("");
-		
+
 		// Add typing message
 		const typingMessage: Message = {
 			user: "riki",
 			text: "",
 			time: "Just now",
 		};
-		setMessages(prev => [...prev, typingMessage]);
+		setMessages((prev) => [...prev, typingMessage]);
 
 		return new Promise<void>((resolve) => {
 			let currentIndex = 0;
-			const typeSpeed = 50; // milliseconds per character
-			
-			// typingIntervalRef.current = window.setInterval(() => {
-			// 	if (currentIndex < text.length) {
-			// 		const currentText = text.substring(0, currentIndex + 1);
-			// 		setTypingText(currentText);
-					
-			// 		// Update the last message with current typing text
-			// 		setMessages(prev => {
-			// 			const updated = [...prev];
-			// 			updated[updated.length - 1] = {
-			// 				...updated[updated.length - 1],
-			// 				text: currentText
-			// 			};
-			// 			return updated;
-			// 		});
-					
-			// 		currentIndex++;
-			// 	} else {
-			// 		if (typingIntervalRef.current) {
-			// 			clearInterval(typingIntervalRef.current);
-			// 			typingIntervalRef.current = null;
-			// 		}
-			// 		setIsTyping(false);
-			// 		setTypingText("");
-			// 		resolve();
-			// 	}
-			// }, typeSpeed);
-			
-			// Simplified typing animation
-			const simplifiedText = text.replace(/([.?!])\s*(?=[A-Z])/g, "$1|").split("|");
+			const simplifiedText = text
+				.replace(/([.?!])\s*(?=[A-Z])/g, "$1|")
+				.split("|");
 			let partIndex = 0;
-			
+
 			const displayNextPart = () => {
 				if (partIndex < simplifiedText.length) {
-					setTypingText(simplifiedText[partIndex]);
 					partIndex++;
 				} else {
 					setIsTyping(false);
 					resolve();
 					return;
 				}
-				
+
 				setTimeout(displayNextPart, 500); // Adjusted speed
 			};
-			
+
 			displayNextPart();
 		});
 	};
@@ -218,7 +182,7 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 		if (!messageText.trim() || !interviewId || isTerminated) return;
 
 		let lastRikiMsg: Message | undefined;
-		setMessages(prevMessages => {
+		setMessages((prevMessages) => {
 			lastRikiMsg = [...prevMessages].reverse().find((m) => m.user === "riki");
 			return [
 				...prevMessages,
@@ -227,8 +191,6 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 		});
 		setMessage("");
 		setShowTextArea(false);
-
-		// Wait for setMessages to complete before using lastRikiMsg
 		const body = {
 			text: lastRikiMsg?.text || "",
 			answer: messageText,
@@ -239,7 +201,8 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 			if (!token) throw new Error("Missing auth token");
 
 			const res = await axios.post(
-				`${(import.meta as any).env.VITE_APP_API_BASE_URL
+				`${
+					(import.meta as any).env.VITE_APP_API_BASE_URL
 				}/Interviews/next-question/${interviewId}`,
 				body,
 				{
@@ -255,22 +218,18 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 				if (data.terminate) {
 					setIsTerminated(true);
 					const terminationMessage = "Interview has ended. Thank you!";
-					await Promise.all([
-						playAudioMessage(terminationMessage),
-						startTypingAnimation(terminationMessage)
-					]);
+					await playAudioMessage(terminationMessage);
+					await startTypingAnimation(terminationMessage);
 					if (onTerminate && interviewId) {
 						onTerminate(interviewId);
 					}
 				} else {
-					// Start typing animation and play audio simultaneously
-					await Promise.all([
-						playAudioMessage(data.question),
-						startTypingAnimation(data.question)
-					]);
+					await playAudioMessage(data.question);
+					await startTypingAnimation(data.question);
 				}
 			} else {
-				const errorMessage = res.data.message || "Error retrieving next question.";
+				const errorMessage =
+					res.data.message || "Error retrieving next question.";
 				await startTypingAnimation(errorMessage);
 			}
 		} catch (error: any) {
@@ -299,51 +258,53 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 		const hours = Math.floor(totalSeconds / 3600);
 		const minutes = Math.floor((totalSeconds % 3600) / 60);
 		const seconds = totalSeconds % 60;
-		
+
 		if (hours > 0) {
-			return `${padStart(hours.toString(), 2, '0')}:${padStart(minutes.toString(), 2, '0')}:${padStart(seconds.toString(), 2, '0')}`;
+			return `${padStart(hours.toString(), 2, "0")}:${padStart(
+				minutes.toString(),
+				2,
+				"0"
+			)}:${padStart(seconds.toString(), 2, "0")}`;
 		}
-		return `${padStart(minutes.toString(), 2, '0')}:${padStart(seconds.toString(), 2, '0')}`;
+		return `${padStart(minutes.toString(), 2, "0")}:${padStart(
+			seconds.toString(),
+			2,
+			"0"
+		)}`;
 	};
 
 	const startRecording = async () => {
 		try {
 			setRecordingSeconds(0);
 			chunksRef.current = [];
-			
+
 			const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 			mediaStreamRef.current = stream;
-			
+
 			const mediaRecorder = new MediaRecorder(stream);
 			mediaRecorderRef.current = mediaRecorder;
-			
+
 			mediaRecorder.ondataavailable = (event) => {
 				if (event.data.size > 0) {
 					chunksRef.current.push(event.data);
 				}
 			};
-			
+
 			mediaRecorder.onstop = async () => {
-				const audioBlob = new Blob(chunksRef.current, { type: 'audio/wav' });
-				
-				// Transcribe the audio
+				const audioBlob = new Blob(chunksRef.current, { type: "audio/wav" });
+
 				await transcribeAudio(audioBlob);
-				
-				// Clean up
 				if (mediaStreamRef.current) {
-					mediaStreamRef.current.getTracks().forEach(track => track.stop());
+					mediaStreamRef.current.getTracks().forEach((track) => track.stop());
 					mediaStreamRef.current = null;
 				}
 			};
-			
+
 			mediaRecorder.start();
 			setIsRecording(true);
-			
-			// Start timer
 			timerRef.current = window.setInterval(() => {
-				setRecordingSeconds(prev => prev + 1);
+				setRecordingSeconds((prev) => prev + 1);
 			}, 1000);
-			
 		} catch (error) {
 			console.error("Error starting recording:", error);
 		}
@@ -353,8 +314,6 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 		if (mediaRecorderRef.current && isRecording) {
 			mediaRecorderRef.current.stop();
 			setIsRecording(false);
-			
-			// Stop timer
 			if (timerRef.current) {
 				clearInterval(timerRef.current);
 				timerRef.current = null;
@@ -375,14 +334,18 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 		if (!keyToUse) return;
 
 		try {
-			const openai = new OpenAI({ apiKey: keyToUse, dangerouslyAllowBrowser: true });
+			const openai = new OpenAI({
+				apiKey: keyToUse,
+				dangerouslyAllowBrowser: true,
+			});
 			const audio = await openai.audio.speech.create({
 				model: "gpt-4o-mini-tts",
 				voice: "nova",
 				input: text,
-				instructions: "Speak like you're a professional recruiter but you should sound friendly to keep the candidate at ease",
+				instructions:
+					"Speak like you're a professional recruiter but you should sound friendly to keep the candidate at ease",
 			});
-			
+
 			let audioBlob: Blob;
 			if (audio.body && typeof audio.body.getReader === "function") {
 				const response = audio as Response;
@@ -404,53 +367,44 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 
 	const transcribeAudio = async (audioBlob: Blob) => {
 		if (!apiKey) return;
-		
+
 		setIsTranscribing(true);
-		
+
 		try {
 			const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
-			
-			// Create a File object from the Blob
 			const audioFile = new File([audioBlob], "recording.wav", {
 				type: "audio/wav",
 			});
-			
+
 			const transcription = await openai.audio.transcriptions.create({
 				model: "whisper-1",
 				file: audioFile,
 				response_format: "text",
 			});
-			
+
 			const transcribedText = transcription || "";
-			
+
 			if (transcribedText.trim()) {
 				setMessage(transcribedText);
-				// Automatically send the transcribed message
 				await sendMessage(transcribedText);
 			} else {
-				// Show text area if transcription is empty
 				setShowTextArea(true);
 			}
 		} catch (error) {
 			console.error("Error transcribing audio:", error);
-			// Show text area if transcription fails
 			setShowTextArea(true);
 		} finally {
 			setIsTranscribing(false);
 		}
 	};
 
-	// Clean up on unmount
 	useEffect(() => {
 		return () => {
 			if (timerRef.current) {
 				clearInterval(timerRef.current);
 			}
-			// if (typingIntervalRef.current) {
-			// 	clearInterval(typingIntervalRef.current);
-			// }
 			if (mediaStreamRef.current) {
-				mediaStreamRef.current.getTracks().forEach(track => track.stop());
+				mediaStreamRef.current.getTracks().forEach((track) => track.stop());
 			}
 		};
 	}, []);
@@ -467,8 +421,9 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 					const avatar = isRiki ? rikiAvatar : candidateAvatar;
 					const name = isRiki ? "Riki" : "You";
 					const state = isRiki ? "info" : "primary";
-					const isCurrentlyTyping = isRiki && isTyping && idx === messages.length - 1;
-					
+					const isCurrentlyTyping =
+						isRiki && isTyping && idx === messages.length - 1;
+
 					return (
 						<div
 							key={idx}
@@ -553,7 +508,10 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 						{isRecording && (
 							<div className="me-3">
 								<span className="badge badge-light-primary fs-7">
-									<i className="fas fa-circle text-danger me-1" style={{ fontSize: '8px' }}></i>
+									<i
+										className="fas fa-circle text-danger me-1"
+										style={{ fontSize: "8px" }}
+									></i>
 									Recording {formatTimer(recordingSeconds)}
 								</span>
 							</div>
@@ -592,7 +550,9 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 								type="button"
 								data-kt-element="send"
 								onClick={() => sendMessage(message)}
-								disabled={!message.trim() || !interviewId || isTerminated || isRecording}
+								disabled={
+									!message.trim() || !interviewId || isTerminated || isRecording
+								}
 							>
 								Send
 							</button>
@@ -601,14 +561,20 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 				</div>
 			</div>
 
-			<style jsx>{`
+			<style>{`
 				.typing-cursor {
 					animation: blink 1s infinite;
 				}
-				
+
 				@keyframes blink {
-					0%, 50% { opacity: 1; }
-					51%, 100% { opacity: 0; }
+					0%,
+					50% {
+						opacity: 1;
+					}
+					51%,
+					100% {
+						opacity: 0;
+					}
 				}
 			`}</style>
 		</div>

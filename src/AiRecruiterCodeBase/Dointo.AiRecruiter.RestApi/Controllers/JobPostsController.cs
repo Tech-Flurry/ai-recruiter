@@ -56,12 +56,12 @@ public class JobPostsController(IJobPostsService service) : ControllerBase
 	[HttpGet("candidate-jobs")]
 	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<CandidateJobViewDto>))]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<IActionResult> GetCandidateJobs( )
+	public IActionResult GetCandidateJobs( )
 	{
-		var result = await _service.GetActiveCandidateJobsAsync(User );
+		var result = _service.GetActiveCandidateJobsAsync(User);
 
 		if (result is not SuccessState<List<CandidateJobViewDto>> successState)
-			return NotFound(result.Message); 
+			return NotFound(result.Message);
 
 		return Ok(successState.Data);
 	}

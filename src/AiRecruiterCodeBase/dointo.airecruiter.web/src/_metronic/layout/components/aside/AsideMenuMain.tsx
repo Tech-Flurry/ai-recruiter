@@ -31,7 +31,11 @@ export function AsideMenuMain() {
 							icon='chart'
 							title='Interview History'
 						/>
-					<AsideMenuItem to='/profile' icon='profile-circle' title='My Profile' />
+						<AsideMenuItem
+							to="/jobs/view-jobs"
+							icon="briefcase" // You can use 'briefcase', 'user', etc.
+							title="My Interviews"
+						/>
 				</>
 			)}
 			<AsideMenuItemWithSub to='/crafted/pages' title='Pages' icon='gift'>

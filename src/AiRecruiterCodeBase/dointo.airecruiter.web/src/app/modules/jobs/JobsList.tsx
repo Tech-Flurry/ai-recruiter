@@ -132,13 +132,12 @@ const JobPost: React.FC = () => {
 							onClick={() => setIsCloseModalOpen(true)}
 							disabled={selectedJobs.length === 0}
 						>
-							Bulk Close Selected
+							Close Selected Job Posts
 						</Button>
 					</div>
-
-					<Table striped bordered hover responsive>
+					<Table hover responsive className="align-middle table-row-dashed fs-6 gy-5">
 						<thead>
-							<tr>
+							<tr className="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
 								<th>
 									<input
 										type="checkbox"
@@ -173,9 +172,7 @@ const JobPost: React.FC = () => {
 										</Link>
 									</td>
 									<td>
-										<span
-											className={`badge ${job.status === "Open" ? "bg-success" : "bg-danger"}`}
-										>
+										<span className={`badge ${job.status === "Open" ? "badge badge-light-primary fw-bold" : "badge badge-light-danger fw-bold"}`}>
 											{job.status}
 										</span>
 									</td>
@@ -183,13 +180,13 @@ const JobPost: React.FC = () => {
 									<td>
 										<Link
 											to={`/jobs/${job.id}/interviews`}
-											className="text-primary"
-											style={{ textDecoration: "underline" }}
+											className="text-primary text-decoration-underline"
 										>
 											{job.numberOfInterviews}
 										</Link>
 									</td>
 									<td>
+										{/* Copy URI */}
 										<button
 											onClick={() => {
 												const fullLink = `${window.location.origin}/jobs/conduct/${job.id}?usp=share`;
@@ -207,36 +204,20 @@ const JobPost: React.FC = () => {
 												cursor: "pointer",
 											}}
 										>
-											<svg
-												xmlns="http://www.w3.org/2000/svg"
-												width="24px"
-												height="24px"
-												viewBox="0 0 24 24"
-											>
-												<g
-													stroke="none"
-													strokeWidth="1"
-													fill="none"
-													fillRule="evenodd"
-												>
-													<rect x="0" y="0" width="24" height="24" />
+											<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 0 24 24">
+												<g fill="none">
+													<rect width="24" height="24" />
 													<path
-														d="M8,3 L8,3.5 C8,4.32842712 8.67157288,5 9.5,5 L14.5,5 C15.3284271,5 16,4.32842712 16,3.5 L16,3 L18,3 C19.1045695,3 20,3.8954305 20,5 L20,21 C20,22.1045695 19.1045695,23 18,23 L6,23 C4.8954305,23 4,22.1045695 4,21 L4,5 C4,3.8954305 4.8954305,3 6,3 L8,3 Z"
-														fill={
-															copiedJobId === job.id ? "#009EF7" : "#5E6278"
-														}
+														d="M8,3 L8,3.5 C8,4.328 8.672,5 9.5,5 L14.5,5 C15.328,5 16,4.328 16,3.5 L16,3 L18,3 C19.105,3 20,3.895 20,5 L20,21 C20,22.105 19.105,23 18,23 L6,23 C4.895,23 4,22.105 4,21 L4,5 C4,3.895 4.895,3 6,3 L8,3 Z"
+														fill={copiedJobId === job.id ? "#009EF7" : "#5E6278"}
 														opacity="0.3"
 													/>
 													<path
-														d="M11,2 C11,1.44771525 11.4477153,1 12,1 C12.5522847,1 13,1.44771525 13,2 L14.5,2 C14.7761424,2 15,2.22385763 15,2.5 L15,3.5 C15,3.77614237 14.7761424,4 14.5,4 L9.5,4 C9.22385763,4 9,3.77614237 9,3.5 L9,2.5 C9,2.22385763 9.22385763,2 9.5,2 L11,2 Z"
-														fill={
-															copiedJobId === job.id ? "#009EF7" : "#5E6278"
-														}
+														d="M11,2 C11,1.448 11.448,1 12,1 C12.552,1 13,1.448 13,2 L14.5,2 C14.776,2 15,2.224 15,2.5 L15,3.5 C15,3.776 14.776,4 14.5,4 L9.5,4 C9.224,4 9,3.776 9,3.5 L9,2.5 C9,2.224 9.224,2 9.5,2 L11,2 Z"
+														fill={copiedJobId === job.id ? "#009EF7" : "#5E6278"}
 													/>
 													<rect
-														fill={
-															copiedJobId === job.id ? "#009EF7" : "#5E6278"
-														}
+														fill={copiedJobId === job.id ? "#009EF7" : "#5E6278"}
 														opacity="0.3"
 														x="7"
 														y="10"
@@ -245,9 +226,7 @@ const JobPost: React.FC = () => {
 														rx="1"
 													/>
 													<rect
-														fill={
-															copiedJobId === job.id ? "#009EF7" : "#5E6278"
-														}
+														fill={copiedJobId === job.id ? "#009EF7" : "#5E6278"}
 														opacity="0.3"
 														x="7"
 														y="14"
@@ -259,7 +238,7 @@ const JobPost: React.FC = () => {
 											</svg>
 										</button>
 
-										{/* Close Job Icon */}
+										{/* Close Job */}
 										{job.status !== "Closed" && (
 											<span
 												className="svg-icon svg-icon-2x"
@@ -292,20 +271,20 @@ const JobPost: React.FC = () => {
 														<rect x="0" y="0" width="24" height="24" />
 														<path
 															d="M12,22 C6.4771525,22 2,17.5228475 2,12 
-														C2,6.4771525 6.4771525,2 12,2 
-														C17.5228475,2 22,6.4771525 22,12 
-														C22,17.5228475 17.5228475,22 12,22 Z 
-														M12,20 C16.418278,20 20,16.418278 20,12 
-														C20,7.581722 16.418278,4 12,4 
-														C7.581722,4 4,7.581722 4,12 
-														C4,16.418278 7.581722,20 12,20 Z 
-														M19.0710678,4.92893219 
-														C19.4615921,5.31945648 19.4615921,5.95262146 19.0710678,6.34314575 
-														L6.34314575,19.0710678 
-														C5.95262146,19.4615921 5.31945648,19.4615921 4.92893219,19.0710678 
-														C4.5384079,18.6805435 4.5384079,18.0473785 4.92893219,17.6568542 
-														L17.6568542,4.92893219 
-														C18.0473785,4.5384079 18.6805435,4.5384079 19.0710678,4.92893219 Z"
+													C2,6.4771525 6.4771525,2 12,2 
+													C17.5228475,2 22,6.4771525 22,12 
+													C22,17.5228475 17.5228475,22 12,22 Z 
+													M12,20 C16.418278,20 20,16.418278 20,12 
+													C20,7.581722 16.418278,4 12,4 
+													C7.581722,4 4,7.581722 4,12 
+													C4,16.418278 7.581722,20 12,20 Z 
+													M19.0710678,4.92893219 
+													C19.4615921,5.31945648 19.4615921,5.95262146 19.0710678,6.34314575 
+													L6.34314575,19.0710678 
+													C5.95262146,19.4615921 5.31945648,19.4615921 4.92893219,19.0710678 
+													C4.5384079,18.6805435 4.5384079,18.0473785 4.92893219,17.6568542 
+													L17.6568542,4.92893219 
+													C18.0473785,4.5384079 18.6805435,4.5384079 19.0710678,4.92893219 Z"
 															fill="currentColor"
 															fillRule="nonzero"
 															opacity="0.9"
@@ -314,7 +293,8 @@ const JobPost: React.FC = () => {
 												</svg>
 											</span>
 										)}
-										{/* Delete Button */}
+
+										{/* Delete Job */}
 										<button
 											title="Delete Job"
 											onClick={() => {
@@ -349,6 +329,7 @@ const JobPost: React.FC = () => {
 							))}
 						</tbody>
 					</Table>
+
 
 					{/* Close Modal */}
 					<Modal show={isCloseModalOpen} onHide={() => setIsCloseModalOpen(false)} centered>

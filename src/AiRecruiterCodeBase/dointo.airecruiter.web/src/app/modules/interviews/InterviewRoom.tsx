@@ -1,59 +1,111 @@
-import React, { useState } from 'react'
-import { Dropdown1 } from '../../../_metronic/partials'
-import InterviewChat from './InterviewChat'
-import CandidateInterviewResult from './CandidateInterviewResult'
+import * as React from "react";
+import { FC, useState } from "react";
+import InterviewVideoPanel from "./InterviewVideoPanel";
+import InterviewControls from "./InterviewControls";
+import CandidateInterviewResult from "./CandidateInterviewResult";
 
-interface InterviewRoomProps { jobId: string, candidateId: string }
-
-const InterviewRoom: React.FC<InterviewRoomProps> = ({ jobId, candidateId }) => {
-  const [interviewId, setInterviewId] = useState<string>('')
-  const [terminatedInterviewId, setTerminatedInterviewId] = useState<string>('')
-
-  return (
-    <div className="interview-room d-flex flex-column align-items-center py-10">
-      <div className="card w-100 w-lg-600px" id="kt_interview_messenger">
-        <div className="card-header" id="kt_interview_messenger_header">
-          <div className="card-title">
-            <div className="symbol-group symbol-hover"></div>
-            <div className="d-flex justify-content-center flex-column me-3">
-              <a
-                href="#"
-                className="fs-4 fw-bolder text-gray-900 text-hover-primary me-1 mb-2 lh-1"
-              >
-                Riku
-              </a>
-              <div className="mb-0 lh-1">
-                <span className="badge badge-success badge-circle w-10px h-10px me-1"></span>
-                <span className="fs-7 fw-bold text-gray-500">Active</span>
-              </div>
-            </div>
-          </div>
-          <div className="card-toolbar">
-            <div className="me-n3">
-              <button
-                className="btn btn-sm btn-icon btn-active-light-primary"
-                data-kt-menu-trigger="click"
-                data-kt-menu-placement="bottom-end"
-                data-kt-menu-flip="top-end"
-              >
-                <i className="bi bi-three-dots fs-2"></i>
-              </button>
-              <Dropdown1 />
-            </div>
-          </div>
-        </div>
-        <InterviewChat
-          jobId={jobId}
-          candidateId={candidateId}
-          onInterviewId={setInterviewId}
-          onTerminate={setTerminatedInterviewId}
-        />
-        {terminatedInterviewId && (
-          <CandidateInterviewResult interviewId={terminatedInterviewId} />
-        )}
-      </div>
-    </div>
-  )
+interface InterviewRoomProps {
+	jobId: string;
+	candidateId: string;
 }
 
-export default InterviewRoom
+const InterviewRoom: FC<InterviewRoomProps> = ({ jobId, candidateId }) => {
+	const [interviewId, setInterviewId] = useState<string>("");
+	const [terminatedInterviewId, setTerminatedInterviewId] = useState<string>("");
+	const [isSpeaking, setIsSpeaking] = useState(false);
+	const [isRecording, setIsRecording] = useState(false);
+
+	const handleSpeakingChange = (speaking: boolean) => {
+		setIsSpeaking(speaking);
+	};
+
+	const handleRecordingChange = (recording: boolean) => {
+		setIsRecording(recording);
+	};
+
+	const handleInterviewStart = (id: string) => {
+		setInterviewId(id);
+	};
+
+	if (terminatedInterviewId) {
+		return (
+			<div className="interview-room-container">
+				<div className="container-fluid h-100">
+					<div className="row h-100">
+						<div className="col-12 d-flex justify-content-center align-items-center">
+							<div className="interview-result-panel">
+								<CandidateInterviewResult interviewId={terminatedInterviewId} />
+							</div>
+						</div>
+					</div>
+				</div>
+				<style jsx="true">{`
+					.interview-room-container {
+						height: 100vh;
+						background-color: #1a1a1a;
+						overflow: hidden;
+					}
+
+					.interview-result-panel {
+						max-width: 800px;
+						width: 100%;
+						margin: 20px;
+					}
+				`}</style>
+			</div>
+		);
+	}
+
+	return (
+		<div className="interview-room-container">
+			<div className="container-fluid h-100">
+				<div className="row h-100">
+					{/* Single Full-Width Video Panel */}
+					<div className="col-12 video-panel-column">
+						<InterviewVideoPanel
+							isSpeaking={isSpeaking}
+							isRecording={isRecording}
+						/>
+						
+						{/* Controls at bottom */}
+						<div className="interview-controls-container">
+							<InterviewControls
+								jobId={jobId}
+								candidateId={candidateId}
+								onInterviewId={handleInterviewStart}
+								onTerminate={setTerminatedInterviewId}
+								onSpeakingChange={handleSpeakingChange}
+								onRecordingChange={handleRecordingChange}
+							/>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<style jsx="true">{`
+				.interview-room-container {
+					height: 100vh;
+					background-color: #1a1a1a;
+					overflow: hidden;
+					position: relative;
+				}
+
+				.video-panel-column {
+					background-color: #1a1a1a;
+					position: relative;
+					padding: 0;
+				}
+
+				.interview-controls-container {
+					position: absolute;
+					bottom: 20px;
+					left: 50%;
+					transform: translateX(-50%);
+					z-index: 10;
+				}
+			`}</style>
+		</div>
+	);
+};
+
+export default InterviewRoom;

@@ -23,7 +23,7 @@ public interface IJobPostsService
 	Task<IProcessingState> CloseMultipleJobsAsync(CloseMultipleJobsDto closeJobDto);
 	Task<IProcessingState> ExtractSkillsFromDescriptionAsync(string jobDescription);
 	IProcessingState GetAllSkills( );
-	Task<IProcessingState> GetActiveCandidateJobsAsync(ClaimsPrincipal user );
+	IProcessingState GetActiveCandidateJobsAsync(ClaimsPrincipal user);
 
 	Task<IProcessingState> GetAllInterviews(string jobId);
 
@@ -41,25 +41,38 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 	private readonly IJobsAgent _jobsAgent = jobsAgent;
 	private readonly MessageBuilder _messageBuilder = new( );
 
-	public Task<IProcessingState> GetActiveCandidateJobsAsync(ClaimsPrincipal user)
+	public IProcessingState GetActiveCandidateJobsAsync(ClaimsPrincipal user)
 	{
 		_messageBuilder.Clear( );
+		var candidate = _readOnlyRepository.Query<Candidate>( )
+			.FirstOrDefault(x => x.CreatedBy == user.GetOwnerId( ));
+		if (candidate == null)
+		{
+			return new SuccessState<List<CandidateJobViewDto>>(
+			_messageBuilder.AddFormat(Messages.RECORD_NOT_FOUND_FORMAT).AddString(nameof(Candidate)).Build( ),
+			[ ]);
+		}
 
-		// Step 1: Get list of job IDs owned by user
-		var ownerJobIds = GetOwnerJobIds(user); // List<string> or IEnumerable<string>
+		var candidateSkillNames = candidate.Skills
+			.Select(s => s.Skill?.Trim( ).ToLower( ))
+			.Where(n => !string.IsNullOrEmpty(n))
+			.ToHashSet( );
 
-		// Step 2: Fetch Job objects for those IDs
-		var ownerJobs = _readOnlyRepository
+		var jobs = _readOnlyRepository
 			.Query<Job>( )
-			.Where(job => ownerJobIds.Contains(job.Id))
-			.ToList();
+			.Where(job => !job.IsDeleted && job.Status != JobStatus.Closed)
+			.ToList( );
 
-		// Step 3: Get all interviews
+		// Filter jobs where candidate has all required skills
+		var matchingJobs = jobs
+			.Where(job =>
+				job.RequiredSkills.Any(rs =>
+					candidateSkillNames.Contains(rs.Trim( ).ToLower( ))))
+			.ToList( );
+
 		var interviewsSet = _readOnlyRepository.Query<Interview>( );
 
-		// Step 4: Filter and project candidate jobs
-		var candidateJobs = ownerJobs
-			.Where(job => !job.IsDeleted && job.Status != JobStatus.Closed)
+		var candidateJobs = matchingJobs
 			.Select(job =>
 			{
 				var interviewCount = job.GetInterviewCount(interviewsSet);
@@ -74,10 +87,10 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 			})
 			.ToList( );
 
-		return Task.FromResult<IProcessingState>(new SuccessState<List<CandidateJobViewDto>>(
+		return new SuccessState<List<CandidateJobViewDto>>(
 			_messageBuilder.AddFormat(Messages.RECORD_RETRIEVED_FORMAT).AddString("Jobs").Build( ),
 			candidateJobs
-		));
+		);
 	}
 
 
@@ -214,21 +227,21 @@ internal class JobPostsService(IJobPostRepository repository, IResolver<Job, Edi
 		.Select(_skillsResolver.Resolve)
 		.ToList( );
 
-    public async Task<IProcessingState> GetAllInterviews(string jobId)
-    {
-        _messageBuilder.Clear();
+	public async Task<IProcessingState> GetAllInterviews(string jobId)
+	{
+		_messageBuilder.Clear( );
 
-        var jobPost = await _repository.GetByIdAsync(jobId);
-        if (jobPost is null)
-            return new BusinessErrorState(RecordNotFoundMessage());
+		var jobPost = await _repository.GetByIdAsync(jobId);
+		if (jobPost is null)
+			return new BusinessErrorState(RecordNotFoundMessage( ));
 
-        var interviews = _readOnlyRepository.Query<Interview>();
-        var interviewees = jobPost.GetSortedInterviewees(interviews);
-        return new SuccessState<List<Interviewee>>(
-            _messageBuilder.AddFormat(Messages.RECORD_RETRIEVED_FORMAT).AddString(JOB_STRING).Build(),
-            interviewees
-        );
-    }
+		var interviews = _readOnlyRepository.Query<Interview>( );
+		var interviewees = jobPost.GetSortedInterviewees(interviews);
+		return new SuccessState<List<Interviewee>>(
+			_messageBuilder.AddFormat(Messages.RECORD_RETRIEVED_FORMAT).AddString(JOB_STRING).Build( ),
+			interviewees
+		);
+	}
 
 	private string RecordNotFoundMessage( )
 	{

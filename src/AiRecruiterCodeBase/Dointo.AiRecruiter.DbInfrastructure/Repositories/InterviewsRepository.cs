@@ -37,9 +37,7 @@ internal class InterviewsRepository(AiRecruiterDbContext dbContext)
 				Phone = candidate.Phone,
 				Location = candidate.Location,
 				JobFitAnalysis = string.Empty,
-				Experience = (int)Math.Round(
-					( candidate.Experiences.Select(x => x.EndDate ?? DateTime.UtcNow).Max( ) -
-					candidate.Experiences.Min(x => x.StartDate) ).TotalDays / 365)
+				Experience = GetTotalExperience(candidate)
 			},
 			Job = new InterviewJob
 			{
@@ -54,6 +52,20 @@ internal class InterviewsRepository(AiRecruiterDbContext dbContext)
 
 		var entry = await _entitySet.AddAsync(interview);
 		return entry.Entity;
+
+		static int GetTotalExperience(Candidate candidate)
+		{
+			try
+			{
+				return (int)Math.Round(
+										( candidate.Experiences.Select(x => x.EndDate ?? DateTime.UtcNow).Max( ) -
+										candidate.Experiences.Min(x => x.StartDate) ).TotalDays / 365);
+			}
+			catch (Exception)
+			{
+				return 0;
+			}
+		}
 	}
 
 	public async Task<Interview?> GetInterviewResultByInterviewIdAsync(string interviewId)

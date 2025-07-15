@@ -95,7 +95,7 @@ const CandidateJobView = () => {
 										d='M0 5h16v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V5zm5 2a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm6 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z'
 									/>
 								</svg>
-								Available Interviews
+								Available Jobs
 							</h2>
 							<p className='text-muted fs-6'>Choose a job to begin or resume your interview process.</p>
 						</div>

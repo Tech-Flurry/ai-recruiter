@@ -1,7 +1,9 @@
-﻿import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+﻿import React, { useState, useEffect } from "react";
+import axios from "axios";
 
-interface CandidateInfoProps { onCandidateCreated?: (candidateId: string) => void }
+interface CandidateInfoProps {
+	onCandidateCreated?: (candidateId: string) => void;
+}
 interface Credential {
 	certificate: string;
 	institution: string;
@@ -40,43 +42,45 @@ interface Candidate {
 }
 
 const emptyCredential = (): Credential => ({
-	certificate: '',
-	institution: '',
-	yearOfCompletion: '',
+	certificate: "",
+	institution: "",
+	yearOfCompletion: "",
 });
 
 const emptyExperience = (): Experience => ({
-	jobTitle: '',
-	company: '',
-	details: '',
-	startDate: '',
-	endDate: '',
+	jobTitle: "",
+	company: "",
+	details: "",
+	startDate: "",
+	endDate: "",
 });
 
 const emptySkillRating = (): SkillRating => ({
-	skill: '',
+	skill: "",
 	rating: 5,
 });
 
 const initialCandidate: Candidate = {
-	firstName: '',
-	lastName: '',
-	dateOfBirth: '',
-	email: '',
-	phone: '',
-	jobTitle: '',
-	location: '',
+	firstName: "",
+	lastName: "",
+	dateOfBirth: "",
+	email: "",
+	phone: "",
+	jobTitle: "",
+	location: "",
 	educationHistory: [],
 	certifications: [],
 	experiences: [],
 	skills: [],
 };
 
-const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => {
+const CandidateInfo: React.FC<CandidateInfoProps> = ({
+	onCandidateCreated,
+}) => {
 	const [candidate, setCandidate] = useState<Candidate>(initialCandidate);
 	const [availableSkills, setAvailableSkills] = useState<Skill[]>([]);
-	const [statusMessage, setStatusMessage] = useState('');
-	const [statusAlertClass, setStatusAlertClass] = useState('alert-info');
+	const [statusMessage, setStatusMessage] = useState("");
+	const [statusAlertClass, setStatusAlertClass] = useState("alert-info");
 	const [isProcessing, setIsProcessing] = useState(false);
 
 	useEffect(() => {
@@ -103,8 +107,18 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 			});
 	}, []);
 
+	const handleChange = (
+		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+	) => {
+		const { name, value } = e.target;
+		setCandidate((prev) => ({
+			...prev,
+			[name]: value,
+		}));
+	};
+
 	const handleCredentialChange = (
-		listName: 'educationHistory' | 'certifications',
+		listName: "educationHistory" | "certifications",
 		idx: number,
 		field: keyof Credential,
 		value: string
@@ -127,14 +141,6 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 			return { ...prev, experiences: updatedList };
 		});
 	};
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-		const { name, value } = e.target;
-		setCandidate((prev) => ({
-			...prev,
-			[name]: value,
-		}));
-	};
-
 	const handleSkillChange = (
 		idx: number,
 		field: keyof SkillRating,
@@ -147,14 +153,17 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 		});
 	};
 
-	const addCredential = (listName: 'educationHistory' | 'certifications') => {
+	const addCredential = (listName: "educationHistory" | "certifications") => {
 		setCandidate((prev) => ({
 			...prev,
 			[listName]: [...prev[listName], emptyCredential()],
 		}));
 	};
 
-	const removeCredential = (listName: 'educationHistory' | 'certifications', idx: number) => {
+	const removeCredential = (
+		listName: "educationHistory" | "certifications",
+		idx: number
+	) => {
 		setCandidate((prev) => {
 			const updatedList = [...prev[listName]];
 			updatedList.splice(idx, 1);
@@ -192,64 +201,62 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 		});
 	};
 	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault()
-		setStatusMessage('')
-		setStatusAlertClass('alert-info')
-		setIsProcessing(true)
+		e.preventDefault();
+		setStatusMessage("");
+		setStatusAlertClass("alert-info");
+		setIsProcessing(true);
 
 		try {
-			const rawToken = localStorage.getItem('kt-auth-react-v')
-			if (!rawToken) throw new Error('Missing auth token')
-			const tokenObj = JSON.parse(rawToken)
-			if (!tokenObj.api_token) throw new Error('Invalid auth token')
+			const rawToken = localStorage.getItem("kt-auth-react-v");
+			if (!rawToken) throw new Error("Missing auth token");
+			const tokenObj = JSON.parse(rawToken);
+			if (!tokenObj.api_token) throw new Error("Invalid auth token");
+
+			// 📡 Submit API request
 			const response = await axios.post(
 				`${import.meta.env.VITE_APP_API_BASE_URL}/interviews/create-candidate`,
-				{ ...candidate, id: '' },
+				{ ...candidate, id: "" },
 				{
 					headers: {
-						'Content-Type': 'application/json',
+						"Content-Type": "application/json",
 						Authorization: `Bearer ${tokenObj.api_token}`,
 					},
 				}
-			)
+			);
 
-			const result = response.data
+			const result = response.data;
 			if (result.success) {
 				if (onCandidateCreated && result.data?.id) {
-					onCandidateCreated(result.data.id)
+					onCandidateCreated(result.data.id);
 				}
-				setStatusMessage(result.message)
-				setStatusAlertClass('alert-success')
-				setCandidate(initialCandidate)
-			}
-			else if (result.errors) {
+				setStatusMessage(result.message);
+				setStatusAlertClass("alert-success");
+				setCandidate(initialCandidate);
+			} else if (result.errors) {
 				setStatusMessage(
 					result.message +
-					'\n' +
-					result.errors
-						.map((e: any) => `${e.propertyName}: ${e.errorMessage}`)
-						.join('\n')
-				)
-				setStatusAlertClass('alert-warning')
-			}
-			else if (result.exceptionMessage) {
-				setStatusMessage(result.message + '\n' + result.exceptionMessage)
-				setStatusAlertClass('alert-danger')
-			}
-			else {
-				setStatusMessage('Unknown response from server.')
-				setStatusAlertClass('alert-danger')
+						"\n" +
+						result.errors
+							.map((e: any) => `${e.propertyName}: ${e.errorMessage}`)
+							.join("\n")
+				);
+				setStatusAlertClass("alert-warning");
+			} else if (result.exceptionMessage) {
+				setStatusMessage(result.message + "\n" + result.exceptionMessage);
+				setStatusAlertClass("alert-danger");
+			} else {
+				setStatusMessage("Unknown response from server.");
+				setStatusAlertClass("alert-danger");
 			}
 		} catch (ex: any) {
 			setStatusMessage(
 				`An error occurred: ${ex.response?.data?.message || ex.message}`
-			)
-			setStatusAlertClass('alert-danger')
+			);
+			setStatusAlertClass("alert-danger");
 		} finally {
-			setIsProcessing(false)
+			setIsProcessing(false);
 		}
-	}
-
+	};
 
 	return (
 		<div>
@@ -539,7 +546,9 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 										className="form-control form-control-solid"
 										placeholder="e.g. Frontend Developer"
 										value={exp.jobTitle}
-										onChange={(e) => handleExperienceChange(idx, 'jobTitle', e.target.value)}
+										onChange={(e) =>
+											handleExperienceChange(idx, "jobTitle", e.target.value)
+										}
 									/>
 								</div>
 								<div className="col-md-3">
@@ -549,7 +558,9 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 										className="form-control form-control-solid"
 										placeholder="e.g. Google"
 										value={exp.company}
-										onChange={(e) => handleExperienceChange(idx, 'company', e.target.value)}
+										onChange={(e) =>
+											handleExperienceChange(idx, "company", e.target.value)
+										}
 									/>
 								</div>
 								<div className="col-md-3">
@@ -559,7 +570,9 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 										className="form-control form-control-solid"
 										placeholder="e.g. Worked on UI features"
 										value={exp.details}
-										onChange={(e) => handleExperienceChange(idx, 'details', e.target.value)}
+										onChange={(e) =>
+											handleExperienceChange(idx, "details", e.target.value)
+										}
 									/>
 								</div>
 								<div className="col-md-1">
@@ -568,7 +581,9 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 										type="date"
 										className="form-control form-control-solid"
 										value={exp.startDate}
-										onChange={(e) => handleExperienceChange(idx, 'startDate', e.target.value)}
+										onChange={(e) =>
+											handleExperienceChange(idx, "startDate", e.target.value)
+										}
 									/>
 								</div>
 								<div className="col-md-1">
@@ -577,7 +592,9 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 										type="date"
 										className="form-control form-control-solid"
 										value={exp.endDate}
-										onChange={(e) => handleExperienceChange(idx, 'endDate', e.target.value)}
+										onChange={(e) =>
+											handleExperienceChange(idx, "endDate", e.target.value)
+										}
 									/>
 								</div>
 								<div className="col-md-1 text-end mt-4">
@@ -612,7 +629,9 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 									<select
 										className="form-select form-select-solid"
 										value={skill.skill}
-										onChange={(e) => handleSkillChange(idx, 'skill', e.target.value)}
+										onChange={(e) =>
+											handleSkillChange(idx, "skill", e.target.value)
+										}
 									>
 										<option value="">Select skill</option>
 										{availableSkills.map((s) => (
@@ -627,7 +646,9 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 									<select
 										className="form-select form-select-solid"
 										value={skill.rating}
-										onChange={(e) => handleSkillChange(idx, 'rating', Number(e.target.value))}
+										onChange={(e) =>
+											handleSkillChange(idx, "rating", Number(e.target.value))
+										}
 									>
 										{[1, 2, 3, 4, 5].map((r) => (
 											<option key={r} value={r}>
@@ -650,14 +671,22 @@ const CandidateInfo: React.FC<CandidateInfoProps> = ({ onCandidateCreated }) => 
 					))}
 				</div>
 
-				<button type="submit" className="btn btn-primary" disabled={isProcessing}>
+				<button
+					type="submit"
+					className="btn btn-primary"
+					disabled={isProcessing}
+				>
 					{isProcessing ? (
 						<>
-							<span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+							<span
+								className="spinner-border spinner-border-sm me-2"
+								role="status"
+								aria-hidden="true"
+							></span>
 							Submitting...
 						</>
 					) : (
-						'Start Interview'
+						"Start Interview"
 					)}
 				</button>
 			</form>

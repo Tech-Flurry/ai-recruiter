@@ -19,19 +19,19 @@ interface CandidateDashboardDto {
 }
 
 const CandidateDashboard: React.FC = () => {
-	const [data, setData] = useState<CandidateDashboardDto | null>(null)
+	const [data, setData] = useState<Partial<CandidateDashboardDto>>({})
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
 
 	useEffect(() => {
 		const fetchDashboardData = async () => {
-			const token = localStorage.getItem('kt-auth-react-v');
+			const token = localStorage.getItem('kt-auth-react-v')
 
 			if (!token) {
-				console.error("❌ Authentication token not found.");
-				setError('Authentication token not found.');
-				setLoading(false);
-				return;
+				console.error('❌ Authentication token not found.')
+				setError('Authentication token not found.')
+				setLoading(false)
+				return
 			}
 
 			try {
@@ -42,25 +42,23 @@ const CandidateDashboard: React.FC = () => {
 							Authorization: `Bearer ${token}`,
 						},
 					}
-				);
+				)
 
-				setData(dashboardRes.data.data);
+				setData(dashboardRes.data?.data || {})
 			} catch (err: any) {
-				console.error("❌ Error fetching dashboard data:", err);
+				console.error('❌ Error fetching dashboard data:', err)
 				if (err.response?.status === 401) {
-					setError('Unauthorized. Please log in again.');
+					setError('Unauthorized. Please log in again.')
 				} else {
-					setError('Failed to load dashboard. Please try again.');
+					setError('Failed to load dashboard. Please try again.')
 				}
 			} finally {
-				setLoading(false);
+				setLoading(false)
 			}
-		};
+		}
 
-		fetchDashboardData();
-	}, []);
-
-
+		fetchDashboardData()
+	}, [])
 
 	const getVariant = (level: number) => {
 		if (level >= 80) return 'success'
@@ -77,18 +75,24 @@ const CandidateDashboard: React.FC = () => {
 	}
 
 	if (loading) {
-		return <div className='text-center mt-10'><Spinner animation='border' variant='primary' /></div>
-	}
-
-	if (error || !data) {
-		return <Alert variant='danger' className='mt-5 text-center'>{error}</Alert>
+		return (
+			<div className='text-center mt-10'>
+				<Spinner animation='border' variant='primary' />
+			</div>
+		)
 	}
 
 	return (
 		<div className='mt-5 px-4'>
+			{error && (
+				<Alert variant='danger' className='text-center'>
+					{error}
+				</Alert>
+			)}
+
 			{/* Welcome Banner */}
 			<div className='p-5 bg-light-primary rounded mb-7'>
-				<h2 className='fw-bold text-primary'>Welcome, {data.name}!</h2>
+				<h2 className='fw-bold text-primary'>Welcome, {data?.name || 'Candidate'}!</h2>
 				<p className='mb-0 text-muted'>Track your interview progress and performance below.</p>
 			</div>
 
@@ -98,7 +102,7 @@ const CandidateDashboard: React.FC = () => {
 					<div className='card card-xl-stretch mb-xl-8 shadow-sm border-0 text-center'>
 						<div className='card-body'>
 							<KTSVG path='/media/icons/duotune/general/gen048.svg' className='svg-icon-2tx mb-2 text-primary' />
-							<div className='fs-2hx fw-bold text-dark'>{data.totalInterviews}</div>
+							<div className='fs-2hx fw-bold text-dark'>{data?.totalInterviews ?? 0}</div>
 							<div className='text-muted fw-semibold'>Total Interviews</div>
 						</div>
 					</div>
@@ -107,7 +111,7 @@ const CandidateDashboard: React.FC = () => {
 					<div className='card card-xl-stretch mb-xl-8 shadow-sm border-0 text-center'>
 						<div className='card-body'>
 							<KTSVG path='/media/icons/duotune/general/gen049.svg' className='svg-icon-2tx mb-2 text-success' />
-							<div className='fs-2hx fw-bold text-dark'>{data.averageScore}</div>
+							<div className='fs-2hx fw-bold text-dark'>{data?.averageScore ?? 0}</div>
 							<div className='text-muted fw-semibold'>Average Score</div>
 						</div>
 					</div>
@@ -116,7 +120,7 @@ const CandidateDashboard: React.FC = () => {
 					<div className='card card-xl-stretch mb-xl-8 shadow-sm border-0 text-center'>
 						<div className='card-body'>
 							<KTSVG path='/media/icons/duotune/arrows/arr016.svg' className='svg-icon-2tx mb-2 text-primary' />
-							<div className='fs-2hx fw-bold text-dark'>{data.passRate}%</div>
+							<div className='fs-2hx fw-bold text-dark'>{data?.passRate ?? 0}%</div>
 							<div className='text-muted fw-semibold'>Pass Rate</div>
 						</div>
 					</div>
@@ -130,7 +134,7 @@ const CandidateDashboard: React.FC = () => {
 					<span className='text-muted fs-7'>Based on AI interview analysis</span>
 				</Card.Header>
 				<Card.Body className='pt-4'>
-					{data.topSkills && data.topSkills.length > 0 ? (
+					{data?.topSkills?.length ? (
 						data.topSkills.map((item, index) => (
 							<div key={index} className='mb-4'>
 								<div className='d-flex justify-content-between align-items-center mb-2'>
@@ -162,14 +166,15 @@ const CandidateDashboard: React.FC = () => {
 				<Tab eventKey='summary' title='Summary'>
 					<div className='p-4 bg-light rounded border'>
 						<h5 className='mb-3'>Performance Overview</h5>
-						<p className='text-muted'>{data.summary}</p>
+						<p className='text-muted'>{data?.summary || 'No summary available yet.'}</p>
 					</div>
 				</Tab>
-			<Tab eventKey='history' title='Recent Activity'>
-	<div className='p-4 bg-light rounded border'>
-		<h5 className='mb-4 text-dark fw-bold'>Activity Timeline</h5>
-		<div className='timeline'>
-							{data?.recentActivities?.length > 0 ? (
+
+				<Tab eventKey='history' title='Recent Activity'>
+					<div className='p-4 bg-light rounded border'>
+						<h5 className='mb-4 text-dark fw-bold'>Activity Timeline</h5>
+						<div className='timeline'>
+							{data?.recentActivities?.length ? (
 								data.recentActivities.map((item, index) => (
 									<div key={index} className='timeline-item d-flex mb-4'>
 										<div className='timeline-label'>
@@ -186,11 +191,9 @@ const CandidateDashboard: React.FC = () => {
 							) : (
 								<div className='text-muted'>No recent activity found.</div>
 							)}
-
-		</div>
-	</div>
-</Tab>
-
+						</div>
+					</div>
+				</Tab>
 			</Tabs>
 		</div>
 	)

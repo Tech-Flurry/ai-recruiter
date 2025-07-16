@@ -85,8 +85,7 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 				const token = localStorage.getItem("kt-auth-react-v");
 				if (!token) throw new Error("Missing auth token");
 				const keyRes = await axios.get(
-					`${
-						(import.meta as any).env.VITE_APP_API_BASE_URL
+					`${(import.meta as any).env.VITE_APP_API_BASE_URL
 					}/Interviews/get-api-key`,
 					{
 						headers: {
@@ -98,8 +97,7 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 				setApiKey(fetchedApiKey); // still set for later use
 
 				const res = await axios.get(
-					`${
-						(import.meta as any).env.VITE_APP_API_BASE_URL
+					`${(import.meta as any).env.VITE_APP_API_BASE_URL
 					}/Interviews/generate-interview/${candidateId}/${jobId}`,
 					{
 						headers: {
@@ -156,6 +154,7 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 		setMessages((prev) => [...prev, typingMessage]);
 
 		return new Promise<void>((resolve) => {
+			let currentIndex = 0;
 			const simplifiedText = text
 				.replace(/([.?!])\s*(?=[A-Z])/g, "$1|")
 				.split("|");
@@ -170,7 +169,7 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 					return;
 				}
 
-				setTimeout(displayNextPart, 500);
+				setTimeout(displayNextPart, 500); // Adjusted speed
 			};
 
 			displayNextPart();
@@ -200,8 +199,7 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 			if (!token) throw new Error("Missing auth token");
 
 			const res = await axios.post(
-				`${
-					(import.meta as any).env.VITE_APP_API_BASE_URL
+				`${(import.meta as any).env.VITE_APP_API_BASE_URL
 				}/Interviews/next-question/${interviewId}`,
 				body,
 				{

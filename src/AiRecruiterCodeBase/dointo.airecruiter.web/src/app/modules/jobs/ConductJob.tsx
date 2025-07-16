@@ -71,7 +71,7 @@ const ConductJob: React.FC = () => {
 						<p className="mt-3">Checking for existing candidate...</p>
 					</div>
 				</div>
-				<style jsx="true">{`
+				<style>{`
 					.conduct-job-container {
 						min-height: 100vh;
 						background: #f8f9fa;
@@ -95,14 +95,14 @@ const ConductJob: React.FC = () => {
 					<div className="alert alert-danger" role="alert">
 						{error}
 					</div>
-					<button 
+					<button
 						className="btn btn-primary mt-3"
 						onClick={() => window.location.reload()}
 					>
 						Try Again
 					</button>
 				</div>
-				<style jsx="true">{`
+				<style>{`
 					.conduct-job-container {
 						min-height: 100vh;
 						background: #f8f9fa;
@@ -132,7 +132,7 @@ const ConductJob: React.FC = () => {
 				<InterviewRoom jobId={jobId} candidateId={candidateId} />
 			)}
 
-			<style jsx="true">{`
+			<style>{`
 				.conduct-job-container {
 					min-height: 100vh;
 					background: #f8f9fa;

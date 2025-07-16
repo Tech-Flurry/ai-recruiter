@@ -1,10 +1,9 @@
-import { FC, useState, useRef, useEffect, useCallback } from "react";
+import * as React from "react";
+import { FC, useState, useRef, useEffect } from "react";
 import clsx from "clsx";
 import axios from "axios";
 import { toAbsoluteUrl } from "../../../_metronic/helpers";
-import { useAudioRecording } from "../../hooks/useAudioRecording";
-import { useAudioPlayback } from "../../hooks/useAudioPlayback";
-import { useTypingAnimation } from "../../hooks/useTypingAnimation";
+import OpenAI from "openai";
 
 type Message = {
 	user: "riki" | "candidate";
@@ -29,32 +28,20 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 	const [interviewId, setInterviewId] = useState<string>("");
 	const [isTerminated, setIsTerminated] = useState(false);
 	const [apiKey, setApiKey] = useState<string>("");
+
+	// Recording states
+	const [isRecording, setIsRecording] = useState(false);
+	const [recordingSeconds, setRecordingSeconds] = useState(0);
+	const [isTranscribing, setIsTranscribing] = useState(false);
 	const [showTextArea, setShowTextArea] = useState(false);
+	const [isTyping, setIsTyping] = useState(false);
 
+	// Recording refs
 	const messagesEndRef = useRef<HTMLDivElement>(null);
-
-	const { playAudioMessage } = useAudioPlayback({ apiKey });
-	const { isTyping, startTypingAnimation, cleanup: cleanupTyping } = useTypingAnimation();
-	
-	const {
-		isRecording,
-		recordingSeconds,
-		isTranscribing,
-		formatTimer,
-		startRecording,
-		stopRecording,
-		toggleRecording,
-		cleanup: cleanupRecording
-	} = useAudioRecording({
-		apiKey,
-		onTranscriptionComplete: async (text: string) => {
-			setMessage(text);
-			await sendMessage(text);
-		},
-		onTranscriptionFailed: () => {
-			setShowTextArea(true);
-		}
-	});
+	const mediaStreamRef = useRef<MediaStream | null>(null);
+	const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+	const chunksRef = useRef<Blob[]>([]);
+	const timerRef = useRef<number | null>(null);
 
 	useEffect(() => {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -83,30 +70,7 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 			document.removeEventListener("keydown", handleKeyDown);
 			document.removeEventListener("keyup", handleKeyUp);
 		};
-	}, [isRecording, isTerminated, interviewId, startRecording, stopRecording]);
-
-	const startTypingMessage = useCallback(async (text: string) => {
-		const typingMessage: Message = {
-			user: "riki",
-			text: "",
-			time: "Just now",
-		};
-		setMessages((prev) => [...prev, typingMessage]);
-
-		await startTypingAnimation(text);
-		
-		// Update the last message with the complete text
-		setMessages((prev) => {
-			const newMessages = [...prev];
-			if (newMessages.length > 0) {
-				newMessages[newMessages.length - 1] = {
-					...newMessages[newMessages.length - 1],
-					text: text
-				};
-			}
-			return newMessages;
-		});
-	}, [startTypingAnimation]);
+	}, [isRecording, isTerminated, interviewId]);
 
 	useEffect(() => {
 		const generateInterview = async () => {
@@ -121,8 +85,7 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 				const token = localStorage.getItem("kt-auth-react-v");
 				if (!token) throw new Error("Missing auth token");
 				const keyRes = await axios.get(
-					`${
-						(import.meta as any).env.VITE_APP_API_BASE_URL
+					`${(import.meta as any).env.VITE_APP_API_BASE_URL
 					}/Interviews/get-api-key`,
 					{
 						headers: {
@@ -131,11 +94,10 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 					}
 				);
 				const fetchedApiKey = keyRes.data || "";
-				setApiKey(fetchedApiKey);
+				setApiKey(fetchedApiKey); // still set for later use
 
 				const res = await axios.get(
-					`${
-						(import.meta as any).env.VITE_APP_API_BASE_URL
+					`${(import.meta as any).env.VITE_APP_API_BASE_URL
 					}/Interviews/generate-interview/${candidateId}/${jobId}`,
 					{
 						headers: {
@@ -150,8 +112,8 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 					const data = res.data.data;
 					setInterviewId(data.interviewId);
 					if (onInterviewId) onInterviewId(data.interviewId);
-					await playAudioMessage(data.interviewStarter);
-					await startTypingMessage(data.interviewStarter);
+					await playAudioMessage(data.interviewStarter, fetchedApiKey);
+					await startTypingAnimation(data.interviewStarter);
 				} else {
 					setMessages([
 						{
@@ -178,9 +140,43 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 		if (candidateId && jobId) {
 			generateInterview();
 		}
-	}, [candidateId, jobId, onInterviewId, playAudioMessage, startTypingMessage]);
+	}, [candidateId, jobId, onInterviewId]);
 
-	const sendMessage = useCallback(async (messageText: string) => {
+	const startTypingAnimation = async (text: string) => {
+		setIsTyping(true);
+
+		// Add typing message
+		const typingMessage: Message = {
+			user: "riki",
+			text: "",
+			time: "Just now",
+		};
+		setMessages((prev) => [...prev, typingMessage]);
+
+		return new Promise<void>((resolve) => {
+			let currentIndex = 0;
+			const simplifiedText = text
+				.replace(/([.?!])\s*(?=[A-Z])/g, "$1|")
+				.split("|");
+			let partIndex = 0;
+
+			const displayNextPart = () => {
+				if (partIndex < simplifiedText.length) {
+					partIndex++;
+				} else {
+					setIsTyping(false);
+					resolve();
+					return;
+				}
+
+				setTimeout(displayNextPart, 500); // Adjusted speed
+			};
+
+			displayNextPart();
+		});
+	};
+
+	const sendMessage = async (messageText: string) => {
 		if (!messageText.trim() || !interviewId || isTerminated) return;
 
 		let lastRikiMsg: Message | undefined;
@@ -203,8 +199,7 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 			if (!token) throw new Error("Missing auth token");
 
 			const res = await axios.post(
-				`${
-					(import.meta as any).env.VITE_APP_API_BASE_URL
+				`${(import.meta as any).env.VITE_APP_API_BASE_URL
 				}/Interviews/next-question/${interviewId}`,
 				body,
 				{
@@ -221,26 +216,26 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 					setIsTerminated(true);
 					const terminationMessage = "Interview has ended. Thank you!";
 					await playAudioMessage(terminationMessage);
-					await startTypingMessage(terminationMessage);
+					await startTypingAnimation(terminationMessage);
 					if (onTerminate && interviewId) {
 						onTerminate(interviewId);
 					}
 				} else {
 					await playAudioMessage(data.question);
-					await startTypingMessage(data.question);
+					await startTypingAnimation(data.question);
 				}
 			} else {
 				const errorMessage =
 					res.data.message || "Error retrieving next question.";
-				await startTypingMessage(errorMessage);
+				await startTypingAnimation(errorMessage);
 			}
 		} catch (error: any) {
 			const errorMessage = axios.isAxiosError(error)
 				? error.response?.data?.message || "Server error"
 				: "Internal server error";
-			await startTypingMessage(errorMessage);
+			await startTypingAnimation(errorMessage);
 		}
-	}, [interviewId, isTerminated, onTerminate, playAudioMessage, startTypingMessage]);
+	};
 
 	const onEnterPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
 		if (e.key === "Enter" && !e.shiftKey) {
@@ -249,12 +244,167 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 		}
 	};
 
+	const padStart = (str: string, targetLength: number, padString: string) => {
+		if (str.length >= targetLength) return str;
+		const padLength = targetLength - str.length;
+		const fullPad = padString.repeat(Math.ceil(padLength / padString.length));
+		return fullPad.slice(0, padLength) + str;
+	};
+
+	const formatTimer = (totalSeconds: number): string => {
+		const hours = Math.floor(totalSeconds / 3600);
+		const minutes = Math.floor((totalSeconds % 3600) / 60);
+		const seconds = totalSeconds % 60;
+
+		if (hours > 0) {
+			return `${padStart(hours.toString(), 2, "0")}:${padStart(
+				minutes.toString(),
+				2,
+				"0"
+			)}:${padStart(seconds.toString(), 2, "0")}`;
+		}
+		return `${padStart(minutes.toString(), 2, "0")}:${padStart(
+			seconds.toString(),
+			2,
+			"0"
+		)}`;
+	};
+
+	const startRecording = async () => {
+		try {
+			setRecordingSeconds(0);
+			chunksRef.current = [];
+
+			const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+			mediaStreamRef.current = stream;
+
+			const mediaRecorder = new MediaRecorder(stream);
+			mediaRecorderRef.current = mediaRecorder;
+
+			mediaRecorder.ondataavailable = (event) => {
+				if (event.data.size > 0) {
+					chunksRef.current.push(event.data);
+				}
+			};
+
+			mediaRecorder.onstop = async () => {
+				const audioBlob = new Blob(chunksRef.current, { type: "audio/wav" });
+
+				await transcribeAudio(audioBlob);
+				if (mediaStreamRef.current) {
+					mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+					mediaStreamRef.current = null;
+				}
+			};
+
+			mediaRecorder.start();
+			setIsRecording(true);
+			timerRef.current = window.setInterval(() => {
+				setRecordingSeconds((prev) => prev + 1);
+			}, 1000);
+		} catch (error) {
+			console.error("Error starting recording:", error);
+		}
+	};
+
+	const stopRecording = () => {
+		if (mediaRecorderRef.current && isRecording) {
+			mediaRecorderRef.current.stop();
+			setIsRecording(false);
+			if (timerRef.current) {
+				clearInterval(timerRef.current);
+				timerRef.current = null;
+			}
+		}
+	};
+
+	const toggleRecording = () => {
+		if (isRecording) {
+			stopRecording();
+		} else {
+			startRecording();
+		}
+	};
+
+	const playAudioMessage = async (text: string, keyOverride?: string) => {
+		const keyToUse = keyOverride || apiKey;
+		if (!keyToUse) return;
+
+		try {
+			const openai = new OpenAI({
+				apiKey: keyToUse,
+				dangerouslyAllowBrowser: true,
+			});
+			const audio = await openai.audio.speech.create({
+				model: "gpt-4o-mini-tts",
+				voice: "nova",
+				input: text,
+				instructions:
+					"Speak like you're a professional recruiter but you should sound friendly to keep the candidate at ease",
+			});
+
+			let audioBlob: Blob;
+			if (audio.body && typeof audio.body.getReader === "function") {
+				const response = audio as Response;
+				audioBlob = await response.blob();
+			} else if ((audio as any).blob) {
+				audioBlob = await (audio as any).blob();
+			} else {
+				throw new Error("Unsupported audio response format");
+			}
+
+			const url = URL.createObjectURL(audioBlob);
+			const audioElement = new Audio(url);
+			audioElement.play();
+			audioElement.onended = () => URL.revokeObjectURL(url);
+		} catch (error) {
+			console.error("Error playing audio:", error);
+		}
+	};
+
+	const transcribeAudio = async (audioBlob: Blob) => {
+		if (!apiKey) return;
+
+		setIsTranscribing(true);
+
+		try {
+			const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+			const audioFile = new File([audioBlob], "recording.wav", {
+				type: "audio/wav",
+			});
+
+			const transcription = await openai.audio.transcriptions.create({
+				model: "whisper-1",
+				file: audioFile,
+				response_format: "text",
+			});
+
+			const transcribedText = transcription || "";
+
+			if (transcribedText.trim()) {
+				setMessage(transcribedText);
+				await sendMessage(transcribedText);
+			} else {
+				setShowTextArea(true);
+			}
+		} catch (error) {
+			console.error("Error transcribing audio:", error);
+			setShowTextArea(true);
+		} finally {
+			setIsTranscribing(false);
+		}
+	};
+
 	useEffect(() => {
 		return () => {
-			cleanupRecording();
-			cleanupTyping();
+			if (timerRef.current) {
+				clearInterval(timerRef.current);
+			}
+			if (mediaStreamRef.current) {
+				mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+			}
 		};
-	}, [cleanupRecording, cleanupTyping]);
+	}, []);
 
 	return (
 		<div className="card-body" id="kt_interview_chat_body">
@@ -408,7 +558,7 @@ const InterviewChat: FC<InterviewChatProps> = (props) => {
 				</div>
 			</div>
 
-			<style jsx="true">{`
+			<style>{`
 				.typing-cursor {
 					animation: blink 1s infinite;
 				}

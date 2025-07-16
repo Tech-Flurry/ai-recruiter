@@ -1,8 +1,7 @@
-import { FC, useState, useEffect, useCallback } from "react";
+import * as React from "react";
+import { FC, useState, useRef, useEffect, useCallback } from "react";
 import axios from "axios";
-import { useAudioRecording } from "../../hooks/useAudioRecording";
-import { useAudioPlayback } from "../../hooks/useAudioPlayback";
-import { useTypingAnimation } from "../../hooks/useTypingAnimation";
+import OpenAI from "openai";
 
 interface InterviewControlsProps {
 	jobId: string;
@@ -25,31 +24,21 @@ const InterviewControls: FC<InterviewControlsProps> = ({
 	const [isTerminated, setIsTerminated] = useState(false);
 	const [apiKey, setApiKey] = useState<string>("");
 	const [interviewGenerated, setInterviewGenerated] = useState(false);
+
+	// Recording states
+	const [isRecording, setIsRecording] = useState(false);
+	const [recordingSeconds, setRecordingSeconds] = useState(0);
+	const [isTranscribing, setIsTranscribing] = useState(false);
+	const [isTyping, setIsTyping] = useState(false);
 	const [showRetryMessage, setShowRetryMessage] = useState(false);
 	const [currentQuestion, setCurrentQuestion] = useState<string>("");
-	
-	const { playAudioMessage } = useAudioPlayback({ apiKey });
-	const { isTyping, currentText, startTypingAnimation, cleanup: cleanupTyping } = useTypingAnimation();
-	
-	const {
-		isRecording,
-		recordingSeconds,
-		isTranscribing,
-		formatTimer,
-		startRecording,
-		stopRecording,
-		toggleRecording,
-		cleanup: cleanupRecording
-	} = useAudioRecording({
-		apiKey,
-		onTranscriptionComplete: async (text: string) => {
-			setShowRetryMessage(false);
-			await sendMessage(text);
-		},
-		onTranscriptionFailed: () => {
-			setShowRetryMessage(true);
-		}
-	});
+
+	// Recording refs
+	const mediaStreamRef = useRef<MediaStream | null>(null);
+	const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+	const chunksRef = useRef<Blob[]>([]);
+	const timerRef = useRef<number | null>(null);
+	const typingIntervalRef = useRef<number | null>(null);
 
 	// Update parent components when states change
 	useEffect(() => {
@@ -59,11 +48,6 @@ const InterviewControls: FC<InterviewControlsProps> = ({
 	useEffect(() => {
 		if (onSpeakingChange) onSpeakingChange(isTyping);
 	}, [isTyping, onSpeakingChange]);
-
-	// Update current question when typing animation text changes
-	useEffect(() => {
-		setCurrentQuestion(currentText);
-	}, [currentText]);
 
 	// Space bar event listeners
 	useEffect(() => {
@@ -88,17 +72,18 @@ const InterviewControls: FC<InterviewControlsProps> = ({
 			document.removeEventListener("keydown", handleKeyDown);
 			document.removeEventListener("keyup", handleKeyUp);
 		};
-	}, [isRecording, isTerminated, interviewId, startRecording, stopRecording]);
+	}, [isRecording, isTerminated, interviewId]);
 
+	// Generate interview only once
 	const generateInterview = useCallback(async () => {
-		if (interviewGenerated) return;
-		
+		if (interviewGenerated) return; // Prevent multiple calls
+
 		setInterviewGenerated(true);
-		
+
 		try {
 			const token = localStorage.getItem("kt-auth-react-v");
 			if (!token) throw new Error("Missing auth token");
-			
+
 			const keyRes = await axios.get(
 				`${(import.meta as any).env.VITE_APP_API_BASE_URL}/Interviews/get-api-key`,
 				{
@@ -108,7 +93,7 @@ const InterviewControls: FC<InterviewControlsProps> = ({
 				}
 			);
 			setApiKey(keyRes.data || "");
-			
+
 			const res = await axios.get(
 				`${(import.meta as any).env.VITE_APP_API_BASE_URL}/Interviews/generate-interview/${candidateId}/${jobId}`,
 				{
@@ -123,25 +108,84 @@ const InterviewControls: FC<InterviewControlsProps> = ({
 				setInterviewId(data.interviewId);
 				if (onInterviewId) onInterviewId(data.interviewId);
 
+				// Start typing animation and play audio simultaneously
+				setCurrentQuestion(data.interviewStarter);
 				await Promise.all([
 					playAudioMessage(data.interviewStarter),
 					startTypingAnimation(data.interviewStarter)
 				]);
 			} else {
 				console.error("Error starting interview:", res.data?.message || "Unknown error");
-				setInterviewGenerated(false);
+				setInterviewGenerated(false); // Allow retry on error
 			}
 		} catch (error: any) {
 			console.error("Interview generation error:", error);
-			setInterviewGenerated(false);
+			setInterviewGenerated(false); // Allow retry on error
 		}
-	}, [candidateId, jobId, onInterviewId, interviewGenerated, playAudioMessage, startTypingAnimation]);
+	}, [candidateId, jobId, onInterviewId, interviewGenerated]);
 
+	// Use effect to generate interview once
 	useEffect(() => {
 		if (candidateId && jobId && !interviewGenerated) {
 			generateInterview();
 		}
 	}, [candidateId, jobId, generateInterview, interviewGenerated]);
+
+	const startTypingAnimation = useCallback(async (text: string) => {
+		setIsTyping(true);
+		setCurrentQuestion("");
+
+		return new Promise<void>((resolve) => {
+			let currentIndex = 0;
+			const typeSpeed = 50; // milliseconds per character
+
+			typingIntervalRef.current = window.setInterval(() => {
+				if (currentIndex < text.length) {
+					const currentText = text.substring(0, currentIndex + 1);
+					setCurrentQuestion(currentText);
+					currentIndex++;
+				} else {
+					if (typingIntervalRef.current) {
+						clearInterval(typingIntervalRef.current);
+						typingIntervalRef.current = null;
+					}
+					setIsTyping(false);
+					resolve();
+				}
+			}, typeSpeed);
+		});
+	}, []);
+
+	const playAudioMessage = useCallback(async (text: string) => {
+		if (!apiKey) return;
+
+		try {
+			const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+			const audio = await openai.audio.speech.create({
+				model: "tts-1",
+				voice: "nova",
+				input: text,
+			});
+
+			// Convert the response to a Blob and play it in the browser
+			let audioBlob: Blob;
+			if (audio.body && typeof audio.body.getReader === "function") {
+				const response = audio as Response;
+				audioBlob = await response.blob();
+			} else if ((audio as any).blob) {
+				audioBlob = await (audio as any).blob();
+			} else {
+				throw new Error("Unsupported audio response format");
+			}
+
+			const url = URL.createObjectURL(audioBlob);
+			const audioElement = new Audio(url);
+			audioElement.play();
+			audioElement.onended = () => URL.revokeObjectURL(url);
+		} catch (error) {
+			console.error("Error playing audio:", error);
+		}
+	}, [apiKey]);
 
 	const sendMessage = useCallback(async (messageText: string) => {
 		if (!messageText.trim() || !interviewId || isTerminated) return;
@@ -181,6 +225,8 @@ const InterviewControls: FC<InterviewControlsProps> = ({
 						onTerminate(interviewId);
 					}
 				} else {
+					// Start typing animation and play audio simultaneously
+					setCurrentQuestion(data.question);
 					await Promise.all([
 						playAudioMessage(data.question),
 						startTypingAnimation(data.question)
@@ -194,16 +240,145 @@ const InterviewControls: FC<InterviewControlsProps> = ({
 		}
 	}, [currentQuestion, interviewId, isTerminated, onTerminate, playAudioMessage, startTypingAnimation]);
 
+	const padStart = (str: string, targetLength: number, padString: string) => {
+		if (str.length >= targetLength) return str;
+		const padLength = targetLength - str.length;
+		const fullPad = padString.repeat(Math.ceil(padLength / padString.length));
+		return fullPad.slice(0, padLength) + str;
+	};
+
+	const formatTimer = (totalSeconds: number): string => {
+		const hours = Math.floor(totalSeconds / 3600);
+		const minutes = Math.floor((totalSeconds % 3600) / 60);
+		const seconds = totalSeconds % 60;
+
+		if (hours > 0) {
+			return `${padStart(hours.toString(), 2, '0')}:${padStart(minutes.toString(), 2, '0')}:${padStart(seconds.toString(), 2, '0')}`;
+		}
+		return `${padStart(minutes.toString(), 2, '0')}:${padStart(seconds.toString(), 2, '0')}`;
+	};
+
+	const startRecording = async () => {
+		try {
+			setRecordingSeconds(0);
+			chunksRef.current = [];
+			setShowRetryMessage(false);
+
+			const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+			mediaStreamRef.current = stream;
+
+			const mediaRecorder = new MediaRecorder(stream);
+			mediaRecorderRef.current = mediaRecorder;
+
+			mediaRecorder.ondataavailable = (event) => {
+				if (event.data.size > 0) {
+					chunksRef.current.push(event.data);
+				}
+			};
+
+			mediaRecorder.onstop = async () => {
+				const audioBlob = new Blob(chunksRef.current, { type: 'audio/wav' });
+
+				// Transcribe the audio
+				await transcribeAudio(audioBlob);
+
+				// Clean up
+				if (mediaStreamRef.current) {
+					mediaStreamRef.current.getTracks().forEach(track => track.stop());
+					mediaStreamRef.current = null;
+				}
+			};
+
+			mediaRecorder.start();
+			setIsRecording(true);
+
+			// Start timer
+			timerRef.current = window.setInterval(() => {
+				setRecordingSeconds(prev => prev + 1);
+			}, 1000);
+
+		} catch (error) {
+			console.error("Error starting recording:", error);
+		}
+	};
+
+	const stopRecording = () => {
+		if (mediaRecorderRef.current && isRecording) {
+			mediaRecorderRef.current.stop();
+			setIsRecording(false);
+
+			// Stop timer
+			if (timerRef.current) {
+				clearInterval(timerRef.current);
+				timerRef.current = null;
+			}
+		}
+	};
+
+	const toggleRecording = () => {
+		if (isRecording) {
+			stopRecording();
+		} else {
+			startRecording();
+		}
+	};
+
+	const transcribeAudio = async (audioBlob: Blob) => {
+		if (!apiKey) return;
+
+		setIsTranscribing(true);
+
+		try {
+			const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+
+			// Create a File object from the Blob
+			const audioFile = new File([audioBlob], "recording.wav", {
+				type: "audio/wav",
+			});
+
+			const transcription = await openai.audio.transcriptions.create({
+				model: "whisper-1",
+				file: audioFile,
+				response_format: "text",
+			});
+
+			const transcribedText = transcription || "";
+
+			if (transcribedText.trim()) {
+				// Automatically send the transcribed message
+				await sendMessage(transcribedText);
+			} else {
+				// Show retry message if transcription is empty
+				setShowRetryMessage(true);
+			}
+		} catch (error) {
+			console.error("Error transcribing audio:", error);
+			// Show retry message if transcription fails
+			setShowRetryMessage(true);
+		} finally {
+			setIsTranscribing(false);
+		}
+	};
+
+	// Clean up on unmount
 	useEffect(() => {
 		return () => {
-			cleanupRecording();
-			cleanupTyping();
+			if (timerRef.current) {
+				clearInterval(timerRef.current);
+			}
+			if (typingIntervalRef.current) {
+				clearInterval(typingIntervalRef.current);
+			}
+			if (mediaStreamRef.current) {
+				mediaStreamRef.current.getTracks().forEach(track => track.stop());
+			}
 		};
-	}, [cleanupRecording, cleanupTyping]);
+	}, []);
 
 	return (
 		<div className="interview-controls">
 			<div className="controls-container">
+				{/* Current Question Display */}
 				{currentQuestion && (
 					<div className="question-display">
 						<div className="question-text">
@@ -215,6 +390,7 @@ const InterviewControls: FC<InterviewControlsProps> = ({
 					</div>
 				)}
 
+				{/* Status indicators */}
 				<div className="status-indicators">
 					{isRecording && (
 						<div className="status-badge recording">
@@ -236,6 +412,7 @@ const InterviewControls: FC<InterviewControlsProps> = ({
 					)}
 				</div>
 
+				{/* Main controls */}
 				<div className="main-controls">
 					<button
 						className={`control-btn record-btn ${isRecording ? 'recording' : ''}`}

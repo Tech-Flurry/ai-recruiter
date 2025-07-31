@@ -1,5 +1,5 @@
-import * as React from "react";
-import { FC, useState } from "react";
+﻿import * as React from "react";
+import { FC, useEffect, useState } from "react";
 import InterviewVideoPanel from "./InterviewVideoPanel";
 import InterviewControls from "./InterviewControls";
 import CandidateInterviewResult from "./CandidateInterviewResult";
@@ -27,6 +27,24 @@ const InterviewRoom: FC<InterviewRoomProps> = ({ jobId, candidateId }) => {
 		setInterviewId(id);
 	};
 
+	// 🔒 Disable copy, right-click, and Ctrl/Cmd+C
+	useEffect(() => {
+		const handleContextMenu = (e: MouseEvent) => e.preventDefault();
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if ((e.ctrlKey || e.metaKey) && (e.key === "c" || e.key === "x")) {
+				e.preventDefault();
+			}
+		};
+
+		document.addEventListener("contextmenu", handleContextMenu);
+		document.addEventListener("keydown", handleKeyDown);
+
+		return () => {
+			document.removeEventListener("contextmenu", handleContextMenu);
+			document.removeEventListener("keydown", handleKeyDown);
+		};
+	}, []);
+
 	if (terminatedInterviewId) {
 		return (
 			<div className="interview-room-container">
@@ -40,18 +58,26 @@ const InterviewRoom: FC<InterviewRoomProps> = ({ jobId, candidateId }) => {
 					</div>
 				</div>
 				<style jsx="true">{`
-					.interview-room-container {
-						height: 100vh;
-						background-color: #1a1a1a;
-						overflow: hidden;
-					}
+          .interview-room-container {
+            height: 100vh;
+            background-color: #1a1a1a;
+            overflow: hidden;
+            user-select: none;
+          }
 
-					.interview-result-panel {
-						max-width: 800px;
-						width: 100%;
-						margin: 20px;
-					}
-				`}</style>
+          .interview-result-panel {
+            max-width: 800px;
+            width: 100%;
+            margin: 20px;
+          }
+
+          body {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+          }
+        `}</style>
 			</div>
 		);
 	}
@@ -62,11 +88,8 @@ const InterviewRoom: FC<InterviewRoomProps> = ({ jobId, candidateId }) => {
 				<div className="row h-100">
 					{/* Single Full-Width Video Panel */}
 					<div className="col-12 video-panel-column">
-						<InterviewVideoPanel
-							isSpeaking={isSpeaking}
-							isRecording={isRecording}
-						/>
-						
+						<InterviewVideoPanel isSpeaking={isSpeaking} isRecording={isRecording} />
+
 						{/* Controls at bottom */}
 						<div className="interview-controls-container">
 							<InterviewControls
@@ -83,27 +106,35 @@ const InterviewRoom: FC<InterviewRoomProps> = ({ jobId, candidateId }) => {
 			</div>
 
 			<style jsx="true">{`
-				.interview-room-container {
-					height: 100vh;
-					background-color: #1a1a1a;
-					overflow: hidden;
-					position: relative;
-				}
+        .interview-room-container {
+          height: 100vh;
+          background-color: #1a1a1a;
+          overflow: hidden;
+          position: relative;
+          user-select: none;
+        }
 
-				.video-panel-column {
-					background-color: #1a1a1a;
-					position: relative;
-					padding: 0;
-				}
+        .video-panel-column {
+          background-color: #1a1a1a;
+          position: relative;
+          padding: 0;
+        }
 
-				.interview-controls-container {
-					position: absolute;
-					bottom: 20px;
-					left: 50%;
-					transform: translateX(-50%);
-					z-index: 10;
-				}
-			`}</style>
+        .interview-controls-container {
+          position: absolute;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 10;
+        }
+
+        body {
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+        }
+      `}</style>
 		</div>
 	);
 };
